@@ -45,10 +45,11 @@ prognose = predict_visitors(heutige_temp, regnet_es)
 
 # Schicke Tabellenausgabe
 regen_status = "Ja" if regnet_es else "Nein"
-print(f"+-----------------------+-----------+")
+SEPARATOR = "+-----------------------+-----------+"
+print(SEPARATOR)
 print(f"| Schwimmbad-Check      | Details   |")
-print(f"+-----------------------+-----------+")
+print(SEPARATOR)
 print(f"| Temperatur            | {heutige_temp:>7}°C |")
 print(f"| Regen                 | {regen_status:>9} |")
 print(f"| Besucher-Prognose     | {prognose:>9} |")
-print(f"+-----------------------+-----------+")
+print(SEPARATOR)
