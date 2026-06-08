@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ Familien-WM-Tippspiel 2026</title>
+<style>
+  :root {
+    --gruen: #2e7d32;
+    --gruen-hell: #4caf50;
+    --gold: #ffd54f;
+    --dunkel: #1b3a2b;
+    --karte: #ffffff;
+    --bg: #0d4d2b;
+    --schatten: 0 4px 14px rgba(0,0,0,.18);
+    --rot: #e53935;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(circle at 20% 10%, #1a6b3c 0%, transparent 40%),
+      radial-gradient(circle at 80% 90%, #1a6b3c 0%, transparent 40%),
+      var(--bg);
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding-bottom: 90px;
+  }
+  /* Rasenstreifen-Optik im Header */
+  header {
+    background: repeating-linear-gradient(90deg, var(--gruen) 0 40px, var(--gruen-hell) 40px 80px);
+    color: #fff;
+    text-align: center;
+    padding: 22px 12px 18px;
+    box-shadow: var(--schatten);
+    position: relative;
+    overflow: hidden;
+  }
+  header h1 { font-size: 1.6rem; text-shadow: 2px 2px 4px rgba(0,0,0,.4); }
+  header p { font-size: .85rem; opacity: .92; margin-top: 4px; }
+  .ball-deko { position: absolute; font-size: 2.2rem; opacity: .25; }
+  .ball-deko.l { left: 8px; top: 14px; transform: rotate(-15deg); }
+  .ball-deko.r { right: 8px; top: 18px; transform: rotate(20deg); }
+
+  /* aktiver Spieler-Schalter */
+  .aktiver-spieler {
+    background: var(--dunkel);
+    color: #fff;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: .9rem;
+    flex-wrap: wrap;
+  }
+  .aktiver-spieler select {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+    background: #fff;
+    font-weight: 600;
+  }
+
+  main { max-width: 760px; margin: 0 auto; padding: 14px; }
+
+  .karte {
+    background: var(--karte);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: var(--schatten);
+  }
+  .karte h2 { color: var(--gruen); font-size: 1.15rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .karte h3 { font-size: .95rem; color: var(--dunkel); margin: 14px 0 8px; }
+
+  /* Buttons */
+  button, .btn {
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: .95rem;
+    font-weight: 600;
+    background: var(--gruen);
+    color: #fff;
+    transition: transform .08s, filter .15s;
+  }
+  button:hover { filter: brightness(1.08); }
+  button:active { transform: scale(.96); }
+  button.sekundaer { background: #607d8b; }
+  button.gefahr { background: var(--rot); }
+  button.klein { padding: 5px 10px; font-size: .8rem; }
+  button.gold { background: var(--gold); color: #5d4000; }
+
+  input, select {
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 8px 10px;
+    border: 2px solid #d4d4d4;
+    border-radius: 8px;
+    width: 100%;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--gruen-hell); }
+  label { font-size: .82rem; color: #555; font-weight: 600; display: block; margin-bottom: 3px; }
+
+  /* Tabelle */
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 6px; text-align: left; border-bottom: 1px solid #eee; }
+  th { font-size: .75rem; text-transform: uppercase; color: #888; letter-spacing: .5px; }
+  td.pkt { font-weight: 800; color: var(--gruen); text-align: right; font-size: 1.1rem; }
+  tr.fuehrend { background: linear-gradient(90deg, rgba(255,213,79,.35), transparent); }
+  tr.letzter { background: linear-gradient(90deg, rgba(229,57,53,.12), transparent); }
+  .rang-emoji { font-size: 1.2rem; }
+  .titel-badge { font-size: .7rem; color: #777; display: block; }
+  .spieler-name { font-weight: 700; }
+
+  /* Spiel-Karte */
+  .spiel {
+    border: 2px solid #eee;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  .spiel.gespielt { border-color: var(--gruen-hell); background: #f3fbf4; }
+  .spiel-kopf { display: flex; justify-content: space-between; align-items: center; font-size: .75rem; color: #999; margin-bottom: 8px; }
+  .spiel-teams { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+  .team { text-align: center; font-weight: 700; font-size: .95rem; }
+  .team .flagge { font-size: 1.8rem; display: block; }
+  .tipp-eingabe { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .tipp-eingabe input { width: 52px; text-align: center; font-size: 1.3rem; font-weight: 800; padding: 6px; }
+  .doppelpunkt { font-size: 1.4rem; font-weight: 800; color: #aaa; }
+  .ergebnis-echt { text-align: center; font-size: .85rem; color: var(--gruen); font-weight: 700; margin-top: 8px; }
+  .punkte-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: .75rem; font-weight: 800; margin-left: 6px; }
+  .p4 { background: #ffd54f; color: #5d4000; }
+  .p3 { background: #aed581; color: #33691e; }
+  .p2 { background: #b3e5fc; color: #01579b; }
+  .p0 { background: #eee; color: #999; }
+
+  .tipps-uebersicht { margin-top: 8px; font-size: .8rem; }
+  .tipps-uebersicht .zeile { display: flex; justify-content: space-between; padding: 3px 0; border-top: 1px dashed #eee; }
+
+  /* Tabs unten */
+  nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--dunkel);
+    display: flex;
+    justify-content: space-around;
+    padding: 6px 4px 8px;
+    box-shadow: 0 -4px 14px rgba(0,0,0,.25);
+    z-index: 50;
+  }
+  nav button {
+    background: none; color: #9fc7af; flex: 1;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    font-size: .65rem; padding: 4px;
+  }
+  nav button .ico { font-size: 1.4rem; }
+  nav button.aktiv { color: var(--gold); }
+
+  .view { display: none; }
+  .view.aktiv { display: block; }
+
+  .leer-hinweis { text-align: center; color: #999; padding: 24px; font-size: .9rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .flex-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+  .flex-row > div { flex: 1; min-width: 120px; }
+
+  .pokal-box {
+    background: linear-gradient(135deg, #ffe082, #ffd54f);
+    border-radius: 16px; padding: 18px; text-align: center; color: #5d4000;
+    margin-bottom: 14px; box-shadow: var(--schatten);
+  }
+  .pokal-box .pokal-emoji { font-size: 3rem; display: block; animation: wackeln 2s ease-in-out infinite; }
+  @keyframes wackeln { 0%,100%{transform:rotate(-6deg)} 50%{transform:rotate(6deg)} }
+  .pokal-box .name { font-size: 1.4rem; font-weight: 800; margin-top: 4px; }
+
+  .strafe-box {
+    background: linear-gradient(135deg, #ef9a9a, #e57373);
+    border-radius: 16px; padding: 16px; text-align: center; color: #fff;
+    margin-bottom: 14px; box-shadow: var(--schatten);
+  }
+  .strafe-box .name { font-size: 1.1rem; font-weight: 800; }
+  .strafe-text { font-size: 1.05rem; margin-top: 8px; min-height: 24px; font-weight: 600; }
+
+  .award { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; margin-bottom: 8px; background: #f7f7f7; }
+  .award .emoji { font-size: 2rem; }
+  .award .txt strong { display: block; font-size: .95rem; }
+  .award .txt span { font-size: .8rem; color: #777; }
+
+  .spieler-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #eef7f0; border-radius: 20px; padding: 6px 12px; margin: 4px;
+    font-weight: 600;
+  }
+  .spieler-chip button { background: none; color: var(--rot); padding: 0 4px; font-size: 1.1rem; }
+
+  .emoji-picker { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .emoji-picker button { background: #f0f0f0; font-size: 1.3rem; padding: 6px; border-radius: 8px; }
+  .emoji-picker button.gewaehlt { background: var(--gruen-hell); outline: 3px solid var(--gold); }
+
+  .quiz-frage { font-weight: 700; margin-bottom: 10px; font-size: 1.05rem; }
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; background: #f3f3f3; color: #333;
+    margin-bottom: 6px; padding: 12px; border-radius: 10px; font-weight: 600;
+  }
+  .quiz-opt.richtig { background: #aed581; color: #1b5e20; }
+  .quiz-opt.falsch { background: #ef9a9a; color: #b71c1c; }
+
+  .bonus-frage { border: 2px solid #eee; border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+  .bonus-frage.aufgeloest { background: #f3fbf4; border-color: var(--gruen-hell); }
+
+  /* Konfetti */
+  #konfetti { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
+  .konfetti-stueck { position: absolute; width: 10px; height: 14px; top: -20px; animation: fallen linear forwards; }
+  @keyframes fallen { to { transform: translateY(105vh) rotate(720deg); opacity: .3; } }
+
+  .toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: var(--dunkel); color: #fff; padding: 12px 20px; border-radius: 30px;
+    box-shadow: var(--schatten); z-index: 120; font-weight: 600; font-size: .9rem;
+    opacity: 0; transition: opacity .3s, bottom .3s; pointer-events: none; text-align: center; max-width: 90%;
+  }
+  .toast.zeigen { opacity: 1; bottom: 110px; }
+
+  .info-zeile { font-size: .78rem; color: #888; margin-top: 6px; line-height: 1.5; }
+  details { margin-top: 10px; }
+  summary { cursor: pointer; font-weight: 600; color: var(--gruen); font-size: .85rem; }
+  .punkte-regeln { font-size: .8rem; color: #555; line-height: 1.7; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="ball-deko l">⚽</span>
+  <span class="ball-deko r">🏆</span>
+  <h1>Familien-WM-Tippspiel 2026</h1>
+  <p>Tippen, lachen, gewinnen – und der Letzte muss zittern! 😈</p>
+</header>
+
+<div class="aktiver-spieler">
+  <span>🎮 Wer tippt gerade?</span>
+  <select id="aktiverSpielerSelect" onchange="setzeAktivenSpieler(this.value)"></select>
+</div>
+
+<main>
+  <!-- ====================== TABELLE ====================== -->
+  <section id="view-tabelle" class="view aktiv">
+    <div id="pokalContainer"></div>
+    <div class="karte">
+      <h2>🏆 Die Tabelle</h2>
+      <div id="tabelleInhalt"></div>
+      <details>
+        <summary>So gibt's Punkte</summary>
+        <div class="punkte-regeln">
+          🎯 <b>Exakt richtig</b> (z.B. 2:1 getippt, 2:1 passiert): <b>4 Punkte</b><br>
+          ↔️ <b>Richtige Tordifferenz</b> (z.B. 2:1 getippt, 3:2 passiert): <b>3 Punkte</b><br>
+          ✅ <b>Richtige Tendenz</b> (Sieger/Unentschieden stimmt): <b>2 Punkte</b><br>
+          ❌ <b>Daneben</b>: 0 Punkte<br>
+          🎲 <b>Bonus-Fragen</b> bringen Extra-Punkte!
+        </div>
+      </details>
+    </div>
+
+    <div class="karte">
+      <h2>🎖️ Spaß-Awards</h2>
+      <div id="awardsInhalt"></div>
+    </div>
+
+    <div class="karte">
+      <h2>😈 Strafen-Generator</h2>
+      <p class="info-zeile">Der aktuell Letzte muss ran! Dreh am Rad des Schicksals…</p>
+      <div id="strafeContainer"></div>
+      <button onclick="ziehStrafe()" class="gefahr" style="width:100%;margin-top:10px">🎰 Strafe für die rote Laterne ziehen!</button>
+    </div>
+  </section>
+
+  <!-- ====================== TIPPEN ====================== -->
+  <section id="view-tippen" class="view">
+    <div class="karte">
+      <h2>⚽ Spiele & Tipps</h2>
+      <p class="info-zeile" id="tippenHinweis"></p>
+      <div id="spieleListe"></div>
+    </div>
+  </section>
+
+  <!-- ====================== BONUS ====================== -->
+  <section id="view-bonus" class="view">
+    <div class="karte">
+      <h2>🎲 Bonus-Fragen</h2>
+      <p class="info-zeile">Tippt aufs ganze Turnier – das bringt fette Extra-Punkte!</p>
+      <div id="bonusListe"></div>
+    </div>
+
+    <div class="karte">
+      <h2>🧠 Fußball-Quiz der Pause</h2>
+      <p class="info-zeile">Zeit totschlagen bis zum nächsten Anpfiff? Teste dein Wissen!</p>
+      <div id="quizContainer"></div>
+      <button onclick="naechsteQuizFrage()" class="gold" style="width:100%;margin-top:10px">🎲 Neue Quizfrage</button>
+    </div>
+  </section>
+
+  <!-- ====================== FAMILIE ====================== -->
+  <section id="view-familie" class="view">
+    <div class="karte">
+      <h2>👨‍👩‍👧‍👦 Familien-Mitspieler</h2>
+      <div id="spielerListe"></div>
+      <h3>Neuen Mitspieler hinzufügen</h3>
+      <label>Name</label>
+      <input id="neuerSpielerName" placeholder="z.B. Oma Helga" maxlength="20">
+      <label style="margin-top:8px">Wähle ein Wappentier / Avatar</label>
+      <div class="emoji-picker" id="avatarPicker"></div>
+      <button onclick="spielerHinzufuegen()" style="width:100%;margin-top:12px">➕ Mitspieler aufstellen</button>
+    </div>
+  </section>
+
+  <!-- ====================== VERWALTUNG ====================== -->
+  <section id="view-verwaltung" class="view">
+    <div class="karte">
+      <h2>⚙️ Spielplan verwalten</h2>
+      <h3>Neues Spiel anlegen</h3>
+      <div class="flex-row">
+        <div>
+          <label>Heim-Team</label>
+          <select id="neuTeam1"></select>
+        </div>
+        <div>
+          <label>Auswärts-Team</label>
+          <select id="neuTeam2"></select>
+        </div>
+      </div>
+      <div class="flex-row" style="margin-top:8px">
+        <div>
+          <label>Phase</label>
+          <select id="neuPhase">
+            <option>Gruppenphase</option>
+            <option>Achtelfinale</option>
+            <option>Viertelfinale</option>
+            <option>Halbfinale</option>
+            <option>Spiel um Platz 3</option>
+            <option>Finale</option>
+          </select>
+        </div>
+        <div>
+          <label>Anstoß (optional)</label>
+          <input id="neuDatum" placeholder="z.B. Sa 18:00">
+        </div>
+      </div>
+      <button onclick="spielHinzufuegen()" style="width:100%;margin-top:12px">➕ Spiel zum Plan hinzufügen</button>
+    </div>
+
+    <div class="karte">
+      <h2>🎲 Bonus-Frage anlegen</h2>
+      <label>Frage</label>
+      <input id="neuBonusFrage" placeholder="z.B. Wer wird Weltmeister?">
+      <label style="margin-top:8px">Antwort-Möglichkeiten (mit Komma trennen)</label>
+      <input id="neuBonusOptionen" placeholder="z.B. Deutschland, Brasilien, Frankreich">
+      <label style="margin-top:8px">Punkte für richtige Antwort</label>
+      <input id="neuBonusPunkte" type="number" value="5" min="1" max="20">
+      <button onclick="bonusFrageHinzufuegen()" style="width:100%;margin-top:12px">➕ Bonus-Frage erstellen</button>
+    </div>
+
+    <div class="karte">
+      <h2>💾 Daten</h2>
+      <p class="info-zeile">Alles wird lokal im Browser gespeichert. Du kannst den Spielstand sichern oder zurücksetzen.</p>
+      <div class="grid2" style="margin-top:10px">
+        <button onclick="datenExportieren()" class="sekundaer">⬇️ Sichern</button>
+        <button onclick="document.getElementById('importDatei').click()" class="sekundaer">⬆️ Laden</button>
+      </div>
+      <input type="file" id="importDatei" accept=".json" style="display:none" onchange="datenImportieren(event)">
+      <button onclick="beispielDatenLaden()" class="gold" style="width:100%;margin-top:10px">✨ Beispiel-Daten laden (zum Ausprobieren)</button>
+      <button onclick="allesZuruecksetzen()" class="gefahr" style="width:100%;margin-top:10px">🗑️ Alles zurücksetzen</button>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button class="nav-btn aktiv" data-view="tabelle" onclick="zeigeView('tabelle')"><span class="ico">🏆</span>Tabelle</button>
+  <button class="nav-btn" data-view="tippen" onclick="zeigeView('tippen')"><span class="ico">⚽</span>Tippen</button>
+  <button class="nav-btn" data-view="bonus" onclick="zeigeView('bonus')"><span class="ico">🎲</span>Bonus</button>
+  <button class="nav-btn" data-view="familie" onclick="zeigeView('familie')"><span class="ico">👨‍👩‍👧</span>Familie</button>
+  <button class="nav-btn" data-view="verwaltung" onclick="zeigeView('verwaltung')"><span class="ico">⚙️</span>Verwalten</button>
+</nav>
+
+<div id="konfetti"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+/* =========================================================
+   FAMILIEN-WM-TIPPSPIEL 2026
+   Reine HTML/JS-App, Speicherung im localStorage.
+   ========================================================= */
+
+const SPEICHER_KEY = "wm_tippspiel_2026";
+
+// ----- Auswahl an Teams (WM 2026 hat 48 Teams – hier eine bunte Auswahl) -----
+const TEAMS = [
+  ["Deutschland","🇩🇪"],["Brasilien","🇧🇷"],["Argentinien","🇦🇷"],["Frankreich","🇫🇷"],
+  ["Spanien","🇪🇸"],["England","🏴"],["Portugal","🇵🇹"],["Niederlande","🇳🇱"],
+  ["Italien","🇮🇹"],["Belgien","🇧🇪"],["Kroatien","🇭🇷"],["USA","🇺🇸"],
+  ["Mexiko","🇲🇽"],["Kanada","🇨🇦"],["Japan","🇯🇵"],["Südkorea","🇰🇷"],
+  ["Marokko","🇲🇦"],["Senegal","🇸🇳"],["Uruguay","🇺🇾"],["Kolumbien","🇨🇴"],
+  ["Schweiz","🇨🇭"],["Dänemark","🇩🇰"],["Polen","🇵🇱"],["Österreich","🇦🇹"],
+  ["Australien","🇦🇺"],["Ghana","🇬🇭"],["Nigeria","🇳🇬"],["Saudi-Arabien","🇸🇦"]
+];
+const flaggeVon = (name) => (TEAMS.find(t => t[0] === name) || [name,"🏳️"])[1];
+
+// ----- Avatar-Auswahl -----
+const AVATARE = ["🦁","🐻","🦅","🐉","🦊","🐯","🐺","🦄","🐶","🐱","🐼","🐨","🦈","🐧","🦉","🐢","👑","🤓","😎","🥸","🧙","🦸","🤡","👻"];
+
+// ----- Lustige Titel je nach Rang -----
+const TITEL = {
+  erster:  ["👑 Bundestrainer", "🎩 Tipp-König", "🧠 Glaskugel-Guru", "🔮 Orakel von Wembley"],
+  zweiter: ["🥈 Co-Trainer", "🎯 Vize-Visionär"],
+  dritter: ["🥉 Sofa-Experte", "📺 TV-Taktiker"],
+  mitte:   ["🗣️ Quoten-Quassler", "🤷 Mitläufer der Liga", "🍻 Stammtisch-Stratege", "📊 Mittelfeld-Maestro"],
+  letzter: ["🏮 Rote Laterne", "🪦 Tipp-Totalschaden", "🙈 Pannen-Prophet"]
+};
+
+// ----- Strafen für den Letzten -----
+const STRAFEN = [
+  "Eine Woche lang Abwasch! 🧽",
+  "Tor-Jubel-Tanz vor der ganzen Familie vorführen 💃",
+  "Snacks für den nächsten Spieltag besorgen 🍿",
+  "Die Nationalhymne des Tabellenführers singen 🎤",
+  "Liegestütze machen – so viele wie Punkte Rückstand! 💪",
+  "Das nächste Spiel im Trikot des Erzrivalen schauen 👕",
+  "Eine Runde Eis für alle ausgeben 🍦",
+  "Beim nächsten Spieltag Kommentator spielen (mit Begeisterung!) 🎙️",
+  "Müll rausbringen, bis sich die Tabelle dreht 🗑️",
+  "Kabinenpredigt halten und sich selbst motivieren 📣",
+  "Den Kaffee/Kakao für die Familie kochen ☕",
+  "Eine Selfie-Grimasse machen und als neues Avatar nehmen 🤳"
+];
+
+// ----- Quizfragen für die Pause -----
+const QUIZFRAGEN = [
+  { f: "Wie oft wurde Brasilien Fußball-Weltmeister?", o: ["3 mal","5 mal","7 mal"], r: 1 },
+  { f: "In welchem Land findet die WM 2026 (haupts.) statt?", o: ["Katar","USA/Kanada/Mexiko","Brasilien"], r: 1 },
+  { f: "Wie viele Teams spielen bei der WM 2026 mit?", o: ["32","40","48"], r: 2 },
+  { f: "Welcher Spieler erzielte das berühmte 'Hand-Gottes'-Tor?", o: ["Pelé","Maradona","Zidane"], r: 1 },
+  { f: "Wie lange dauert eine reguläre Halbzeit?", o: ["40 Min","45 Min","50 Min"], r: 1 },
+  { f: "Wer wurde 2014 Weltmeister?", o: ["Deutschland","Argentinien","Spanien"], r: 0 },
+  { f: "Wie viele Spieler stehen pro Team auf dem Feld?", o: ["10","11","12"], r: 1 },
+  { f: "Welche Farbe hat die Karte für einen Platzverweis?", o: ["Gelb","Rot","Blau"], r: 1 },
+  { f: "Wer gewann die WM 2022 in Katar?", o: ["Frankreich","Argentinien","Kroatien"], r: 1 },
+  { f: "Wie heißt der WM-Pokal?", o: ["Champions Cup","FIFA-WM-Pokal","Golden Goal"], r: 1 },
+  { f: "Was bedeutet ein 'Hattrick'?", o: ["3 Tore eines Spielers","3 Gegentore","3 Ecken"], r: 0 },
+  { f: "Welches Land hat die meisten WM-Titel?", o: ["Deutschland","Italien","Brasilien"], r: 2 }
+];
+
+// ===================== STATE =====================
+let state = laden();
+let aktivesQuiz = null;
+
+function standardState() {
+  return { spieler: [], spiele: [], tipps: {}, bonusFragen: [], bonusTipps: {}, aktiverSpielerId: null };
+}
+function laden() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SPEICHER_KEY));
+    if (!d) return standardState();
+    return Object.assign(standardState(), d);
+  } catch(e) { return standardState(); }
+}
+function speichern() {
+  localStorage.setItem(SPEICHER_KEY, JSON.stringify(state));
+}
+const id = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+// ===================== NAVIGATION =====================
+function zeigeView(name) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("aktiv"));
+  document.getElementById("view-" + name).classList.add("aktiv");
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("aktiv", b.dataset.view === name));
+  window.scrollTo(0,0);
+}
+
+// ===================== SPIELER =====================
+function setzeAktivenSpieler(spid) {
+  state.aktiverSpielerId = spid || null;
+  speichern();
+  renderSpiele();
+  renderBonus();
+}
+
+function spielerHinzufuegen() {
+  const name = document.getElementById("neuerSpielerName").value.trim();
+  const avatar = document.querySelector("#avatarPicker .gewaehlt")?.dataset.emoji;
+  if (!name) { toast("Bitte einen Namen eingeben! ✍️"); return; }
+  if (!avatar) { toast("Bitte ein Avatar wählen! 🦁"); return; }
+  state.spieler.push({ id: id(), name, avatar });
+  document.getElementById("neuerSpielerName").value = "";
+  if (!state.aktiverSpielerId) state.aktiverSpielerId = state.spieler[state.spieler.length-1].id;
+  speichern();
+  toast(avatar + " " + name + " ist im Team! ⚽");
+  konfettiRegen(40);
+  alleRendern();
+}
+
+function spielerLoeschen(spid) {
+  const sp = state.spieler.find(s => s.id === spid);
+  if (!confirm(`"${sp.name}" wirklich aus dem Tippspiel werfen?`)) return;
+  state.spieler = state.spieler.filter(s => s.id !== spid);
+  delete state.tipps[spid];
+  delete state.bonusTipps[spid];
+  if (state.aktiverSpielerId === spid) state.aktiverSpielerId = state.spieler[0]?.id || null;
+  speichern();
+  alleRendern();
+}
+
+function renderSpielerListe() {
+  const c = document.getElementById("spielerListe");
+  if (!state.spieler.length) {
+    c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler. Stell unten deine Familien-Elf auf! 👨‍👩‍👧‍👦</p>';
+    return;
+  }
+  c.innerHTML = state.spieler.map(s =>
+    `<span class="spieler-chip">${s.avatar} ${s.name}
+      <button onclick="spielerLoeschen('${s.id}')" title="entfernen">✕</button></span>`
+  ).join("");
+}
+
+function renderAvatarPicker() {
+  const c = document.getElementById("avatarPicker");
+  const benutzt = state.spieler.map(s => s.avatar);
+  c.innerHTML = AVATARE.map(e =>
+    `<button data-emoji="${e}" ${benutzt.includes(e)?'disabled style="opacity:.25"':''}
+      onclick="avatarWaehlen(this)">${e}</button>`
+  ).join("");
+}
+function avatarWaehlen(btn) {
+  document.querySelectorAll("#avatarPicker .gewaehlt").forEach(b => b.classList.remove("gewaehlt"));
+  btn.classList.add("gewaehlt");
+}
+
+function renderSpielerSelect() {
+  const sel = document.getElementById("aktiverSpielerSelect");
+  if (!state.spieler.length) {
+    sel.innerHTML = '<option value="">– noch keine Spieler –</option>';
+    return;
+  }
+  sel.innerHTML = state.spieler.map(s =>
+    `<option value="${s.id}" ${s.id===state.aktiverSpielerId?'selected':''}>${s.avatar} ${s.name}</option>`
+  ).join("");
+}
+
+// ===================== SPIELE =====================
+function renderTeamSelects() {
+  const opt = TEAMS.map(t => `<option value="${t[0]}">${t[1]} ${t[0]}</option>`).join("");
+  document.getElementById("neuTeam1").innerHTML = opt;
+  document.getElementById("neuTeam2").innerHTML = opt;
+  document.getElementById("neuTeam2").selectedIndex = 1;
+}
+
+function spielHinzufuegen() {
+  const t1 = document.getElementById("neuTeam1").value;
+  const t2 = document.getElementById("neuTeam2").value;
+  const phase = document.getElementById("neuPhase").value;
+  const datum = document.getElementById("neuDatum").value.trim();
+  if (t1 === t2) { toast("Ein Team kann nicht gegen sich selbst spielen! 😅"); return; }
+  state.spiele.push({ id: id(), t1, t2, phase, datum, gespielt: false, e1: null, e2: null });
+  document.getElementById("neuDatum").value = "";
+  speichern();
+  toast(`${flaggeVon(t1)} ${t1} – ${t2} ${flaggeVon(t2)} angesetzt! ⚽`);
+  renderSpiele();
+}
+
+function spielLoeschen(spid) {
+  if (!confirm("Dieses Spiel wirklich löschen?")) return;
+  state.spiele = state.spiele.filter(s => s.id !== spid);
+  Object.values(state.tipps).forEach(t => delete t[spid]);
+  speichern();
+  renderSpiele();
+  renderTabelle();
+}
+
+function tippSpeichern(spielId, feld, wert) {
+  const sp = state.aktiverSpielerId;
+  if (!sp) return;
+  if (!state.tipps[sp]) state.tipps[sp] = {};
+  if (!state.tipps[sp][spielId]) state.tipps[sp][spielId] = { e1: null, e2: null };
+  const v = wert === "" ? null : Math.max(0, parseInt(wert) || 0);
+  state.tipps[sp][spielId][feld] = v;
+  speichern();
+}
+
+function ergebnisSpeichern(spielId, feld, wert) {
+  const spiel = state.spiele.find(s => s.id === spielId);
+  const v = wert === "" ? null : Math.max(0, parseInt(wert) || 0);
+  spiel[feld] = v;
+  spiel.gespielt = (spiel.e1 !== null && spiel.e2 !== null);
+  speichern();
+  renderSpiele();
+  renderTabelle();
+  if (spiel.gespielt) pruefeExakteTreffer(spiel);
+}
+
+// Konfetti, wenn der aktive Spieler exakt richtig lag
+function pruefeExakteTreffer(spiel) {
+  const sp = state.aktiverSpielerId;
+  const t = state.tipps[sp]?.[spiel.id];
+  if (t && t.e1 === spiel.e1 && t.e2 === spiel.e2) {
+    konfettiRegen(90);
+    torjubel();
+    toast("🎯 VOLLTREFFER! Exakt getippt – 4 Punkte! 🎉");
+  }
+}
+
+// Punkteberechnung für einen Tipp gegen ein Ergebnis
+function punkteFuer(tipp, spiel) {
+  if (!tipp || tipp.e1 === null || tipp.e2 === null) return null;
+  if (!spiel.gespielt) return null;
+  const exakt = tipp.e1 === spiel.e1 && tipp.e2 === spiel.e2;
+  if (exakt) return 4;
+  const diffTipp = tipp.e1 - tipp.e2, diffEcht = spiel.e1 - spiel.e2;
+  if (diffTipp === diffEcht) return 3; // gleiche Tordifferenz (inkl. Unentschieden mit gleichem Abstand)
+  const tendTipp = Math.sign(diffTipp), tendEcht = Math.sign(diffEcht);
+  if (tendTipp === tendEcht) return 2; // richtige Tendenz
+  return 0;
+}
+
+function renderSpiele() {
+  const c = document.getElementById("spieleListe");
+  const hinweis = document.getElementById("tippenHinweis");
+  const sp = state.aktiverSpielerId;
+  const spObj = state.spieler.find(s => s.id === sp);
+
+  hinweis.innerHTML = spObj
+    ? `Du tippst als <b>${spObj.avatar} ${spObj.name}</b>. Oben kannst du wechseln.`
+    : `⚠️ Lege zuerst unter <b>Familie</b> Mitspieler an!`;
+
+  if (!state.spiele.length) {
+    c.innerHTML = '<p class="leer-hinweis">Noch keine Spiele im Plan. Lege welche unter ⚙️ <b>Verwalten</b> an – oder lade die Beispiel-Daten!</p>';
+    return;
+  }
+
+  c.innerHTML = state.spiele.map(spiel => {
+    const t = (sp && state.tipps[sp] && state.tipps[sp][spiel.id]) || { e1:null, e2:null };
+    const pkt = punkteFuer(t, spiel);
+    const pktBadge = pkt !== null ? `<span class="punkte-badge p${pkt}">${pkt} P</span>` : "";
+    const disabled = sp ? "" : "disabled";
+
+    // Übersicht aller Tipps (wenn gespielt)
+    let uebersicht = "";
+    if (spiel.gespielt && state.spieler.length) {
+      const zeilen = state.spieler.map(s => {
+        const tt = state.tipps[s.id]?.[spiel.id];
+        const p = punkteFuer(tt, spiel);
+        const tippStr = (tt && tt.e1!==null && tt.e2!==null) ? `${tt.e1}:${tt.e2}` : "–";
+        return `<div class="zeile"><span>${s.avatar} ${s.name}: <b>${tippStr}</b></span>
+          <span class="punkte-badge p${p??0}">${p??0} P</span></div>`;
+      }).join("");
+      uebersicht = `<details><summary>Alle Tipps anzeigen</summary><div class="tipps-uebersicht">${zeilen}</div></details>`;
+    }
+
+    return `
+    <div class="spiel ${spiel.gespielt?'gespielt':''}">
+      <div class="spiel-kopf">
+        <span>${spiel.phase}${spiel.datum?' · '+spiel.datum:''}</span>
+        <span>
+          ${pktBadge}
+          <button class="klein gefahr" onclick="spielLoeschen('${spiel.id}')" style="margin-left:6px">✕</button>
+        </span>
+      </div>
+      <div class="spiel-teams">
+        <div class="team"><span class="flagge">${flaggeVon(spiel.t1)}</span>${spiel.t1}</div>
+        <div class="tipp-eingabe">
+          <input type="number" min="0" ${disabled} value="${t.e1??''}"
+            onchange="tippSpeichern('${spiel.id}','e1',this.value)" placeholder="-">
+          <span class="doppelpunkt">:</span>
+          <input type="number" min="0" ${disabled} value="${t.e2??''}"
+            onchange="tippSpeichern('${spiel.id}','e2',this.value)" placeholder="-">
+        </div>
+        <div class="team"><span class="flagge">${flaggeVon(spiel.t2)}</span>${spiel.t2}</div>
+      </div>
+      ${spiel.gespielt
+        ? `<div class="ergebnis-echt">⚽ Endstand: ${spiel.e1} : ${spiel.e2}</div>`
+        : ''}
+      <details style="margin-top:8px">
+        <summary>📝 Echtes Ergebnis eintragen (Spielleiter)</summary>
+        <div class="tipp-eingabe" style="margin-top:8px">
+          <input type="number" min="0" value="${spiel.e1??''}" placeholder="-"
+            onchange="ergebnisSpeichern('${spiel.id}','e1',this.value)">
+          <span class="doppelpunkt">:</span>
+          <input type="number" min="0" value="${spiel.e2??''}" placeholder="-"
+            onchange="ergebnisSpeichern('${spiel.id}','e2',this.value)">
+        </div>
+      </details>
+      ${uebersicht}
+    </div>`;
+  }).join("");
+}
+
+// ===================== BONUS-FRAGEN =====================
+function bonusFrageHinzufuegen() {
+  const frage = document.getElementById("neuBonusFrage").value.trim();
+  const optRoh = document.getElementById("neuBonusOptionen").value.trim();
+  const punkte = parseInt(document.getElementById("neuBonusPunkte").value) || 5;
+  if (!frage || !optRoh) { toast("Frage und Antworten ausfüllen! ✍️"); return; }
+  const optionen = optRoh.split(",").map(o => o.trim()).filter(Boolean);
+  if (optionen.length < 2) { toast("Mindestens 2 Antwort-Optionen (mit Komma)! "); return; }
+  state.bonusFragen.push({ id: id(), frage, optionen, punkte, loesung: null });
+  document.getElementById("neuBonusFrage").value = "";
+  document.getElementById("neuBonusOptionen").value = "";
+  speichern();
+  toast("Bonus-Frage erstellt! 🎲");
+  renderBonus();
+}
+
+function bonusFrageLoeschen(bid) {
+  if (!confirm("Bonus-Frage löschen?")) return;
+  state.bonusFragen = state.bonusFragen.filter(b => b.id !== bid);
+  Object.values(state.bonusTipps).forEach(t => delete t[bid]);
+  speichern();
+  renderBonus();
+  renderTabelle();
+}
+
+function bonusTippSpeichern(bid, antwort) {
+  const sp = state.aktiverSpielerId;
+  if (!sp) { toast("Wähle oben zuerst einen Spieler!"); return; }
+  if (!state.bonusTipps[sp]) state.bonusTipps[sp] = {};
+  state.bonusTipps[sp][bid] = antwort;
+  speichern();
+  renderBonus();
+}
+
+function bonusLoesungSetzen(bid, antwort) {
+  const b = state.bonusFragen.find(x => x.id === bid);
+  b.loesung = antwort || null;
+  speichern();
+  renderBonus();
+  renderTabelle();
+  if (antwort) { konfettiRegen(50); }
+}
+
+function renderBonus() {
+  const c = document.getElementById("bonusListe");
+  const sp = state.aktiverSpielerId;
+  if (!state.bonusFragen.length) {
+    c.innerHTML = '<p class="leer-hinweis">Noch keine Bonus-Fragen. Lege welche unter ⚙️ <b>Verwalten</b> an!</p>';
+    return;
+  }
+  c.innerHTML = state.bonusFragen.map(b => {
+    const meinTipp = sp ? state.bonusTipps[sp]?.[b.id] : null;
+    const optBtns = b.optionen.map(o => {
+      let cls = "quiz-opt";
+      if (b.loesung) {
+        if (o === b.loesung) cls += " richtig";
+        else if (o === meinTipp) cls += " falsch";
+      } else if (o === meinTipp) {
+        cls += " richtig";
+      }
+      const dis = b.loesung ? "disabled" : "";
+      return `<button class="${cls}" ${dis} onclick="bonusTippSpeichern('${b.id}','${o.replace(/'/g,"\\'")}')">
+        ${o} ${o===meinTipp?'✓':''}</button>`;
+    }).join("");
+
+    const loesungSel = `
+      <details style="margin-top:8px">
+        <summary>🏁 Auflösung festlegen (Spielleiter)</summary>
+        <select onchange="bonusLoesungSetzen('${b.id}', this.value)" style="margin-top:8px">
+          <option value="">– noch offen –</option>
+          ${b.optionen.map(o => `<option ${o===b.loesung?'selected':''}>${o}</option>`).join("")}
+        </select>
+      </details>`;
+
+    return `
+    <div class="bonus-frage ${b.loesung?'aufgeloest':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="quiz-frage">🎲 ${b.frage} <small style="color:#999">(${b.punkte} P)</small></div>
+        <button class="klein gefahr" onclick="bonusFrageLoeschen('${b.id}')">✕</button>
+      </div>
+      ${optBtns}
+      ${loesungSel}
+    </div>`;
+  }).join("");
+}
+
+// ===================== TABELLE / RANKING =====================
+function berechneStand() {
+  return state.spieler.map(s => {
+    let punkte = 0, treffer = 0, getippt = 0;
+    state.spiele.forEach(spiel => {
+      const t = state.tipps[s.id]?.[spiel.id];
+      if (t && t.e1!==null && t.e2!==null) {
+        if (spiel.gespielt) {
+          const p = punkteFuer(t, spiel);
+          punkte += p;
+          if (p === 4) treffer++;
+          getippt++;
+        }
+      }
+    });
+    // Bonus
+    let bonus = 0;
+    state.bonusFragen.forEach(b => {
+      if (b.loesung && state.bonusTipps[s.id]?.[b.id] === b.loesung) bonus += b.punkte;
+    });
+    return { ...s, punkte: punkte + bonus, spielPunkte: punkte, bonus, treffer, getippt };
+  }).sort((a,b) => b.punkte - a.punkte || b.treffer - a.treffer);
+}
+
+function titelFuer(rang, gesamt) {
+  const w = (arr) => arr[Math.floor(Math.random()*arr.length)];
+  if (gesamt === 1) return TITEL.erster[0];
+  if (rang === 0) return w(TITEL.erster);
+  if (rang === gesamt-1) return w(TITEL.letzter);
+  if (rang === 1) return w(TITEL.zweiter);
+  if (rang === 2 && gesamt > 4) return w(TITEL.dritter);
+  return w(TITEL.mitte);
+}
+
+function renderTabelle() {
+  const c = document.getElementById("tabelleInhalt");
+  const stand = berechneStand();
+  const pokalC = document.getElementById("pokalContainer");
+
+  if (!stand.length) {
+    c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler. Geh zu 👨‍👩‍👧 <b>Familie</b> und stell dein Team auf!</p>';
+    pokalC.innerHTML = "";
+    return;
+  }
+
+  // Wanderpokal für den Führenden
+  const fuehrend = stand[0];
+  const hatPunkte = stand.some(s => s.punkte > 0);
+  pokalC.innerHTML = hatPunkte ? `
+    <div class="pokal-box">
+      <span class="pokal-emoji">🏆</span>
+      <div>Aktueller Träger des Familien-Wanderpokals:</div>
+      <div class="name">${fuehrend.avatar} ${fuehrend.name}</div>
+      <div style="font-size:.85rem;margin-top:4px">mit ${fuehrend.punkte} Punkten – alle anderen: aufgepasst! 👀</div>
+    </div>` : "";
+
+  c.innerHTML = `
+    <table>
+      <thead><tr><th></th><th>Spieler</th><th style="text-align:center">🎯</th><th style="text-align:right">Punkte</th></tr></thead>
+      <tbody>
+      ${stand.map((s,i) => {
+        const titel = titelFuer(i, stand.length);
+        const rangEmoji = i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1)+".";
+        const klasse = i===0 && hatPunkte ? "fuehrend" : (i===stand.length-1 && stand.length>1 && hatPunkte ? "letzter" : "");
+        return `<tr class="${klasse}">
+          <td class="rang-emoji">${rangEmoji}</td>
+          <td>
+            <span class="spieler-name">${s.avatar} ${s.name}</span>
+            <span class="titel-badge">${titel}${s.bonus?` · 🎲 +${s.bonus}`:''}</span>
+          </td>
+          <td style="text-align:center">${s.treffer}</td>
+          <td class="pkt">${s.punkte}</td>
+        </tr>`;
+      }).join("")}
+      </tbody>
+    </table>`;
+}
+
+// ===================== SPAß-AWARDS =====================
+function renderAwards() {
+  const c = document.getElementById("awardsInhalt");
+  const stand = berechneStand();
+  const gespielteSpiele = state.spiele.filter(s => s.gespielt).length;
+
+  if (!stand.length || (gespielteSpiele === 0 && !stand.some(s=>s.bonus))) {
+    c.innerHTML = '<p class="leer-hinweis">Awards erscheinen, sobald die ersten Ergebnisse feststehen! 🎬</p>';
+    return;
+  }
+
+  const awards = [];
+
+  // Volltreffer-König
+  const maxTreffer = Math.max(...stand.map(s => s.treffer));
+  if (maxTreffer > 0) {
+    const koenig = stand.filter(s => s.treffer === maxTreffer);
+    awards.push({ e:"🎯", t:"Der Scharfschütze", s:`${koenig.map(k=>k.avatar+" "+k.name).join(", ")} – ${maxTreffer}× exakt getippt!` });
+  }
+
+  // Schwarze Laterne / schlechtester
+  if (stand.length > 1 && gespielteSpiele > 0) {
+    const letzter = stand[stand.length-1];
+    awards.push({ e:"🏮", t:"Schwarze Laterne", s:`${letzter.avatar} ${letzter.name} bildet das Schlusslicht. Kopf hoch! 🫂` });
+  }
+
+  // Bauernopfer-Pokal: hat getippt, aber wenigste Punkte pro Tipp
+  const mitTipps = stand.filter(s => s.getippt > 0);
+  if (mitTipps.length > 1) {
+    const mutigster = mitTipps.reduce((a,b) => (b.spielPunkte/b.getippt < a.spielPunkte/a.getippt ? b : a));
+    if (mutigster.getippt >= 2) {
+      awards.push({ e:"🐔", t:"Bauernopfer-Pokal", s:`${mutigster.avatar} ${mutigster.name} – viel getippt, wenig geholt. Mutig! 😅` });
+    }
+  }
+
+  // Bonus-Fuchs
+  const maxBonus = Math.max(...stand.map(s => s.bonus));
+  if (maxBonus > 0) {
+    const fuchs = stand.find(s => s.bonus === maxBonus);
+    awards.push({ e:"🦊", t:"Der Bonus-Fuchs", s:`${fuchs.avatar} ${fuchs.name} kassiert ${maxBonus} Bonus-Punkte. Schlau! 🧠` });
+  }
+
+  c.innerHTML = awards.map(a =>
+    `<div class="award"><span class="emoji">${a.e}</span>
+      <div class="txt"><strong>${a.t}</strong><span>${a.s}</span></div></div>`
+  ).join("") || '<p class="leer-hinweis">Noch keine Awards – tippt weiter! ⚽</p>';
+}
+
+// ===================== STRAFEN-GENERATOR =====================
+function ziehStrafe() {
+  const stand = berechneStand();
+  if (stand.length < 2) { toast("Dafür braucht's mindestens 2 Mitspieler! 👬"); return; }
+  if (!state.spiele.some(s=>s.gespielt)) { toast("Erst muss ein Spiel ausgewertet sein! ⚽"); return; }
+  const letzter = stand[stand.length-1];
+  const box = document.getElementById("strafeContainer");
+  const text = document.createElement("div");
+
+  box.innerHTML = `<div class="strafe-box">
+    <div class="name">😈 ${letzter.avatar} ${letzter.name}, du bist dran!</div>
+    <div class="strafe-text" id="strafeText">🎰 …</div>
+  </div>`;
+
+  // Slot-Maschine-Effekt
+  let durchgaenge = 0;
+  const dauer = 18;
+  const tick = setInterval(() => {
+    document.getElementById("strafeText").textContent = STRAFEN[Math.floor(Math.random()*STRAFEN.length)];
+    durchgaenge++;
+    if (durchgaenge >= dauer) {
+      clearInterval(tick);
+      const finale = STRAFEN[Math.floor(Math.random()*STRAFEN.length)];
+      document.getElementById("strafeText").textContent = "👉 " + finale;
+      konfettiRegen(30);
+    }
+  }, 90);
+}
+
+// ===================== QUIZ =====================
+function naechsteQuizFrage() {
+  aktivesQuiz = QUIZFRAGEN[Math.floor(Math.random()*QUIZFRAGEN.length)];
+  const c = document.getElementById("quizContainer");
+  c.innerHTML = `
+    <div class="quiz-frage">❓ ${aktivesQuiz.f}</div>
+    ${aktivesQuiz.o.map((o,i) =>
+      `<button class="quiz-opt" onclick="quizAntwort(${i}, this)">${o}</button>`).join("")}`;
+}
+function quizAntwort(i, btn) {
+  const richtig = i === aktivesQuiz.r;
+  document.querySelectorAll("#quizContainer .quiz-opt").forEach((b,idx) => {
+    b.disabled = true;
+    if (idx === aktivesQuiz.r) b.classList.add("richtig");
+    else if (idx === i) b.classList.add("falsch");
+  });
+  if (richtig) { toast("Richtig! 🎉 Du Fußball-Genie!"); konfettiRegen(30); }
+  else { toast("Leider falsch 😬 – die grüne war's!"); }
+}
+
+// ===================== EFFEKTE =====================
+function konfettiRegen(anzahl) {
+  const farben = ["#ffd54f","#4caf50","#e53935","#42a5f5","#ab47bc","#ff7043"];
+  const c = document.getElementById("konfetti");
+  for (let i=0; i<anzahl; i++) {
+    const s = document.createElement("div");
+    s.className = "konfetti-stueck";
+    s.style.left = Math.random()*100 + "vw";
+    s.style.background = farben[Math.floor(Math.random()*farben.length)];
+    s.style.animationDuration = (1.8 + Math.random()*1.6) + "s";
+    s.style.animationDelay = (Math.random()*0.3) + "s";
+    c.appendChild(s);
+    setTimeout(() => s.remove(), 3600);
+  }
+}
+
+// Kleiner Torjubel-Jingle via Web Audio API
+function torjubel() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const noten = [523, 659, 784, 1047]; // C-Dur-Aufstieg
+    noten.forEach((f,i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "triangle";
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, ctx.currentTime + i*0.12);
+      g.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + i*0.12 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i*0.12 + 0.3);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(ctx.currentTime + i*0.12);
+      o.stop(ctx.currentTime + i*0.12 + 0.3);
+    });
+  } catch(e) { /* Audio nicht verfügbar – kein Problem */ }
+}
+
+function toast(text) {
+  const t = document.getElementById("toast");
+  t.textContent = text;
+  t.classList.add("zeigen");
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove("zeigen"), 2800);
+}
+
+// ===================== DATEN: Export / Import / Reset =====================
+function datenExportieren() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "wm-tippspiel-spielstand.json";
+  a.click();
+  toast("Spielstand gesichert! 💾");
+}
+function datenImportieren(ev) {
+  const datei = ev.target.files[0];
+  if (!datei) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      state = Object.assign(standardState(), JSON.parse(e.target.result));
+      speichern();
+      alleRendern();
+      toast("Spielstand geladen! ✅");
+    } catch(err) { toast("Datei konnte nicht gelesen werden 😕"); }
+  };
+  reader.readAsText(datei);
+  ev.target.value = "";
+}
+function allesZuruecksetzen() {
+  if (!confirm("Wirklich ALLES löschen? Spieler, Spiele, Tipps – alles weg!")) return;
+  state = standardState();
+  speichern();
+  alleRendern();
+  toast("Alles zurückgesetzt. Neue Saison! 🆕");
+}
+
+// ----- Beispieldaten zum sofortigen Ausprobieren -----
+function beispielDatenLaden() {
+  if (state.spieler.length && !confirm("Vorhandene Daten werden ersetzt. Fortfahren?")) return;
+  state = standardState();
+  const sp = [
+    { id:"p1", name:"Papa", avatar:"🦁" },
+    { id:"p2", name:"Mama", avatar:"🦊" },
+    { id:"p3", name:"Oma Helga", avatar:"👑" },
+    { id:"p4", name:"Lukas", avatar:"🐉" }
+  ];
+  state.spieler = sp;
+  state.aktiverSpielerId = "p1";
+  state.spiele = [
+    { id:"s1", t1:"Deutschland", t2:"Brasilien", phase:"Gruppenphase", datum:"Sa 18:00", gespielt:true, e1:2, e2:1 },
+    { id:"s2", t1:"Frankreich", t2:"Argentinien", phase:"Gruppenphase", datum:"Sa 21:00", gespielt:true, e1:1, e2:1 },
+    { id:"s3", t1:"Spanien", t2:"England", phase:"Achtelfinale", datum:"So 18:00", gespielt:false, e1:null, e2:null },
+    { id:"s4", t1:"Niederlande", t2:"Portugal", phase:"Achtelfinale", datum:"So 21:00", gespielt:false, e1:null, e2:null }
+  ];
+  state.tipps = {
+    p1: { s1:{e1:2,e2:1}, s2:{e1:2,e2:0}, s3:{e1:1,e2:1}, s4:{e1:2,e2:1} },
+    p2: { s1:{e1:1,e2:1}, s2:{e1:1,e2:1}, s3:{e1:0,e2:2}, s4:{e1:1,e2:0} },
+    p3: { s1:{e1:3,e2:0}, s2:{e1:0,e2:3}, s3:{e1:2,e2:2}, s4:{e1:0,e2:0} },
+    p4: { s1:{e1:2,e2:2}, s2:{e1:2,e2:1}, s3:{e1:3,e2:1}, s4:{e1:1,e2:1} }
+  };
+  state.bonusFragen = [
+    { id:"b1", frage:"Wer wird Weltmeister 2026?", optionen:["Deutschland","Brasilien","Frankreich","Argentinien"], punkte:10, loesung:null },
+    { id:"b2", frage:"Welches Team fliegt als Erstes raus?", optionen:["Saudi-Arabien","Kanada","Ghana"], punkte:5, loesung:null }
+  ];
+  state.bonusTipps = {
+    p1: { b1:"Deutschland", b2:"Kanada" },
+    p2: { b1:"Brasilien", b2:"Ghana" },
+    p3: { b1:"Frankreich" },
+    p4: { b1:"Deutschland", b2:"Saudi-Arabien" }
+  };
+  speichern();
+  alleRendern();
+  toast("Beispiel-Familie geladen! Schau dir die Tabelle an 🏆");
+  konfettiRegen(60);
+  zeigeView("tabelle");
+}
+
+// ===================== INIT =====================
+function alleRendern() {
+  renderSpielerSelect();
+  renderSpielerListe();
+  renderAvatarPicker();
+  renderTeamSelects();
+  renderSpiele();
+  renderBonus();
+  renderTabelle();
+  renderAwards();
+}
+
+renderTeamSelects();
+alleRendern();
+naechsteQuizFrage();
+</script>
+</body>
+</html>
