@@ -451,21 +451,52 @@ const QUIZFRAGEN = [
 ];
 
 // ===================== STATE =====================
+// Manche Browser (v.a. mobil oder bei "Datei öffnen" statt über einen Webserver)
+// blockieren den Zugriff auf localStorage mit einer SecurityError-Exception.
+// Damit die App dann nicht stillschweigend hängenbleibt, läuft sie ohne
+// dauerhafte Speicherung weiter (nur für die aktuelle Sitzung im Arbeitsspeicher).
+let speicherVerfuegbar = true;
 let state = laden();
 let aktivesQuiz = null;
 
 function standardState() {
   return { spieler: [], spiele: [], tipps: {}, bonusFragen: [], bonusTipps: {}, aktiverSpielerId: null };
 }
+
 function laden() {
   try {
     const d = JSON.parse(localStorage.getItem(SPEICHER_KEY));
     if (!d) return standardState();
     return Object.assign(standardState(), d);
-  } catch(e) { return standardState(); }
+  } catch(e) {
+    speicherVerfuegbar = false;
+    return standardState();
+  }
 }
 function speichern() {
-  localStorage.setItem(SPEICHER_KEY, JSON.stringify(state));
+  if (!speicherVerfuegbar) return;
+  try {
+    localStorage.setItem(SPEICHER_KEY, JSON.stringify(state));
+  } catch(e) {
+    speicherVerfuegbar = false;
+    speicherWarnungZeigen();
+  }
+}
+function speicherWarnungZeigen() {
+  if (document.getElementById("speicherWarnung")) return;
+  const w = document.createElement("div");
+  w.id = "speicherWarnung";
+  w.className = "strafe-box";
+  w.style.margin = "0 14px 14px";
+  w.style.background = "linear-gradient(135deg, #ffb74d, #ff9800)";
+  w.innerHTML = `<div class="name">⚠️ Kein dauerhafter Speicher verfügbar</div>
+    <div class="strafe-text" style="font-size:.85rem">
+      Dein Browser blockiert hier das Speichern (häufig bei „Datei direkt öffnen" auf Handys).
+      Das Spiel funktioniert trotzdem – aber Tipps gehen beim Schließen verloren.<br><br>
+      💡 Tipp: Nutze unten <b>⬇️ Sichern</b> regelmäßig, um den Stand als Datei zu exportieren,
+      oder öffne die Seite über einen lokalen Webserver statt per Doppelklick.
+    </div>`;
+  document.querySelector("main").prepend(w);
 }
 const id = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 
@@ -1086,6 +1117,7 @@ function alleRendern() {
 renderTeamSelects();
 alleRendern();
 naechsteQuizFrage();
+if (!speicherVerfuegbar) speicherWarnungZeigen();
 </script>
 </body>
 </html>
