@@ -318,8 +318,25 @@
   <!-- ====================== VERWALTUNG ====================== -->
   <section id="view-verwaltung" class="view">
     <div class="karte">
-      <h2>⚙️ Spielplan verwalten</h2>
-      <h3>Neues Spiel anlegen</h3>
+      <h2>🌍 Echter WM-2026-Spielplan</h2>
+      <p class="info-zeile">
+        Lädt die komplette Gruppenphase mit den echten 12 Gruppen und allen 48 Endrunden-Teams
+        (recherchierter Stand: alle Gruppenspiele, 6 Partien pro Gruppe auf 3 Spieltagen verteilt).
+      </p>
+      <button onclick="kompletterWMPlanLaden()" class="gold" style="width:100%;margin-top:10px">
+        🌍 Kompletten Gruppenplan laden (72 Spiele, 12 Gruppen)
+      </button>
+      <p class="info-zeile">
+        ⚠️ Genaue Anstoßzeiten/Termine sind hier bewusst nicht eingetragen, damit nichts Falsches
+        angezeigt wird – die könnt ihr beim jeweiligen Spiel unter „Anstoß" selbst ergänzen
+        (z.B. nach dem offiziellen FIFA-Spielplan). Die K.-o.-Runde (Sechzehntel-, Achtel-,
+        Viertelfinale, Halbfinale, Finale) legt ihr am besten erst an, sobald die Paarungen nach
+        der Gruppenphase feststehen – einfach unten unter „Neues Spiel anlegen".
+      </p>
+    </div>
+
+    <div class="karte">
+      <h3 style="margin-top:0">Neues Spiel anlegen</h3>
       <div class="flex-row">
         <div>
           <label>Heim-Team</label>
@@ -335,6 +352,7 @@
           <label>Phase</label>
           <select id="neuPhase">
             <option>Gruppenphase</option>
+            <option>Sechzehntelfinale</option>
             <option>Achtelfinale</option>
             <option>Viertelfinale</option>
             <option>Halbfinale</option>
@@ -394,17 +412,39 @@
 
 const SPEICHER_KEY = "wm_tippspiel_2026";
 
-// ----- Auswahl an Teams (WM 2026 hat 48 Teams – hier eine bunte Auswahl) -----
-const TEAMS = [
-  ["Deutschland","🇩🇪"],["Brasilien","🇧🇷"],["Argentinien","🇦🇷"],["Frankreich","🇫🇷"],
-  ["Spanien","🇪🇸"],["England","🏴"],["Portugal","🇵🇹"],["Niederlande","🇳🇱"],
-  ["Italien","🇮🇹"],["Belgien","🇧🇪"],["Kroatien","🇭🇷"],["USA","🇺🇸"],
-  ["Mexiko","🇲🇽"],["Kanada","🇨🇦"],["Japan","🇯🇵"],["Südkorea","🇰🇷"],
-  ["Marokko","🇲🇦"],["Senegal","🇸🇳"],["Uruguay","🇺🇾"],["Kolumbien","🇨🇴"],
-  ["Schweiz","🇨🇭"],["Dänemark","🇩🇰"],["Polen","🇵🇱"],["Österreich","🇦🇹"],
-  ["Australien","🇦🇺"],["Ghana","🇬🇭"],["Nigeria","🇳🇬"],["Saudi-Arabien","🇸🇦"]
-];
-const flaggeVon = (name) => (TEAMS.find(t => t[0] === name) || [name,"🏳️"])[1];
+// ----- Die 12 WM-2026-Gruppen mit ihren je 4 Teams (Endrunden-Teilnehmer) -----
+const GRUPPEN = {
+  "A": ["Mexiko","Südafrika","Südkorea","Tschechien"],
+  "B": ["Kanada","Bosnien-Herzegowina","Katar","Schweiz"],
+  "C": ["Brasilien","Marokko","Haiti","Schottland"],
+  "D": ["USA","Paraguay","Australien","Türkei"],
+  "E": ["Deutschland","Curaçao","Elfenbeinküste","Ecuador"],
+  "F": ["Niederlande","Japan","Schweden","Tunesien"],
+  "G": ["Belgien","Ägypten","Iran","Neuseeland"],
+  "H": ["Spanien","Kap Verde","Saudi-Arabien","Uruguay"],
+  "I": ["Frankreich","Senegal","Irak","Norwegen"],
+  "J": ["Argentinien","Algerien","Österreich","Jordanien"],
+  "K": ["Portugal","DR Kongo","Usbekistan","Kolumbien"],
+  "L": ["England","Kroatien","Ghana","Panama"]
+};
+
+// ----- Alle 48 WM-2026-Teilnehmer mit Flagge (aus den Gruppen oben abgeleitet) -----
+const FLAGGEN = {
+  "Mexiko":"🇲🇽","Südafrika":"🇿🇦","Südkorea":"🇰🇷","Tschechien":"🇨🇿",
+  "Kanada":"🇨🇦","Bosnien-Herzegowina":"🇧🇦","Katar":"🇶🇦","Schweiz":"🇨🇭",
+  "Brasilien":"🇧🇷","Marokko":"🇲🇦","Haiti":"🇭🇹","Schottland":"🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+  "USA":"🇺🇸","Paraguay":"🇵🇾","Australien":"🇦🇺","Türkei":"🇹🇷",
+  "Deutschland":"🇩🇪","Curaçao":"🇨🇼","Elfenbeinküste":"🇨🇮","Ecuador":"🇪🇨",
+  "Niederlande":"🇳🇱","Japan":"🇯🇵","Schweden":"🇸🇪","Tunesien":"🇹🇳",
+  "Belgien":"🇧🇪","Ägypten":"🇪🇬","Iran":"🇮🇷","Neuseeland":"🇳🇿",
+  "Spanien":"🇪🇸","Kap Verde":"🇨🇻","Saudi-Arabien":"🇸🇦","Uruguay":"🇺🇾",
+  "Frankreich":"🇫🇷","Senegal":"🇸🇳","Irak":"🇮🇶","Norwegen":"🇳🇴",
+  "Argentinien":"🇦🇷","Algerien":"🇩🇿","Österreich":"🇦🇹","Jordanien":"🇯🇴",
+  "Portugal":"🇵🇹","DR Kongo":"🇨🇩","Usbekistan":"🇺🇿","Kolumbien":"🇨🇴",
+  "England":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Kroatien":"🇭🇷","Ghana":"🇬🇭","Panama":"🇵🇦"
+};
+const TEAMS = Object.entries(FLAGGEN).map(([name, flagge]) => [name, flagge]);
+const flaggeVon = (name) => FLAGGEN[name] || "🏳️";
 
 // ----- Avatar-Auswahl -----
 const AVATARE = ["🦁","🐻","🦅","🐉","🦊","🐯","🐺","🦄","🐶","🐱","🐼","🐨","🦈","🐧","🦉","🐢","👑","🤓","😎","🥸","🧙","🦸","🤡","👻"];
@@ -1059,6 +1099,41 @@ function allesZuruecksetzen() {
   speichern();
   alleRendern();
   toast("Alles zurückgesetzt. Neue Saison! 🆕");
+}
+
+// ----- Kompletten WM-Spielplan (Gruppenphase) erzeugen -----
+// Jede Gruppe hat 4 Teams, die in einer Gruppenphase im Rundensystem
+// je einmal gegeneinander antreten – das ergibt die typischen 6 Partien
+// pro Gruppe, aufgeteilt auf 3 Spieltage (je 2 Spiele gleichzeitig).
+const GRUPPEN_PAARUNGEN = [[0,1],[2,3],[0,2],[1,3],[0,3],[1,2]];
+
+function kompletterWMPlanLaden() {
+  if (state.spiele.length && !confirm(
+    "Der bestehende Spielplan wird komplett ersetzt. Tipps zu bisherigen Spielen bleiben zwar gespeichert, " +
+    "tauchen aber nicht mehr auf, falls die Spiel-IDs nicht mehr existieren. Trotzdem fortfahren?"
+  )) return;
+
+  const neueSpiele = [];
+  Object.entries(GRUPPEN).forEach(([buchstabe, teams]) => {
+    GRUPPEN_PAARUNGEN.forEach((paar, idx) => {
+      const spieltag = Math.floor(idx / 2) + 1;
+      neueSpiele.push({
+        id: id(),
+        t1: teams[paar[0]],
+        t2: teams[paar[1]],
+        phase: `Gruppe ${buchstabe}`,
+        datum: `Spieltag ${spieltag}`,
+        gespielt: false, e1: null, e2: null
+      });
+    });
+  });
+
+  state.spiele = neueSpiele;
+  speichern();
+  alleRendern();
+  toast(`🌍 Kompletter Gruppenplan geladen: ${neueSpiele.length} Spiele in 12 Gruppen!`);
+  konfettiRegen(70);
+  zeigeView("tippen");
 }
 
 // ----- Beispieldaten zum sofortigen Ausprobieren -----
