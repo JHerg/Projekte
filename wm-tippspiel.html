@@ -1583,12 +1583,39 @@ const R32_STRUKTUR = [
 // Berechnet aus den eingetragenen Gruppen-Ergebnissen die Tabelle jeder Gruppe.
 // Reihenfolge: Punkte > Tordifferenz > erzielte Tore > Name (vereinfacht; das
 // offizielle Reglement nutzt zusätzlich den direkten Vergleich).
+// Sortiert eine punktgleiche Teilgruppe nach dem direkten Vergleich (FIFA d–f):
+// Punkte, Tordifferenz und Tore NUR aus den Spielen der betroffenen Teams
+// untereinander. Letzter Fallback alphabetisch (Fair-Play-Wertung und Losen
+// sind nicht erfasst).
+function sortiereDirekterVergleich(run, spiele) {
+  const namen = run.map(t => t.team);
+  const h2h = {};
+  run.forEach(t => h2h[t.team] = { pkt:0, diff:0, tore:0 });
+  spiele.forEach(s => {
+    if (namen.includes(s.t1) && namen.includes(s.t2)) {
+      h2h[s.t1].tore += s.e1; h2h[s.t1].diff += s.e1 - s.e2;
+      h2h[s.t2].tore += s.e2; h2h[s.t2].diff += s.e2 - s.e1;
+      if (s.e1 > s.e2)      h2h[s.t1].pkt += 3;
+      else if (s.e2 > s.e1) h2h[s.t2].pkt += 3;
+      else { h2h[s.t1].pkt++; h2h[s.t2].pkt++; }
+    }
+  });
+  run.sort((a,b) =>
+    h2h[b.team].pkt  - h2h[a.team].pkt  ||
+    h2h[b.team].diff - h2h[a.team].diff ||
+    h2h[b.team].tore - h2h[a.team].tore ||
+    a.team.localeCompare(b.team));
+  // markiere Teams, deren Platz per direktem Vergleich entschieden wurde
+  if (run.length > 1) run.forEach(t => t.h2h = true);
+}
+
 function berechneGruppenTabellen() {
   const tabellen = {};
   Object.entries(GRUPPEN).forEach(([buchstabe, teams]) => {
+    const spiele = state.spiele.filter(s => s.phase === `Gruppe ${buchstabe}` && s.gespielt);
     const stats = {};
     teams.forEach(t => stats[t] = { team:t, sp:0, s:0, u:0, n:0, tore:0, gegen:0, pkt:0 });
-    state.spiele.filter(s => s.phase === `Gruppe ${buchstabe}` && s.gespielt).forEach(s => {
+    spiele.forEach(s => {
       if (!stats[s.t1] || !stats[s.t2]) return;
       stats[s.t1].sp++; stats[s.t2].sp++;
       stats[s.t1].tore += s.e1; stats[s.t1].gegen += s.e2;
@@ -1598,10 +1625,28 @@ function berechneGruppenTabellen() {
       else                  { stats[s.t1].u++; stats[s.t2].u++; stats[s.t1].pkt++; stats[s.t2].pkt++; }
     });
     const arr = Object.values(stats).map(x => ({ ...x, diff: x.tore - x.gegen }));
-    arr.sort((a,b) => b.pkt-a.pkt || b.diff-a.diff || b.tore-a.tore || a.team.localeCompare(b.team));
-    tabellen[buchstabe] = arr;
+    tabellen[buchstabe] = fifaSortiereGruppe(arr, spiele);
   });
   return tabellen;
+}
+
+// Sortiert ein Gruppen-Array endgültig nach den FIFA-Kriterien:
+//   a–c: Punkte, Tordifferenz, erzielte Tore (alle Gruppenspiele)
+//   d–f: bei Gleichstand der direkte Vergleich (nur Spiele der betroffenen Teams)
+function fifaSortiereGruppe(arr, spiele) {
+  arr.sort((a,b) => b.pkt-a.pkt || b.diff-a.diff || b.tore-a.tore);
+  const ergebnis = [];
+  let i = 0;
+  while (i < arr.length) {
+    let j = i + 1;
+    while (j < arr.length &&
+           arr[j].pkt === arr[i].pkt && arr[j].diff === arr[i].diff && arr[j].tore === arr[i].tore) j++;
+    const run = arr.slice(i, j);
+    if (run.length > 1) sortiereDirekterVergleich(run, spiele);
+    run.forEach(t => ergebnis.push(t));
+    i = j;
+  }
+  return ergebnis;
 }
 
 function gibtEsGruppenSpiele() {
@@ -1621,6 +1666,7 @@ function renderGruppenTabellen() {
     return;
   }
   const tabellen = berechneGruppenTabellen();
+  const h2hIrgendwo = Object.values(tabellen).some(arr => arr.some(x => x.h2h));
   c.innerHTML = Object.entries(tabellen).map(([b, arr]) => `
     <details>
       <summary>Gruppe ${b}</summary>
@@ -1629,14 +1675,17 @@ function renderGruppenTabellen() {
         <tbody>
           ${arr.map((x,i) => `<tr class="${i<2?'fuehrend':''}">
             <td>${i+1}.</td>
-            <td>${flaggeVon(x.team)} ${esc(x.team)}</td>
+            <td>${flaggeVon(x.team)} ${esc(x.team)}${x.h2h?' <small title="Platzierung per direktem Vergleich entschieden">⚖️</small>':''}</td>
             <td style="text-align:center">${x.sp}</td>
             <td style="text-align:center">${x.diff>0?'+':''}${x.diff}</td>
             <td class="pkt">${x.pkt}</td>
           </tr>`).join("")}
         </tbody>
       </table>
-    </details>`).join("");
+    </details>`).join("") +
+    `<p class="info-zeile">Sortierung nach FIFA-Regeln: 1) Punkte, 2) Tordifferenz, 3) Tore – bei
+      Gleichstand der <b>direkte Vergleich</b> (Punkte/Differenz/Tore nur untereinander)${h2hIrgendwo?' ⚖️':''}.
+      Fair-Play-Wertung und Losentscheid sind nicht abgebildet.</p>`;
 }
 
 // Hilfsfunktionen für K.-o.-Spiele
