@@ -1,0 +1,20 @@
+{
+  "name": "Familien-WM-Tippspiel 2026",
+  "short_name": "WM-Tippspiel",
+  "description": "Familien-Tippspiel zur Fußball-WM 2026 – offline, lustig, mit Awards.",
+  "lang": "de",
+  "start_url": "./wm-tippspiel.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d4d2b",
+  "theme_color": "#0d4d2b",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
