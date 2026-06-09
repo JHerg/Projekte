@@ -268,6 +268,73 @@
   .stats-phasen .zeile { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #eee; font-size: .83rem; }
   tr.klickbar { cursor: pointer; }
   tr.klickbar:hover { background: #f0f7f2 !important; }
+
+  /* Countdown */
+  .countdown-box {
+    background: linear-gradient(135deg, #1b3a2b, #2e7d32);
+    color: #fff; border-radius: 16px; padding: 16px; text-align: center;
+    margin-bottom: 14px; box-shadow: var(--schatten);
+  }
+  .countdown-box .cd-label { font-size: .8rem; opacity: .85; }
+  .countdown-box .cd-spiel { font-size: 1.15rem; font-weight: 800; margin: 6px 0; }
+  .countdown-box .cd-spiel .flagge { font-size: 1.4rem; vertical-align: middle; }
+  .countdown-box .cd-timer { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+  .countdown-box .cd-feld { background: rgba(255,255,255,.15); border-radius: 10px; padding: 8px 10px; min-width: 56px; }
+  .countdown-box .cd-zahl { font-size: 1.6rem; font-weight: 800; line-height: 1; }
+  .countdown-box .cd-einheit { font-size: .62rem; opacity: .8; text-transform: uppercase; letter-spacing: .5px; }
+  .countdown-box .cd-meta { font-size: .72rem; opacity: .8; margin-top: 8px; }
+  .countdown-box.live { background: linear-gradient(135deg, #c62828, #e53935); animation: pulsen 1.5s ease-in-out infinite; }
+  @keyframes pulsen { 0%,100%{box-shadow:0 4px 14px rgba(229,57,53,.4)} 50%{box-shadow:0 4px 28px rgba(229,57,53,.8)} }
+  .deadline-warnung {
+    background: linear-gradient(135deg, #ff7043, #e53935); color: #fff;
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; font-size: .85rem;
+    font-weight: 600; text-align: center; box-shadow: var(--schatten);
+    animation: pulsen 1.5s ease-in-out infinite;
+  }
+
+  /* Head-to-Head */
+  .h2h-wahl { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .h2h-wahl select { flex: 1; }
+  .h2h-wahl .vs { font-weight: 800; color: var(--rot); font-size: 1.1rem; }
+  .h2h-karte { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px; align-items: center; }
+  .h2h-spieler { text-align: center; }
+  .h2h-spieler .av { font-size: 2rem; }
+  .h2h-spieler .nm { font-weight: 700; font-size: .85rem; }
+  .h2h-zeile { display: contents; }
+  .h2h-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px; align-items: center; padding: 7px 0; border-top: 1px dashed #eee; font-size: .9rem; }
+  .h2h-row .mitte { font-size: .68rem; color: #999; text-transform: uppercase; letter-spacing: .3px; text-align: center; }
+  .h2h-row .wert { text-align: center; font-weight: 800; }
+  .h2h-row .wert.fuehrt { color: var(--gruen); }
+  .h2h-row .wert.fuehrt::after { content: " 👑"; font-size: .8rem; }
+  .h2h-fazit { text-align: center; margin-top: 12px; padding: 10px; background: #f4f8f5; border-radius: 10px; font-size: .85rem; font-weight: 600; }
+
+  /* Verlauf-Chart */
+  .chart-legende { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; justify-content: center; }
+  .chart-legende .item { display: flex; align-items: center; gap: 5px; font-size: .78rem; }
+  .chart-legende .punkt { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* Konsens / Außenseiter-Radar */
+  .konsens-spiel { border: 2px solid #eee; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
+  .konsens-teams { font-weight: 700; font-size: .9rem; margin-bottom: 8px; }
+  .konsens-bars { display: flex; gap: 6px; margin-bottom: 6px; }
+  .konsens-bar { flex: 1; text-align: center; }
+  .konsens-bar .bo { background: #eee; border-radius: 6px; height: 30px; display: flex; align-items: flex-end; overflow: hidden; }
+  .konsens-bar .bi { width: 100%; border-radius: 6px 6px 0 0; transition: height .3s; }
+  .konsens-bar .lbl { font-size: .68rem; color: #777; margin-top: 3px; }
+  .konsens-bar .cnt { font-size: .8rem; font-weight: 800; }
+  .konsens-aussenseiter { font-size: .78rem; color: var(--rot); font-weight: 600; margin-top: 4px; }
+  .konsens-einig { font-size: .78rem; color: var(--gruen); font-weight: 600; margin-top: 4px; }
+
+  /* Badges */
+  .badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px,1fr)); gap: 8px; margin-top: 6px; }
+  .badge {
+    text-align: center; padding: 8px 4px; border-radius: 12px; background: #f4f8f5;
+    border: 2px solid transparent; transition: transform .1s;
+  }
+  .badge.frei { border-color: var(--gold); background: linear-gradient(135deg,#fff8e1,#ffecb3); }
+  .badge.gesperrt { opacity: .38; filter: grayscale(1); }
+  .badge .b-emoji { font-size: 1.7rem; display: block; }
+  .badge .b-name { font-size: .62rem; font-weight: 700; margin-top: 3px; line-height: 1.2; }
 </style>
 </head>
 <body>
@@ -287,6 +354,7 @@
 <main>
   <!-- ====================== TABELLE ====================== -->
   <section id="view-tabelle" class="view aktiv">
+    <div id="countdownBox"></div>
     <div id="pokalContainer"></div>
     <div class="karte">
       <h2>🏆 Die Tabelle</h2>
@@ -302,6 +370,18 @@
           🎲 <b>Bonus-Fragen</b> bringen Extra-Punkte!
         </div>
       </details>
+    </div>
+
+    <div class="karte">
+      <h2>📈 Punkte-Verlauf</h2>
+      <p class="info-zeile">Wie sich die Punkte über die ausgewerteten Spiele entwickelt haben.</p>
+      <div id="verlaufChart"></div>
+    </div>
+
+    <div class="karte">
+      <h2>⚔️ Direktduell</h2>
+      <p class="info-zeile">Zwei Mitspieler im direkten Vergleich – wer hat die Nase vorn?</p>
+      <div id="h2hBox"></div>
     </div>
 
     <div class="karte">
@@ -331,6 +411,11 @@
 
   <!-- ====================== TIPPEN ====================== -->
   <section id="view-tippen" class="view">
+    <div class="karte" id="konsensKarte" style="display:none">
+      <h2>🔮 Außenseiter-Radar</h2>
+      <p class="info-zeile">Wie tippt die Familie für die nächsten Spiele? Wer schert aus?</p>
+      <div id="konsensInhalt"></div>
+    </div>
     <div class="karte">
       <h2>⚽ Spiele & Tipps</h2>
       <p class="info-zeile" id="tippenHinweis"></p>
@@ -438,6 +523,18 @@
         </div>
       </div>
       <button onclick="spielHinzufuegen()" style="width:100%;margin-top:12px">➕ Spiel zum Plan hinzufügen</button>
+    </div>
+
+    <div class="karte">
+      <h2>🏆 Turnier-Vorhersagen</h2>
+      <p class="info-zeile">
+        Fügt mit einem Klick ein Paket vorbereiteter Turnier-Tipps als Bonus-Fragen hinzu –
+        Weltmeister, Finalist, Torschützenkönig, Überraschung & Co. Perfekt zum Anheizen
+        <b>vor</b> dem Anpfiff! Die Familie tippt im Tab 🎲 Bonus, du löst sie am Turnierende auf.
+      </p>
+      <button onclick="turnierVorhersagenHinzufuegen()" class="gold" style="width:100%;margin-top:10px">
+        🏆 Vorhersage-Paket hinzufügen (8 Fragen)
+      </button>
     </div>
 
     <div class="karte">
@@ -1219,6 +1316,23 @@ function renderTabelle() {
     </table>`;
 }
 
+// ===================== SAMMEL-ABZEICHEN (BADGES) =====================
+// Jede Badge prüft ein berechnetes Statistik-Objekt (ctx) des Spielers.
+const BADGES = [
+  { e:"🎯", n:"Erster Volltreffer",  pruef:c => c.p4 >= 1 },
+  { e:"🔫", n:"Scharfschütze",        pruef:c => c.p4 >= 5 },
+  { e:"🃏", n:"Joker gezogen",        pruef:c => c.jokerBonus > 0 },
+  { e:"📝", n:"Alles getippt",        pruef:c => c.anzGespielt >= 3 && c.getippt === c.anzGespielt },
+  { e:"🦉", n:"Nachteule",            pruef:c => c.spaetNacht >= 1 },
+  { e:"🤝", n:"Remis-Riecher",        pruef:c => c.unentschieden >= 1 },
+  { e:"🇩🇪", n:"Deutschland-Fan",      pruef:c => c.deutschlandRichtig >= 1 },
+  { e:"🎲", n:"Bonus-Jäger",          pruef:c => c.bonus > 0 },
+  { e:"🔥", n:"Heißer Lauf (3+)",     pruef:c => c.maxStreak >= 3 },
+  { e:"💯", n:"Perfektionist",        pruef:c => c.getippt >= 5 && c.p0 === 0 },
+  { e:"👑", n:"Spitzenreiter",        pruef:c => c.rang === 0 && c.punkte > 0 },
+  { e:"⭐", n:"50 Punkte-Klub",       pruef:c => c.punkte >= 50 }
+];
+
 // ===================== SPIELER-STATISTIKEN =====================
 function zeigeSpielerstats(spielerId) {
   const spieler = state.spieler.find(s => s.id === spielerId);
@@ -1229,17 +1343,30 @@ function zeigeSpielerstats(spielerId) {
 
   const gespielteSpiele = state.spiele.filter(s => s.gespielt);
   let p4=0, p3=0, p2=0, p0=0;
-  let jokerpunkte=0, jokerSpiel=null;
+  let jokerpunkte=0, jokerSpiel=null, unentschieden=0, spaetNacht=0, deutschlandRichtig=0;
   const phasenPunkte = {};
 
   gespielteSpiele.forEach(spiel => {
-    const basis = punkteFuer(state.tipps[spielerId]?.[spiel.id], spiel);
+    const tipp = state.tipps[spielerId]?.[spiel.id];
+    const basis = punkteFuer(tipp, spiel);
     if (basis === null) return;
     if (basis===4) p4++; else if (basis===3) p3++; else if (basis===2) p2++; else p0++;
     const mitJoker = punkteFuerSpieler(spielerId, spiel);
     const bonus = mitJoker - basis;
     if (bonus > 0) { jokerpunkte = bonus; jokerSpiel = spiel; }
     phasenPunkte[spiel.phase] = (phasenPunkte[spiel.phase]||0) + mitJoker;
+    if (spiel.e1===spiel.e2 && tipp.e1===tipp.e2) unentschieden++;
+    const stunde = parseInt((spiel.datum||"").match(/(\d{1,2}):\d{2}$/)?.[1] ?? "12");
+    if ((stunde >= 23 || stunde <= 4) && basis >= 2) spaetNacht++;
+    if ((spiel.t1==="Deutschland"||spiel.t2==="Deutschland") && basis >= 2) deutschlandRichtig++;
+  });
+
+  // Längste Serie aufeinanderfolgender Treffer (≥2 P) in chronologischer Reihenfolge
+  let maxStreak = 0, streak = 0;
+  spieleChronologisch(true).forEach(spiel => {
+    const b = punkteFuer(state.tipps[spielerId]?.[spiel.id], spiel);
+    if (b !== null && b >= 2) { streak++; maxStreak = Math.max(maxStreak, streak); }
+    else streak = 0;
   });
 
   const getippt = p4+p3+p2+p0;
@@ -1247,6 +1374,17 @@ function zeigeSpielerstats(spielerId) {
   const effizienz = maxMoeglich > 0 ? Math.round(data.spielPunkte / maxMoeglich * 100) : 0;
   const abdeckung = gespielteSpiele.length > 0 ? Math.round(getippt / gespielteSpiele.length * 100) : 0;
   const rangEmoji = rang===0?"🥇":rang===1?"🥈":rang===2?"🥉":`${rang+1}.`;
+
+  // Badges berechnen
+  const ctx = { p4, p3, p2, p0, getippt, jokerBonus:jokerpunkte, bonus:data.bonus,
+    punkte:data.punkte, anzGespielt:gespielteSpiele.length, unentschieden, spaetNacht,
+    deutschlandRichtig, maxStreak, rang };
+  const badgesHTML = BADGES.map(b => {
+    const frei = b.pruef(ctx);
+    return `<div class="badge ${frei?'frei':'gesperrt'}" title="${esc(b.n)}">
+      <span class="b-emoji">${b.e}</span><span class="b-name">${esc(b.n)}</span></div>`;
+  }).join("");
+  const anzFrei = BADGES.filter(b => b.pruef(ctx)).length;
 
   const balken = (cnt, max, farbe) =>
     `<div class="balken-zeile">
@@ -1292,6 +1430,10 @@ function zeigeSpielerstats(spielerId) {
     <div class="stats-phasen">
       <h4>Punkte nach Phase</h4>
       ${phasenHTML}
+    </div>
+    <div class="treffer-balken" style="margin-top:16px">
+      <h4>🏅 Abzeichen-Sammlung (${anzFrei} von ${BADGES.length})</h4>
+      <div class="badges-grid">${badgesHTML}</div>
     </div>`;
 
   document.getElementById("statsOverlay").classList.add("aktiv");
@@ -1439,6 +1581,325 @@ function renderAwards() {
     `<div class="award"><span class="emoji">${a.e}</span>
       <div class="txt"><strong>${a.t}</strong><span>${a.s}</span></div></div>`
   ).join("") || '<p class="leer-hinweis">Noch keine Awards – tippt weiter! ⚽</p>';
+}
+
+// ===================== DATUM / CHRONOLOGIE =====================
+// Wandelt "Do. 11.6., 21:00" in ein echtes Date (Jahr 2026) um – oder null.
+function parseSpielDatum(spiel) {
+  if (!spiel || !spiel.datum) return null;
+  const m = spiel.datum.match(/(\d{1,2})\.(\d{1,2})\.,?\s*(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const tag = +m[1], monat = +m[2], std = +m[3], min = +m[4];
+  return new Date(2026, monat - 1, tag, std, min, 0);
+}
+// Spiele chronologisch (nach Anstoßzeit, falls vorhanden; sonst Listenreihenfolge).
+function spieleChronologisch(nurGespielt) {
+  let arr = state.spiele.slice();
+  if (nurGespielt) arr = arr.filter(s => s.gespielt);
+  return arr.sort((a, b) => {
+    const da = parseSpielDatum(a), db = parseSpielDatum(b);
+    if (da && db) return da - db;
+    if (da) return -1;
+    if (db) return 1;
+    return 0;
+  });
+}
+
+// ===================== COUNTDOWN ZUM NÄCHSTEN SPIEL =====================
+let countdownTimer = null;
+function naechstesSpielInfo() {
+  const now = new Date();
+  let kommend = null, laufend = null;
+  state.spiele.forEach(s => {
+    if (s.gespielt) return;
+    const d = parseSpielDatum(s);
+    if (!d) return;
+    const diff = d - now;
+    if (diff > 0) { if (!kommend || d < kommend.d) kommend = { s, d }; }
+    else if (diff > -2 * 3600 * 1000) { if (!laufend || d > laufend.d) laufend = { s, d }; }
+  });
+  return { kommend, laufend };
+}
+
+function renderCountdown() {
+  const box = document.getElementById("countdownBox");
+  if (!box) return;
+  const { kommend, laufend } = naechstesSpielInfo();
+
+  if (laufend && !kommend) {
+    const s = laufend.s;
+    box.innerHTML = `<div class="countdown-box live">
+      <div class="cd-label">🔴 Läuft gerade</div>
+      <div class="cd-spiel"><span class="flagge">${flaggeVon(s.t1)}</span> ${esc(s.t1)} – ${esc(s.t2)} <span class="flagge">${flaggeVon(s.t2)}</span></div>
+      <div class="cd-meta">Trag das Ergebnis im Tab ⚽ Tippen ein, sobald es feststeht!</div>
+    </div>`;
+    return;
+  }
+  if (!kommend) { box.innerHTML = ""; return; }
+
+  const s = kommend.s;
+  const diff = kommend.d - new Date();
+  const tage = Math.floor(diff / 86400000);
+  const std  = Math.floor(diff % 86400000 / 3600000);
+  const min  = Math.floor(diff % 3600000 / 60000);
+  const sek  = Math.floor(diff % 60000 / 1000);
+
+  const feld = (z, e) => `<div class="cd-feld"><div class="cd-zahl">${z}</div><div class="cd-einheit">${e}</div></div>`;
+  const timer = (tage > 0 ? feld(tage, "Tage") : "") + feld(String(std).padStart(2,"0"), "Std")
+    + feld(String(min).padStart(2,"0"), "Min") + (tage > 0 ? "" : feld(String(sek).padStart(2,"0"), "Sek"));
+
+  // Deadline-Warnung: aktiver Spieler hat noch nicht getippt & < 60 Min bis Anpfiff
+  const sp = state.aktiverSpielerId;
+  const t = sp && state.tipps[sp]?.[s.id];
+  const hatGetippt = t && t.e1 !== null && t.e2 !== null;
+  const warnung = (sp && !hatGetippt && diff < 3600000)
+    ? `<div class="deadline-warnung">⏰ Nur noch ${min} Min! Du hast dieses Spiel noch nicht getippt – schnell ins Tippen! 🏃</div>`
+    : "";
+
+  box.innerHTML = warnung + `<div class="countdown-box">
+    <div class="cd-label">⏱️ Nächster Anpfiff</div>
+    <div class="cd-spiel"><span class="flagge">${flaggeVon(s.t1)}</span> ${esc(s.t1)} – ${esc(s.t2)} <span class="flagge">${flaggeVon(s.t2)}</span></div>
+    <div class="cd-timer">${timer}</div>
+    <div class="cd-meta">${esc(s.phase)}${s.ort ? " · 📍" + esc(s.ort) : ""} · ${esc(s.datum)}</div>
+  </div>`;
+}
+function starteCountdown() {
+  if (countdownTimer) clearInterval(countdownTimer);
+  renderCountdown();
+  countdownTimer = setInterval(renderCountdown, 1000);
+}
+
+// ===================== DIREKTDUELL (HEAD-TO-HEAD) =====================
+let h2hA = null, h2hB = null;
+function renderH2H() {
+  const box = document.getElementById("h2hBox");
+  if (!box) return;
+  if (state.spieler.length < 2) {
+    box.innerHTML = '<p class="leer-hinweis">Mindestens 2 Mitspieler nötig fürs Direktduell. 👥</p>';
+    return;
+  }
+  // Vorauswahl: die zwei Tabellenführenden
+  const stand = berechneStand();
+  if (!h2hA || !state.spieler.some(s => s.id === h2hA)) h2hA = stand[0].id;
+  if (!h2hB || !state.spieler.some(s => s.id === h2hB) || h2hB === h2hA)
+    h2hB = (stand.find(s => s.id !== h2hA) || stand[0]).id;
+
+  const opt = (sel) => state.spieler.map(s =>
+    `<option value="${s.id}" ${s.id===sel?'selected':''}>${s.avatar} ${esc(s.name)}</option>`).join("");
+
+  box.innerHTML = `
+    <div class="h2h-wahl">
+      <select onchange="h2hWahl('a',this.value)">${opt(h2hA)}</select>
+      <span class="vs">VS</span>
+      <select onchange="h2hWahl('b',this.value)">${opt(h2hB)}</select>
+    </div>
+    <div id="h2hErgebnis"></div>`;
+  vergleicheSpieler();
+}
+function h2hWahl(welche, id) {
+  if (welche === "a") { h2hA = id; if (h2hB === id) h2hB = state.spieler.find(s=>s.id!==id)?.id; }
+  else { h2hB = id; if (h2hA === id) h2hA = state.spieler.find(s=>s.id!==id)?.id; }
+  renderH2H();
+}
+function vergleicheSpieler() {
+  const c = document.getElementById("h2hErgebnis");
+  if (!c) return;
+  const A = state.spieler.find(s => s.id === h2hA);
+  const B = state.spieler.find(s => s.id === h2hB);
+  if (!A || !B || A.id === B.id) { c.innerHTML = ""; return; }
+  const stand = berechneStand();
+  const sA = stand.find(s => s.id === A.id), sB = stand.find(s => s.id === B.id);
+
+  const gespielte = state.spiele.filter(s => s.gespielt);
+  let aWins = 0, bWins = 0, gleich = 0, beideVoll = 0;
+  gespielte.forEach(spiel => {
+    const pa = punkteFuerSpieler(A.id, spiel), pb = punkteFuerSpieler(B.id, spiel);
+    if (pa === null && pb === null) return;
+    const va = pa || 0, vb = pb || 0;
+    if (va > vb) aWins++; else if (vb > va) bWins++; else gleich++;
+    if (punkteFuer(state.tipps[A.id]?.[spiel.id], spiel) === 4 &&
+        punkteFuer(state.tipps[B.id]?.[spiel.id], spiel) === 4) beideVoll++;
+  });
+
+  const zeile = (label, va, vb, hoeherBesser=true) => {
+    const aFuehrt = hoeherBesser ? va > vb : va < vb;
+    const bFuehrt = hoeherBesser ? vb > va : vb < va;
+    return `<div class="h2h-row">
+      <div class="wert ${aFuehrt?'fuehrt':''}">${va}</div>
+      <div class="mitte">${label}</div>
+      <div class="wert ${bFuehrt?'fuehrt':''}">${vb}</div>
+    </div>`;
+  };
+
+  let fazit;
+  if (sA.punkte > sB.punkte) fazit = `${A.avatar} ${esc(A.name)} liegt mit ${sA.punkte - sB.punkte} Punkten vorn! 🏆`;
+  else if (sB.punkte > sA.punkte) fazit = `${B.avatar} ${esc(B.name)} liegt mit ${sB.punkte - sA.punkte} Punkten vorn! 🏆`;
+  else fazit = "Kopf-an-Kopf – absolut gleichauf! 🤝";
+
+  c.innerHTML = `
+    <div class="h2h-karte" style="margin-bottom:8px">
+      <div class="h2h-spieler"><div class="av">${A.avatar}</div><div class="nm">${esc(A.name)}</div></div>
+      <div class="mitte" style="font-size:.7rem;color:#999;text-align:center">gegen</div>
+      <div class="h2h-spieler"><div class="av">${B.avatar}</div><div class="nm">${esc(B.name)}</div></div>
+    </div>
+    ${zeile("Punkte gesamt", sA.punkte, sB.punkte)}
+    ${zeile("🎯 Volltreffer", sA.treffer, sB.treffer)}
+    ${zeile("Bessere Tipps", aWins, bWins)}
+    ${zeile("🎲 Bonus-Punkte", sA.bonus, sB.bonus)}
+    ${zeile("Tipps abgegeben", sA.getippt, sB.getippt)}
+    <div class="h2h-fazit">${fazit}${beideVoll>0?`<br><span style="font-size:.78rem;color:#777">🤜🤛 ${beideVoll}× lagen beide exakt richtig!</span>`:''}</div>`;
+}
+
+// ===================== PUNKTE-VERLAUF-CHART (SVG) =====================
+const CHART_FARBEN = ["#e53935","#1e88e5","#43a047","#fb8c00","#8e24aa","#00acc1","#fdd835","#6d4c41","#ec407a","#26a69a"];
+function renderVerlaufChart() {
+  const c = document.getElementById("verlaufChart");
+  if (!c) return;
+  const gespielte = spieleChronologisch(true);
+  if (!state.spieler.length || gespielte.length < 2) {
+    c.innerHTML = '<p class="leer-hinweis">Sobald mindestens 2 Spiele ausgewertet sind, erscheint hier die Verlaufskurve. 📈</p>';
+    return;
+  }
+
+  // Kumulative Spielpunkte je Spieler über die ausgewerteten Spiele
+  const serien = state.spieler.map((sp, idx) => {
+    let summe = 0;
+    const werte = [0];
+    gespielte.forEach(spiel => {
+      const p = punkteFuerSpieler(sp.id, spiel);
+      summe += (p || 0);
+      werte.push(summe);
+    });
+    return { sp, werte, farbe: CHART_FARBEN[idx % CHART_FARBEN.length], final: summe };
+  });
+
+  const maxP = Math.max(1, ...serien.map(s => s.final));
+  const W = 320, H = 160, padL = 28, padR = 8, padT = 10, padB = 20;
+  const n = gespielte.length;
+  const x = i => padL + (n === 0 ? 0 : i * (W - padL - padR) / n);
+  const y = v => H - padB - (v / maxP) * (H - padT - padB);
+
+  // Gitterlinien (Y) + Achsenbeschriftung
+  const gitter = [0, 0.5, 1].map(f => {
+    const yy = y(maxP * f);
+    return `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#eee" stroke-width="1"/>
+      <text x="${padL-4}" y="${yy+3}" text-anchor="end" font-size="8" fill="#aaa">${Math.round(maxP*f)}</text>`;
+  }).join("");
+
+  const linien = serien.map(s => {
+    const punkte = s.werte.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+    const letzterX = x(n), letzterY = y(s.final);
+    return `<polyline points="${punkte}" fill="none" stroke="${s.farbe}" stroke-width="2.5"
+        stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${letzterX.toFixed(1)}" cy="${letzterY.toFixed(1)}" r="3" fill="${s.farbe}"/>`;
+  }).join("");
+
+  const legende = serien.map(s =>
+    `<div class="item"><span class="punkt" style="background:${s.farbe}"></span>${s.sp.avatar} ${esc(s.sp.name)} (${s.final})</div>`).join("");
+
+  c.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;background:#fff;border-radius:10px">
+      ${gitter}
+      <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="#ddd" stroke-width="1"/>
+      <line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="#ddd" stroke-width="1"/>
+      ${linien}
+      <text x="${(W+padL)/2}" y="${H-4}" text-anchor="middle" font-size="8" fill="#aaa">→ ${n} ausgewertete Spiele</text>
+    </svg>
+    <div class="chart-legende">${legende}</div>`;
+}
+
+// ===================== AUSSENSEITER-RADAR (TIPP-KONSENS) =====================
+function renderKonsens() {
+  const karte = document.getElementById("konsensKarte");
+  const c = document.getElementById("konsensInhalt");
+  if (!karte || !c) return;
+
+  // Kommende (noch nicht gespielte) Spiele, chronologisch, max 5
+  const kommend = spieleChronologisch(false)
+    .filter(s => !s.gespielt)
+    .slice(0, 5);
+
+  const bloecke = kommend.map(spiel => {
+    // Tendenzen aller Mitspieler einsammeln
+    const stimmen = { heim: [], remis: [], aus: [] };
+    state.spieler.forEach(sp => {
+      const t = state.tipps[sp.id]?.[spiel.id];
+      if (!t || t.e1 === null || t.e2 === null) return;
+      const d = t.e1 - t.e2;
+      (d > 0 ? stimmen.heim : d < 0 ? stimmen.aus : stimmen.remis).push(sp);
+    });
+    const total = stimmen.heim.length + stimmen.remis.length + stimmen.aus.length;
+    if (total < 2) return "";
+
+    const bar = (liste, label, farbe) => {
+      const h = total ? Math.round(liste.length / total * 100) : 0;
+      return `<div class="konsens-bar">
+        <div class="bo"><div class="bi" style="height:${h}%;background:${farbe}"></div></div>
+        <div class="cnt">${liste.length}</div>
+        <div class="lbl">${label}</div>
+      </div>`;
+    };
+
+    // Außenseiter: genau eine Person schert gegen den Rest aus
+    const gruppen = [stimmen.heim, stimmen.remis, stimmen.aus].filter(g => g.length > 0);
+    let hinweis = "";
+    if (gruppen.length === 1) {
+      hinweis = `<div class="konsens-einig">🤝 Alle einig: ${total} von ${total} tippen gleich!</div>`;
+    } else {
+      const einzel = gruppen.find(g => g.length === 1 && total >= 3);
+      if (einzel) {
+        const tendenz = einzel === stimmen.heim ? `${esc(spiel.t1)}-Sieg`
+          : einzel === stimmen.aus ? `${esc(spiel.t2)}-Sieg` : "Unentschieden";
+        hinweis = `<div class="konsens-aussenseiter">🎭 Außenseiter: ${einzel[0].avatar} ${esc(einzel[0].name)} setzt als Einzige:r auf ${tendenz}!</div>`;
+      }
+    }
+
+    return `<div class="konsens-spiel">
+      <div class="konsens-teams">${flaggeVon(spiel.t1)} ${esc(spiel.t1)} – ${esc(spiel.t2)} ${flaggeVon(spiel.t2)}</div>
+      <div class="konsens-bars">
+        ${bar(stimmen.heim, "1 (Heim)", "#43a047")}
+        ${bar(stimmen.remis, "X (Remis)", "#90a4ae")}
+        ${bar(stimmen.aus, "2 (Ausw.)", "#1e88e5")}
+      </div>
+      ${hinweis}
+    </div>`;
+  }).filter(Boolean).join("");
+
+  if (bloecke) { karte.style.display = ""; c.innerHTML = bloecke; }
+  else { karte.style.display = "none"; c.innerHTML = ""; }
+}
+
+// ===================== TURNIER-VORHERSAGE-PAKET =====================
+function turnierVorhersagenHinzufuegen() {
+  const favoriten = ["Frankreich","Brasilien","Argentinien","Spanien","England","Deutschland","Portugal","Niederlande"];
+  const ueberraschung = ["Marokko","Senegal","Japan","Kroatien","USA","Norwegen","Uruguay","Belgien"];
+  const paket = [
+    { frage:"🏆 Wer wird Weltmeister 2026?", optionen:favoriten, punkte:15 },
+    { frage:"🥈 Wer steht im Finale, wird aber NICHT Weltmeister?", optionen:favoriten, punkte:10 },
+    { frage:"⚽ Wer wird Torschützenkönig (Nation)?", optionen:favoriten, punkte:8 },
+    { frage:"🌟 Überraschungsteam des Turniers?", optionen:ueberraschung, punkte:8 },
+    { frage:"😱 Welcher Favorit enttäuscht am meisten?", optionen:favoriten, punkte:6 },
+    { frage:"🇩🇪 Wie weit kommt Deutschland?", optionen:["Vorrunde aus","Achtelfinale","Viertelfinale","Halbfinale","Finale","Weltmeister"], punkte:6 },
+    { frage:"🥅 Mehr als 2,7 Tore pro Spiel im Schnitt?", optionen:["Ja, Torfestival","Nein, eher mauern"], punkte:4 },
+    { frage:"🟥 Gibt es im Finale eine Rote Karte?", optionen:["Ja","Nein"], punkte:4 }
+  ];
+  // Doppelte (bereits vorhandene) Fragen überspringen
+  const vorhandene = new Set(state.bonusFragen.map(b => b.frage));
+  let hinzu = 0;
+  paket.forEach(p => {
+    if (vorhandene.has(p.frage)) return;
+    state.bonusFragen.push({ id: id(), frage: p.frage, optionen: p.optionen, punkte: p.punkte, loesung: null });
+    hinzu++;
+  });
+  speichern();
+  renderBonus();
+  if (hinzu > 0) {
+    toast(`🏆 ${hinzu} Turnier-Vorhersagen hinzugefügt! Ab in den Tab 🎲 Bonus!`);
+    konfettiRegen(60);
+    zeigeView("bonus");
+  } else {
+    toast("Die Turnier-Vorhersagen sind schon angelegt. 👍");
+  }
 }
 
 // ===================== STRAFEN-GENERATOR =====================
@@ -2174,12 +2635,17 @@ function alleRendern() {
   renderHistorie();
   renderGruppenTabellen();
   renderKoStatus();
+  renderCountdown();
+  renderH2H();
+  renderVerlaufChart();
+  renderKonsens();
 }
 
 pruefeLinkImport();
 renderTeamSelects();
 alleRendern();
 naechsteQuizFrage();
+starteCountdown();
 if (!speicherVerfuegbar) speicherWarnungZeigen();
 </script>
 
