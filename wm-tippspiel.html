@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>⚽ Familien-WM-Tippspiel 2026</title>
+<!-- PWA: installierbar & offline-fähig, sobald die Seite über http(s) ausgeliefert wird -->
+<meta name="theme-color" content="#0d4d2b" id="themeColorMeta">
+<meta name="description" content="Familien-Tippspiel zur Fußball-WM 2026 – offline, lustig, mit Awards.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WM-Tippspiel">
 <style>
   :root {
     --gruen: #2e7d32;
@@ -335,13 +344,74 @@
   .badge.gesperrt { opacity: .38; filter: grayscale(1); }
   .badge .b-emoji { font-size: 1.7rem; display: block; }
   .badge .b-name { font-size: .62rem; font-weight: 700; margin-top: 3px; line-height: 1.2; }
+
+  /* Theme-Umschalter (Hell/Dunkel) */
+  .theme-toggle {
+    position: absolute; top: 10px; right: 10px; z-index: 5;
+    background: rgba(255,255,255,.2); color: #fff; border-radius: 50%;
+    width: 38px; height: 38px; padding: 0; font-size: 1.2rem; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .theme-toggle:hover { filter: brightness(1.12); }
+
+  /* ======================= DARK MODE ======================= */
+  body.dark {
+    --karte: #1e2a24;
+    --dunkel: #14201a;
+    --schatten: 0 4px 16px rgba(0,0,0,.55);
+    color: #e8ece9;
+    background:
+      radial-gradient(circle at 20% 10%, #123524 0%, transparent 42%),
+      radial-gradient(circle at 80% 90%, #123524 0%, transparent 42%),
+      #07120d;
+  }
+  body.dark .karte h2,
+  body.dark summary { color: var(--gruen-hell); }
+  body.dark .karte h3,
+  body.dark .stats-kopf .s-info h3 { color: #cfe8d8; }
+  body.dark input, body.dark select,
+  body.dark .aktiver-spieler select { background: #26332c; color: #e8ece9; border-color: #3a4a42; }
+  body.dark th { color: #9fb0a8; }
+  body.dark td { border-bottom-color: #33423a; }
+  body.dark .spiel,
+  body.dark .bonus-frage,
+  body.dark .konsens-spiel,
+  body.dark .badge { border-color: #33423a; }
+  body.dark .tipps-uebersicht .zeile,
+  body.dark .h2h-row,
+  body.dark .stats-phasen .zeile { border-top-color: #33423a; }
+  body.dark .spiel.gespielt,
+  body.dark .bonus-frage.aufgeloest { background: #1a2e22; border-color: var(--gruen-hell); }
+  body.dark .award,
+  body.dark .stat-kachel,
+  body.dark .stat-kachel.breit,
+  body.dark .h2h-fazit,
+  body.dark .badge,
+  body.dark .spieler-chip { background: #26332c; }
+  body.dark .emoji-picker button,
+  body.dark .quiz-opt { background: #2f3d35; color: #e8ece9; }
+  body.dark .konsens-bar .bo,
+  body.dark .balken-zeile .bo { background: #33423a; }
+  body.dark .stats-panel { background: #1e2a24; }
+  body.dark .stats-panel .schliessen { background: #33423a; color: #e8ece9; }
+  body.dark tr.klickbar:hover { background: #26332c !important; }
+  body.dark .badge.frei { background: linear-gradient(135deg,#3a3320,#4a3f17); border-color: var(--gold); }
+  body.dark #verlaufChart svg { background: #26332c !important; }
+  body.dark .punkte-regeln,
+  body.dark .info-zeile,
+  body.dark .leer-hinweis { color: #9fb0a8; }
+  body.dark td.pkt,
+  body.dark .stat-kachel .val,
+  body.dark .h2h-row .wert.fuehrt,
+  body.dark .ergebnis-echt { color: var(--gruen-hell); }
+  body.dark .punkte-badge.p0 { background: #33423a; color: #aab8b0; }
 </style>
 </head>
 <body>
 
 <header>
   <span class="ball-deko l">⚽</span>
-  <span class="ball-deko r">🏆</span>
+  <button id="themeToggle" class="theme-toggle" onclick="themeUmschalten()" title="Hell/Dunkel umschalten" aria-label="Design umschalten">🌙</button>
   <h1>Familien-WM-Tippspiel 2026</h1>
   <p>Tippen, lachen, gewinnen – und der Letzte muss zittern! 😈</p>
 </header>
@@ -2648,6 +2718,34 @@ function pruefeLinkImport() {
   history.replaceState(null, "", location.href.split("#")[0]);
 }
 
+// ===================== THEME (HELL/DUNKEL) =====================
+// Die Design-Wahl ist eine Geräte-Einstellung (eigener Speicher-Key, NICHT Teil
+// des geteilten Spielstands), damit jedes Gerät sein eigenes Aussehen behält.
+const THEME_KEY = "wm_tippspiel_theme";
+function themeAnwenden(theme) {
+  const dark = theme === "dark";
+  document.body.classList.toggle("dark", dark);
+  const btn = document.getElementById("themeToggle");
+  if (btn) btn.textContent = dark ? "☀️" : "🌙";
+  const meta = document.getElementById("themeColorMeta");
+  if (meta) meta.setAttribute("content", dark ? "#07120d" : "#0d4d2b");
+}
+function themeUmschalten() {
+  const theme = document.body.classList.contains("dark") ? "light" : "dark";
+  themeAnwenden(theme);
+  try { localStorage.setItem(THEME_KEY, theme); } catch(e) {}
+  // SVG-Chart neu zeichnen, damit der Hintergrund zum Theme passt
+  renderVerlaufChart();
+}
+function themeLaden() {
+  let theme = null;
+  try { theme = localStorage.getItem(THEME_KEY); } catch(e) {}
+  if (!theme) {
+    theme = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+  }
+  themeAnwenden(theme);
+}
+
 // ===================== INIT =====================
 function alleRendern() {
   renderSpielerSelect();
@@ -2667,12 +2765,19 @@ function alleRendern() {
   renderKonsens();
 }
 
+themeLaden();
 pruefeLinkImport();
 renderTeamSelects();
 alleRendern();
 naechsteQuizFrage();
 starteCountdown();
 if (!speicherVerfuegbar) speicherWarnungZeigen();
+
+// PWA: Service Worker registrieren – nur über http(s) (per file:// nicht möglich).
+// Schlägt es fehl (z.B. lokale Datei), läuft die App ganz normal ohne PWA weiter.
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
 </script>
 
 <div id="statsOverlay" class="stats-overlay" onclick="if(event.target===this)schliesseStats()">

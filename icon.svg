@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bg" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#2e7d32"/>
+      <stop offset="100%" stop-color="#0d4d2b"/>
+    </radialGradient>
+  </defs>
+  <!-- Hintergrund (maskable: wichtiger Inhalt liegt mittig im sicheren Bereich) -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- Ball -->
+  <circle cx="256" cy="256" r="150" fill="#ffffff" stroke="#dfe7e2" stroke-width="4"/>
+  <g fill="#15212a">
+    <!-- zentrales Fünfeck -->
+    <polygon points="256,201 308.3,239 288.3,300.5 223.7,300.5 203.7,239"/>
+  </g>
+  <g stroke="#15212a" stroke-width="11" stroke-linecap="round">
+    <!-- Nähte von den Fünfeck-Ecken zum Ballrand -->
+    <line x1="256"   y1="201"   x2="256"   y2="106"/>
+    <line x1="308.3" y1="239"   x2="398.6" y2="209.6"/>
+    <line x1="288.3" y1="300.5" x2="344.2" y2="377.4"/>
+    <line x1="223.7" y1="300.5" x2="167.8" y2="377.4"/>
+    <line x1="203.7" y1="239"   x2="113.4" y2="209.6"/>
+  </g>
+  <!-- kleiner Pokal-Akzent -->
+  <text x="256" y="470" font-family="Segoe UI, system-ui, sans-serif" font-size="58" font-weight="800" text-anchor="middle" fill="#ffd54f">2026</text>
+</svg>
