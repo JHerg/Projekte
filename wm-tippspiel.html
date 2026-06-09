@@ -343,19 +343,23 @@
         🌍 Kompletten Gruppenplan laden (72 Spiele, 12 Gruppen)
       </button>
       <p class="info-zeile">
-        ⚠️ Genaue Anstoßzeiten/Termine sind hier bewusst nicht eingetragen, damit nichts Falsches
-        angezeigt wird – die könnt ihr beim jeweiligen Spiel unter „Anstoß" selbst ergänzen
-        (z.B. nach dem offiziellen FIFA-Spielplan).
+        Die Gruppen-Spieltage sind mit ihren <b>Datumsfenstern</b> hinterlegt (Spieltag 1: 11.–16.6.,
+        2: 17.–23.6., 3: 24.–27.6.2026). Die K.-o.-Runden bekommen beim Erzeugen automatisch ihre
+        offiziellen Termine. Genaue Uhrzeiten pro Spiel sind bewusst nicht gesetzt (Ortszeiten der
+        Stadien) – die kannst du bei Bedarf beim jeweiligen Spiel unter „Anstoß" ergänzen.
       </p>
     </div>
 
     <div class="karte">
       <h2>🏆 K.-o.-Baum (automatisch)</h2>
       <p class="info-zeile">
-        Erzeugt aus den eingetragenen Gruppen-Ergebnissen automatisch das Sechzehntelfinale
-        (12 Gruppensieger + 12 Zweite + 8 beste Gruppendritte). Danach kannst du Runde für Runde
-        die nächste Phase aus den Siegern erzeugen. <b>Hinweis:</b> Die Setzung ist vereinfacht
-        (gesetzt nach Leistung, 1 vs 32 usw.) – nicht exakt das offizielle FIFA-Auslosungsschema.
+        Erzeugt aus den eingetragenen Gruppen-Ergebnissen automatisch das Sechzehntelfinale nach dem
+        <b>offiziellen FIFA-Spielplan-Baum 2026</b> (Matches 73–88): feste Paarungen der Gruppensieger
+        und -zweiten, dazu die 8 besten Gruppendritten. Danach erzeugst du Runde für Runde die nächste
+        Phase aus den Siegern – die Verschaltung bis ins Finale entspricht exakt dem offiziellen Bracket.
+        <b>Einzige Vereinfachung:</b> Welcher Gruppendritte genau in welchen der 8 Dritt-Slots kommt,
+        folgt den offiziellen Zulässigkeitsregeln, kann aber in Einzelfällen von FIFAs 495er-Tabelle
+        abweichen.
       </p>
       <div class="grid2" style="margin-top:10px">
         <button onclick="sechzehntelGenerieren()" class="gold">🥁 Sechzehntelfinale erzeugen</button>
@@ -1370,7 +1374,7 @@ function kompletterWMPlanLaden() {
         t1: teams[paar[0]],
         t2: teams[paar[1]],
         phase: `Gruppe ${buchstabe}`,
-        datum: `Spieltag ${spieltag}`,
+        datum: `Spieltag ${spieltag} · ${GRUPPEN_SPIELTAG_DATUM[spieltag]}`,
         gespielt: false, e1: null, e2: null
       });
     });
@@ -1427,6 +1431,41 @@ function beispielDatenLaden() {
 
 // ===================== GRUPPEN-TABELLEN & K.-O.-BAUM =====================
 const KO_PHASE = { 16:"Sechzehntelfinale", 8:"Achtelfinale", 4:"Viertelfinale", 2:"Halbfinale", 1:"Finale" };
+
+// Verlässliche Runden-Termine (recherchiert; ohne erfundene Anstoßzeiten).
+const KO_DATUM = {
+  "Sechzehntelfinale": "28.6.–3.7.2026",
+  "Achtelfinale":      "4.–7.7.2026",
+  "Viertelfinale":     "9.–11.7.2026",
+  "Halbfinale":        "14./15.7.2026",
+  "Spiel um Platz 3":  "18.7.2026",
+  "Finale":            "19.7.2026"
+};
+// Datumsfenster der drei Gruppen-Spieltage (Gruppenphase 11.–27.6.2026).
+const GRUPPEN_SPIELTAG_DATUM = { 1: "11.–16.6.", 2: "17.–23.6.", 3: "24.–27.6." };
+
+// Offizielle Sechzehntelfinal-Struktur (FIFA-Spielplan, Matches 73–88), in der
+// Reihenfolge (koIndex 0–15), die – über das normale Weiterrücken der Sieger –
+// exakt den offiziellen Baum bis ins Finale ergibt.
+// Codes: W=Gruppensieger, R=Gruppenzweiter, D3=bester Gruppendritter (mit erlaubten Gruppen).
+const R32_STRUKTUR = [
+  { nr:74, a:["W","E"], b:["D3",["A","B","C","D","F"]] },
+  { nr:77, a:["W","I"], b:["D3",["C","D","F","G","H"]] },
+  { nr:73, a:["R","A"], b:["R","B"] },
+  { nr:75, a:["W","F"], b:["R","C"] },
+  { nr:83, a:["R","K"], b:["R","L"] },
+  { nr:84, a:["W","H"], b:["R","J"] },
+  { nr:81, a:["W","D"], b:["D3",["B","E","F","I","J"]] },
+  { nr:82, a:["W","G"], b:["D3",["A","E","H","I","J"]] },
+  { nr:76, a:["W","C"], b:["R","F"] },
+  { nr:78, a:["R","E"], b:["R","I"] },
+  { nr:79, a:["W","A"], b:["D3",["C","E","F","H","I"]] },
+  { nr:80, a:["W","L"], b:["D3",["E","H","I","J","K"]] },
+  { nr:86, a:["W","J"], b:["R","H"] },
+  { nr:88, a:["R","D"], b:["R","G"] },
+  { nr:85, a:["W","B"], b:["D3",["E","F","G","I","J"]] },
+  { nr:87, a:["W","K"], b:["D3",["D","E","I","J","L"]] }
+];
 
 // Berechnet aus den eingetragenen Gruppen-Ergebnissen die Tabelle jeder Gruppe.
 // Reihenfolge: Punkte > Tordifferenz > erzielte Tore > Name (vereinfacht; das
@@ -1489,8 +1528,38 @@ function renderGruppenTabellen() {
 
 // Hilfsfunktionen für K.-o.-Spiele
 function mkKo(phase, runde, idx, t1, t2) {
-  return { id:id(), t1, t2, phase, datum:"K.-o.-Runde", gespielt:false,
+  return { id:id(), t1, t2, phase, datum: KO_DATUM[phase] || "K.-o.-Runde", gespielt:false,
            e1:null, e2:null, sieger:null, koRunde:runde, koIndex:idx };
+}
+
+// Ordnet die 8 qualifizierten Gruppendritten den 8 Drittplatzierten-Slots zu –
+// unter Beachtung der offiziellen Zulässigkeits-Listen (welche Gruppe in welchen
+// Slot darf). Liefert { slotNr: gruppenBuchstabe } oder null, falls unmöglich.
+// (Die offizielle FIFA-Tabelle hat 495 feste Kombinationen; diese Zuordnung hält
+//  exakt deren Bedingungen ein, kann im Einzelfall aber einen anderen gültigen
+//  Slot wählen als die offizielle Tabelle.)
+function ordneDritteZu(qualGruppen, slots) {
+  // slots: [{nr, erlaubt:[...]}], qualGruppen: [Buchstaben]
+  const zuordnung = {};
+  const benutzt = {};
+  // Most-constrained-first: Slots mit wenigsten passenden Gruppen zuerst.
+  function rekursiv(restSlots) {
+    if (!restSlots.length) return true;
+    // wähle Slot mit den wenigsten noch verfügbaren Optionen
+    let best = null, bestOpt = null;
+    for (const slot of restSlots) {
+      const opt = slot.erlaubt.filter(g => qualGruppen.includes(g) && !benutzt[g]);
+      if (best === null || opt.length < bestOpt.length) { best = slot; bestOpt = opt; }
+    }
+    if (bestOpt.length === 0) return false;
+    for (const g of bestOpt) {
+      zuordnung[best.nr] = g; benutzt[g] = true;
+      if (rekursiv(restSlots.filter(s => s !== best))) return true;
+      delete zuordnung[best.nr]; benutzt[g] = false;
+    }
+    return false;
+  }
+  return rekursiv(slots.slice()) ? zuordnung : null;
 }
 function koSieger(spiel) {
   if (!spiel.gespielt) return null;
@@ -1512,25 +1581,39 @@ function sechzehntelGenerieren() {
       !confirm("Bestehende K.-o.-Spiele (inkl. Tipps darauf) werden neu erzeugt. Fortfahren?")) return;
 
   state.spiele = state.spiele.filter(s => !s.koRunde);
-  const tabellen = berechneGruppenTabellen();
-  const ersten = [], zweiten = [], dritten = [];
-  Object.values(tabellen).forEach(arr => {
-    if (arr[0]) ersten.push(arr[0]);
-    if (arr[1]) zweiten.push(arr[1]);
-    if (arr[2]) dritten.push(arr[2]);
-  });
-  const cmp = (a,b) => b.pkt-a.pkt || b.diff-a.diff || b.tore-a.tore || a.team.localeCompare(b.team);
-  ersten.sort(cmp); zweiten.sort(cmp); dritten.sort(cmp);
-  const seeds = [...ersten, ...zweiten, ...dritten.slice(0,8)].map(x => x.team);
+  const tab = berechneGruppenTabellen();   // { A:[1.,2.,3.,4.], ... }
 
-  const n = seeds.length, neue = [];
-  for (let i = 0; i < Math.floor(n/2); i++) {
-    neue.push(mkKo("Sechzehntelfinale", 1, i, seeds[i], seeds[n-1-i]));
+  // Die 8 besten Gruppendritten ermitteln (nach Punkten/Differenz/Toren).
+  const cmp = (a,b) => b.pkt-a.pkt || b.diff-a.diff || b.tore-a.tore || a.team.localeCompare(b.team);
+  const dritte = Object.entries(tab)
+    .map(([g, arr]) => ({ g, ...arr[2] }))
+    .sort(cmp);
+  const qualGruppen = dritte.slice(0, 8).map(d => d.g);
+
+  // Drittplatzierte den offiziellen Slots zuordnen (zulässigkeits-konform).
+  const drittSlots = R32_STRUKTUR
+    .filter(m => m.b[0] === "D3")
+    .map(m => ({ nr: m.nr, erlaubt: m.b[1] }));
+  const zuordnung = ordneDritteZu(qualGruppen, drittSlots);
+  if (!zuordnung) {
+    toast("Konnte die Gruppendritten nicht regelkonform zuordnen 😕 (zu wenige Ergebnisse?)");
+    return;
   }
+
+  // Helfer: Team für eine Slot-Seite bestimmen.
+  const team = (seite, slotNr) => {
+    if (seite[0] === "W") return tab[seite[1]][0].team;   // Gruppensieger
+    if (seite[0] === "R") return tab[seite[1]][1].team;   // Gruppenzweiter
+    return tab[ zuordnung[slotNr] ][2].team;              // zugeordneter Gruppendritter
+  };
+
+  const neue = R32_STRUKTUR.map((m, koIndex) =>
+    mkKo("Sechzehntelfinale", 1, koIndex, team(m.a, m.nr), team(m.b, m.nr)));
+
   state.spiele = state.spiele.concat(neue);
   speichern();
   alleRendern();
-  toast(`🥁 Sechzehntelfinale erzeugt: ${neue.length} Paarungen!`);
+  toast(`🥁 Sechzehntelfinale (offizieller Baum) erzeugt: ${neue.length} Paarungen!`);
   konfettiRegen(60);
   phasenFilter = "Sechzehntelfinale";
   zeigeView("tippen");
