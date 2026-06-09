@@ -229,6 +229,45 @@
   details { margin-top: 10px; }
   summary { cursor: pointer; font-weight: 600; color: var(--gruen); font-size: .85rem; }
   .punkte-regeln { font-size: .8rem; color: #555; line-height: 1.7; margin-top: 8px; }
+
+  /* Spieler-Stats-Drawer */
+  .stats-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.52); z-index: 200;
+    align-items: flex-end; justify-content: center;
+  }
+  .stats-overlay.aktiv { display: flex; }
+  .stats-panel {
+    background: #fff; border-radius: 20px 20px 0 0;
+    padding: 20px 16px 96px; max-width: 760px; width: 100%;
+    max-height: 88vh; overflow-y: auto;
+    box-shadow: 0 -8px 32px rgba(0,0,0,.3); position: relative;
+  }
+  .stats-panel .schliessen {
+    position: absolute; top: 12px; right: 14px;
+    background: #eee; border-radius: 50%;
+    width: 34px; height: 34px; font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center; padding: 0;
+  }
+  .stats-kopf { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .stats-kopf .s-avatar { font-size: 2.5rem; }
+  .stats-kopf .s-info h3 { font-size: 1.1rem; font-weight: 800; color: var(--dunkel); }
+  .stats-kopf .s-info .s-rang { font-size: .78rem; color: #888; margin-top: 2px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-kachel { background: #f4f8f5; border-radius: 12px; padding: 12px; text-align: center; }
+  .stat-kachel .val { font-size: 1.6rem; font-weight: 800; color: var(--gruen); }
+  .stat-kachel .lbl { font-size: .72rem; color: #888; margin-top: 2px; }
+  .stat-kachel.breit { grid-column: span 2; text-align: left; padding: 10px 14px; font-size: .85rem; }
+  .treffer-balken { margin-bottom: 16px; }
+  .treffer-balken h4, .stats-phasen h4 { font-size: .85rem; font-weight: 700; color: #555; margin-bottom: 8px; }
+  .balken-zeile { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .balken-zeile .bl { width: 88px; font-size: .72rem; color: #777; text-align: right; flex-shrink: 0; }
+  .balken-zeile .bo { flex: 1; background: #eee; border-radius: 6px; height: 11px; overflow: hidden; }
+  .balken-zeile .bi { height: 100%; border-radius: 6px; }
+  .balken-zeile .bc { width: 24px; text-align: right; font-size: .75rem; font-weight: 700; flex-shrink: 0; }
+  .stats-phasen .zeile { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #eee; font-size: .83rem; }
+  tr.klickbar { cursor: pointer; }
+  tr.klickbar:hover { background: #f0f7f2 !important; }
 </style>
 </head>
 <body>
@@ -1165,61 +1204,235 @@ function renderTabelle() {
       ${stand.map((s,i) => {
         const titel = titelFuer(i, stand.length, s.id);
         const rangEmoji = i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1)+".";
-        const klasse = i===0 && hatPunkte ? "fuehrend" : (i===stand.length-1 && stand.length>1 && hatPunkte ? "letzter" : "");
-        return `<tr class="${klasse}">
+        const klasse = (i===0 && hatPunkte ? "fuehrend" : (i===stand.length-1 && stand.length>1 && hatPunkte ? "letzter" : "")) + " klickbar";
+        return `<tr class="${klasse}" onclick="zeigeSpielerstats('${s.id}')" title="Statistiken anzeigen">
           <td class="rang-emoji">${rangEmoji}</td>
           <td>
             <span class="spieler-name">${s.avatar} ${esc(s.name)}</span>
             <span class="titel-badge">${titel}${s.bonus?` · 🎲 +${s.bonus}`:''}</span>
           </td>
           <td style="text-align:center">${s.treffer}</td>
-          <td class="pkt">${s.punkte}</td>
+          <td class="pkt">${s.punkte} <span style="font-size:.6rem;font-weight:400;color:#bbb">📊</span></td>
         </tr>`;
       }).join("")}
       </tbody>
     </table>`;
 }
 
+// ===================== SPIELER-STATISTIKEN =====================
+function zeigeSpielerstats(spielerId) {
+  const spieler = state.spieler.find(s => s.id === spielerId);
+  if (!spieler) return;
+  const stand = berechneStand();
+  const rang = stand.findIndex(s => s.id === spielerId);
+  const data = stand[rang];
+
+  const gespielteSpiele = state.spiele.filter(s => s.gespielt);
+  let p4=0, p3=0, p2=0, p0=0;
+  let jokerpunkte=0, jokerSpiel=null;
+  const phasenPunkte = {};
+
+  gespielteSpiele.forEach(spiel => {
+    const basis = punkteFuer(state.tipps[spielerId]?.[spiel.id], spiel);
+    if (basis === null) return;
+    if (basis===4) p4++; else if (basis===3) p3++; else if (basis===2) p2++; else p0++;
+    const mitJoker = punkteFuerSpieler(spielerId, spiel);
+    const bonus = mitJoker - basis;
+    if (bonus > 0) { jokerpunkte = bonus; jokerSpiel = spiel; }
+    phasenPunkte[spiel.phase] = (phasenPunkte[spiel.phase]||0) + mitJoker;
+  });
+
+  const getippt = p4+p3+p2+p0;
+  const maxMoeglich = getippt * 4;
+  const effizienz = maxMoeglich > 0 ? Math.round(data.spielPunkte / maxMoeglich * 100) : 0;
+  const abdeckung = gespielteSpiele.length > 0 ? Math.round(getippt / gespielteSpiele.length * 100) : 0;
+  const rangEmoji = rang===0?"🥇":rang===1?"🥈":rang===2?"🥉":`${rang+1}.`;
+
+  const balken = (cnt, max, farbe) =>
+    `<div class="balken-zeile">
+       <span class="bl">${cnt===p4?"🎯 4 Pkt":cnt===p3?"↔️ 3 Pkt":cnt===p2?"✅ 2 Pkt":"❌ 0 Pkt"}</span>
+       <div class="bo"><div class="bi" style="width:${max?Math.round(cnt/max*100):0}%;background:${farbe}"></div></div>
+       <span class="bc">${cnt}</span>
+     </div>`;
+
+  const phasenHTML = Object.entries(phasenPunkte).length
+    ? Object.entries(phasenPunkte).map(([ph,pkt]) =>
+        `<div class="zeile"><span>${esc(ph)}</span><b>${pkt} P</b></div>`).join("")
+    : '<p class="leer-hinweis" style="padding:8px">Noch keine Punkte</p>';
+
+  document.getElementById("statsPanel").innerHTML = `
+    <button class="schliessen" onclick="schliesseStats()">✕</button>
+    <div class="stats-kopf">
+      <span class="s-avatar">${spieler.avatar}</span>
+      <div class="s-info">
+        <h3>${esc(spieler.name)}</h3>
+        <div class="s-rang">${rangEmoji} Platz ${rang+1} von ${stand.length} · ${data.punkte} Punkte gesamt</div>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-kachel"><div class="val">${data.punkte}</div><div class="lbl">Punkte gesamt</div></div>
+      <div class="stat-kachel"><div class="val">${effizienz}%</div><div class="lbl">Effizienz</div></div>
+      <div class="stat-kachel"><div class="val">${p4}</div><div class="lbl">🎯 Volltreffer</div></div>
+      <div class="stat-kachel"><div class="val">${abdeckung}%</div><div class="lbl">Tipps abgegeben</div></div>
+      ${jokerpunkte>0?`<div class="stat-kachel breit">⭐ <b>Joker-Bonus:</b> +${jokerpunkte} Punkte bei ${esc(jokerSpiel.t1)} – ${esc(jokerSpiel.t2)}</div>`:''}
+      ${data.bonus>0?`<div class="stat-kachel breit">🎲 <b>Bonus-Fragen:</b> +${data.bonus} Punkte</div>`:''}
+    </div>
+    <div class="treffer-balken">
+      <h4>Tipp-Auswertung (${getippt} von ${gespielteSpiele.length} Spielen getippt)</h4>
+      ${[p4,p3,p2,p0].map((cnt,i) => {
+        const farben=["#ffd54f","#aed581","#b3e5fc","#ebebeb"];
+        const row = [{cnt:p4,lbl:"🎯 4 Pkt"},{cnt:p3,lbl:"↔️ 3 Pkt"},{cnt:p2,lbl:"✅ 2 Pkt"},{cnt:p0,lbl:"❌ 0 Pkt"}][i];
+        return `<div class="balken-zeile">
+          <span class="bl">${row.lbl}</span>
+          <div class="bo"><div class="bi" style="width:${getippt?Math.round(cnt/getippt*100):0}%;background:${farben[i]}"></div></div>
+          <span class="bc">${cnt}</span>
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="stats-phasen">
+      <h4>Punkte nach Phase</h4>
+      ${phasenHTML}
+    </div>`;
+
+  document.getElementById("statsOverlay").classList.add("aktiv");
+}
+
+function schliesseStats() {
+  document.getElementById("statsOverlay").classList.remove("aktiv");
+}
+
 // ===================== SPAß-AWARDS =====================
 function renderAwards() {
   const c = document.getElementById("awardsInhalt");
   const stand = berechneStand();
-  const gespielteSpiele = state.spiele.filter(s => s.gespielt).length;
+  const gespielteSpiele = state.spiele.filter(s => s.gespielt);
+  const anzGespielt = gespielteSpiele.length;
 
-  if (!stand.length || (gespielteSpiele === 0 && !stand.some(s=>s.bonus))) {
+  if (!stand.length || (anzGespielt === 0 && !stand.some(s=>s.bonus))) {
     c.innerHTML = '<p class="leer-hinweis">Awards erscheinen, sobald die ersten Ergebnisse feststehen! 🎬</p>';
     return;
   }
 
   const awards = [];
 
-  // Volltreffer-König
+  // --- Per-Spieler-Detailstats für Awards berechnen ---
+  const stats = state.spieler.map(sp => {
+    let p4=0, p3=0, p2=0, p0=0, jokerBonus=0, unentschieden=0, spaetNacht=0;
+    gespielteSpiele.forEach(spiel => {
+      const basis = punkteFuer(state.tipps[sp.id]?.[spiel.id], spiel);
+      if (basis === null) return;
+      if (basis===4) p4++; else if (basis===3) p3++; else if (basis===2) p2++; else p0++;
+      const mitJoker = punkteFuerSpieler(sp.id, spiel);
+      jokerBonus += mitJoker - basis;
+      // Unentschieden korrekt getippt
+      const tipp = state.tipps[sp.id]?.[spiel.id];
+      if (tipp && spiel.e1===spiel.e2 && tipp.e1===tipp.e2) unentschieden++;
+      // Spätspiel (Anstoß nach 23:00 oder vor 05:00 MESZ)
+      const stunde = parseInt((spiel.datum||"").match(/(\d{1,2}):\d{2}$/)?.[1] ?? "12");
+      if ((stunde >= 23 || stunde <= 4) && basis >= 2) spaetNacht++;
+    });
+    const getippt = p4+p3+p2+p0;
+    const effizienz = getippt>0 ? (p4*4+p3*3+p2*2) / (getippt*4) : 0;
+    return { sp, p4, p3, p2, p0, jokerBonus, unentschieden, spaetNacht, getippt, effizienz };
+  });
+
+  // --- Punkte nach Phasen (für Aufsteiger) ---
+  const phasen = [...new Set(gespielteSpiele.map(s => s.phase))];
+  const letztePhase = phasen[phasen.length-1];
+  const letztePhaseSpiele = gespielteSpiele.filter(s => s.phase === letztePhase);
+
+  // ===================== AWARD-LISTE =====================
+
+  // 1. Volltreffer-König 🎯
   const maxTreffer = Math.max(...stand.map(s => s.treffer));
   if (maxTreffer > 0) {
     const koenig = stand.filter(s => s.treffer === maxTreffer);
     awards.push({ e:"🎯", t:"Der Scharfschütze", s:`${koenig.map(k=>k.avatar+" "+esc(k.name)).join(", ")} – ${maxTreffer}× exakt getippt!` });
   }
 
-  // Schwarze Laterne / schlechtester
-  if (stand.length > 1 && gespielteSpiele > 0) {
+  // 2. Schwarze Laterne 🏮
+  if (stand.length > 1 && anzGespielt > 0) {
     const letzter = stand[stand.length-1];
     awards.push({ e:"🏮", t:"Schwarze Laterne", s:`${letzter.avatar} ${esc(letzter.name)} bildet das Schlusslicht. Kopf hoch! 🫂` });
   }
 
-  // Bauernopfer-Pokal: hat getippt, aber wenigste Punkte pro Tipp
+  // 3. Bauernopfer-Pokal 🐔 (viel getippt, wenig geholt)
   const mitTipps = stand.filter(s => s.getippt > 0);
   if (mitTipps.length > 1) {
     const mutigster = mitTipps.reduce((a,b) => (b.spielPunkte/b.getippt < a.spielPunkte/a.getippt ? b : a));
-    if (mutigster.getippt >= 2) {
+    if (mutigster.getippt >= 2)
       awards.push({ e:"🐔", t:"Bauernopfer-Pokal", s:`${mutigster.avatar} ${esc(mutigster.name)} – viel getippt, wenig geholt. Mutig! 😅` });
-    }
   }
 
-  // Bonus-Fuchs
+  // 4. Bonus-Fuchs 🦊
   const maxBonus = Math.max(...stand.map(s => s.bonus));
   if (maxBonus > 0) {
     const fuchs = stand.find(s => s.bonus === maxBonus);
     awards.push({ e:"🦊", t:"Der Bonus-Fuchs", s:`${fuchs.avatar} ${esc(fuchs.name)} kassiert ${maxBonus} Bonus-Punkte. Schlau! 🧠` });
+  }
+
+  // 5. Joker-König 🃏 (meiste Joker-Bonuspunkte)
+  const maxJoker = Math.max(...stats.map(s => s.jokerBonus));
+  if (maxJoker > 0) {
+    const jokerKoenig = stats.find(s => s.jokerBonus === maxJoker);
+    awards.push({ e:"🃏", t:"Joker-König", s:`${jokerKoenig.sp.avatar} ${esc(jokerKoenig.sp.name)} hat den Joker goldrichtig eingesetzt – +${maxJoker} Extra-Punkte! 🤑` });
+  }
+
+  // 6. Tor-Prophet 🔮 (meiste 3-Punkte-Tordifferenz-Treffer)
+  const maxP3 = Math.max(...stats.map(s => s.p3));
+  if (maxP3 >= 2) {
+    const prophet = stats.filter(s => s.p3 === maxP3);
+    awards.push({ e:"🔮", t:"Der Tor-Prophet", s:`${prophet.map(p=>p.sp.avatar+" "+esc(p.sp.name)).join(", ")} – ${maxP3}× richtige Tordifferenz getippt! Beeindruckend!` });
+  }
+
+  // 7. Tipp-Maschine 🏟️ (höchste Abdeckung, min 5 abgegebene Tipps)
+  const mitAbdeckung = stats.filter(s => s.getippt >= 5 && anzGespielt > 0);
+  if (mitAbdeckung.length) {
+    const maschine = mitAbdeckung.reduce((a,b) => b.getippt > a.getippt ? b : a);
+    const prozent = Math.round(maschine.getippt / anzGespielt * 100);
+    awards.push({ e:"🏟️", t:"Die Tipp-Maschine", s:`${maschine.sp.avatar} ${esc(maschine.sp.name)} hat ${prozent}% aller Spiele getippt – ${maschine.getippt} von ${anzGespielt}! Fleißig! 💪` });
+  }
+
+  // 8. Glückspilz 🍀 (meiste 2-Punkte-Tendenzen, aber kaum Volltreffer)
+  const glueckStats = stats.filter(s => s.getippt >= 3 && s.p2 > s.p4);
+  if (glueckStats.length) {
+    const glueck = glueckStats.reduce((a,b) => b.p2 > a.p2 ? b : a);
+    if (glueck.p2 >= 2)
+      awards.push({ e:"🍀", t:"Der Glückspilz", s:`${glueck.sp.avatar} ${esc(glueck.sp.name)} – ${glueck.p2}× richtige Tendenz, aber das genaue Ergebnis… keine Ahnung! 😂` });
+  }
+
+  // 9. Aufsteiger 😎 (meiste Punkte in der letzten Phase)
+  if (letztePhase && letztePhaseSpiele.length && stand.length > 1) {
+    const aufstieg = state.spieler.map(sp => {
+      let p = 0;
+      letztePhaseSpiele.forEach(spiel => { const x = punkteFuerSpieler(sp.id, spiel); if (x!==null) p+=x; });
+      return { sp, p };
+    }).sort((a,b)=>b.p-a.p);
+    if (aufstieg[0].p > 0)
+      awards.push({ e:"😎", t:"Der Aufsteiger", s:`${aufstieg[0].sp.avatar} ${esc(aufstieg[0].sp.name)} ist die heiße Nummer in ${esc(letztePhase)} – ${aufstieg[0].p} Punkte in dieser Runde! 🔥` });
+  }
+
+  // 10. Unentschieden-Prophet 🤝 (meiste korrekt getippte Remis)
+  const maxUnent = Math.max(...stats.map(s => s.unentschieden));
+  if (maxUnent >= 2) {
+    const remis = stats.filter(s => s.unentschieden === maxUnent);
+    awards.push({ e:"🤝", t:"Der Remis-Experte", s:`${remis.map(r=>r.sp.avatar+" "+esc(r.sp.name)).join(", ")} – ${maxUnent}× ein Unentschieden exakt vorhergesehen! Filosoph des Fußballs! 🧘` });
+  }
+
+  // 11. Nachteule 🦉 (korrekte Tipps bei Spät-/Nachtspielen)
+  const maxNacht = Math.max(...stats.map(s => s.spaetNacht));
+  if (maxNacht >= 1) {
+    const eule = stats.filter(s => s.spaetNacht === maxNacht);
+    awards.push({ e:"🦉", t:"Die Nachteule", s:`${eule.map(e=>e.sp.avatar+" "+esc(e.sp.name)).join(", ")} – ${maxNacht}× einen Nachtanstoß erfolgreich getippt! Wer schläft, verliert! 🌙` });
+  }
+
+  // 12. Effizienz-König 📊 (höchste Punkte/Tipp-Rate, min 4 Tipps)
+  const effStats = stats.filter(s => s.getippt >= 4);
+  if (effStats.length > 1) {
+    const effKoenig = effStats.reduce((a,b) => b.effizienz > a.effizienz ? b : a);
+    const effProzent = Math.round(effKoenig.effizienz * 100);
+    if (effProzent >= 50)
+      awards.push({ e:"📊", t:"Der Effizienz-König", s:`${effKoenig.sp.avatar} ${esc(effKoenig.sp.name)} holt ${effProzent}% der maximal möglichen Punkte – Qualität vor Quantität! ✨` });
   }
 
   c.innerHTML = awards.map(a =>
@@ -1969,5 +2182,9 @@ alleRendern();
 naechsteQuizFrage();
 if (!speicherVerfuegbar) speicherWarnungZeigen();
 </script>
+
+<div id="statsOverlay" class="stats-overlay" onclick="if(event.target===this)schliesseStats()">
+  <div class="stats-panel" id="statsPanel"></div>
+</div>
 </body>
 </html>
