@@ -374,7 +374,7 @@
 
     <div class="karte">
       <h2>📈 Punkte-Verlauf</h2>
-      <p class="info-zeile">Wie sich die Punkte über die ausgewerteten Spiele entwickelt haben.</p>
+      <p class="info-zeile">Kumulierte <b>Spielpunkte</b> (ohne Bonus-Fragen) über die ausgewerteten Spiele – kann daher von der Gesamtpunktzahl in der Tabelle abweichen.</p>
       <div id="verlaufChart"></div>
     </div>
 
@@ -413,7 +413,7 @@
   <section id="view-tippen" class="view">
     <div class="karte" id="konsensKarte" style="display:none">
       <h2>🔮 Außenseiter-Radar</h2>
-      <p class="info-zeile">Wie tippt die Familie für die nächsten Spiele? Wer schert aus?</p>
+      <p class="info-zeile">Wie tippt die Familie für die nächsten Spiele? Wer schert aus? Ein Spiel erscheint hier <b>erst, wenn du selbst getippt hast</b> – fair bleibt fair! 😉</p>
       <div id="konsensInhalt"></div>
     </div>
     <div class="karte">
@@ -859,6 +859,10 @@ function spielLoeschen(spid) {
   renderHistorie();
   renderGruppenTabellen();
   renderKoStatus();
+  renderCountdown();
+  renderH2H();
+  renderVerlaufChart();
+  renderKonsens();
 }
 
 function tippSpeichern(spielId, feld, wert) {
@@ -869,6 +873,8 @@ function tippSpeichern(spielId, feld, wert) {
   const v = wert === "" ? null : Math.max(0, parseInt(wert) || 0);
   state.tipps[sp][spielId][feld] = v;
   speichern();
+  renderKonsens();    // Außenseiter-Radar hängt von den abgegebenen Tipps ab
+  renderCountdown();  // Deadline-Warnung hängt davon ab, ob schon getippt wurde
 }
 
 function ergebnisSpeichern(spielId, feld, wert) {
@@ -888,6 +894,10 @@ function ergebnisSpeichern(spielId, feld, wert) {
   renderHistorie();
   renderGruppenTabellen();
   renderKoStatus();
+  renderCountdown();
+  renderH2H();
+  renderVerlaufChart();
+  renderKonsens();
   if (spiel.gespielt) pruefeExakteTreffer(spiel);
 }
 
@@ -1370,8 +1380,9 @@ function zeigeSpielerstats(spielerId) {
   });
 
   const getippt = p4+p3+p2+p0;
+  const basisPunkte = p4*4 + p3*3 + p2*2;     // ohne Joker, damit Effizienz max. 100% ist
   const maxMoeglich = getippt * 4;
-  const effizienz = maxMoeglich > 0 ? Math.round(data.spielPunkte / maxMoeglich * 100) : 0;
+  const effizienz = maxMoeglich > 0 ? Math.round(basisPunkte / maxMoeglich * 100) : 0;
   const abdeckung = gespielteSpiele.length > 0 ? Math.round(getippt / gespielteSpiele.length * 100) : 0;
   const rangEmoji = rang===0?"🥇":rang===1?"🥈":rang===2?"🥉":`${rang+1}.`;
 
@@ -1479,9 +1490,12 @@ function renderAwards() {
   });
 
   // --- Punkte nach Phasen (für Aufsteiger) ---
-  const phasen = [...new Set(gespielteSpiele.map(s => s.phase))];
+  // „Spiel um Platz 3" zählt für den Aufsteiger zur selben Endrunde wie das
+  // Finale, damit die letzte Runde nicht künstlich in zwei 1-Spiel-Phasen zerfällt.
+  const phaseGruppe = (ph) => ph === "Spiel um Platz 3" ? "Finale" : ph;
+  const phasen = [...new Set(gespielteSpiele.map(s => phaseGruppe(s.phase)))];
   const letztePhase = phasen[phasen.length-1];
-  const letztePhaseSpiele = gespielteSpiele.filter(s => s.phase === letztePhase);
+  const letztePhaseSpiele = gespielteSpiele.filter(s => phaseGruppe(s.phase) === letztePhase);
 
   // ===================== AWARD-LISTE =====================
 
@@ -1710,15 +1724,17 @@ function vergleicheSpieler() {
   const stand = berechneStand();
   const sA = stand.find(s => s.id === A.id), sB = stand.find(s => s.id === B.id);
 
+  // „Bessere Tipps" vergleicht die reine Tippqualität (Basispunkte ohne Joker),
+  // damit ein einzelner Joker das direkte Duell nicht verzerrt.
   const gespielte = state.spiele.filter(s => s.gespielt);
   let aWins = 0, bWins = 0, gleich = 0, beideVoll = 0;
   gespielte.forEach(spiel => {
-    const pa = punkteFuerSpieler(A.id, spiel), pb = punkteFuerSpieler(B.id, spiel);
+    const pa = punkteFuer(state.tipps[A.id]?.[spiel.id], spiel);
+    const pb = punkteFuer(state.tipps[B.id]?.[spiel.id], spiel);
     if (pa === null && pb === null) return;
     const va = pa || 0, vb = pb || 0;
     if (va > vb) aWins++; else if (vb > va) bWins++; else gleich++;
-    if (punkteFuer(state.tipps[A.id]?.[spiel.id], spiel) === 4 &&
-        punkteFuer(state.tipps[B.id]?.[spiel.id], spiel) === 4) beideVoll++;
+    if (pa === 4 && pb === 4) beideVoll++;
   });
 
   const zeile = (label, va, vb, hoeherBesser=true) => {
@@ -1795,7 +1811,7 @@ function renderVerlaufChart() {
   }).join("");
 
   const legende = serien.map(s =>
-    `<div class="item"><span class="punkt" style="background:${s.farbe}"></span>${s.sp.avatar} ${esc(s.sp.name)} (${s.final})</div>`).join("");
+    `<div class="item"><span class="punkt" style="background:${s.farbe}"></span>${s.sp.avatar} ${esc(s.sp.name)} (${s.final} Sp.-Pkt.)</div>`).join("");
 
   c.innerHTML = `
     <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;background:#fff;border-radius:10px">
@@ -1814,9 +1830,19 @@ function renderKonsens() {
   const c = document.getElementById("konsensInhalt");
   if (!karte || !c) return;
 
-  // Kommende (noch nicht gespielte) Spiele, chronologisch, max 5
+  // Fairness: Damit niemand abschreibt, wird ein Spiel im Radar erst gezeigt,
+  // wenn der aktuell aktive Spieler es selbst getippt hat. (Ohne aktiven
+  // Spieler – z.B. reiner Zuschauer-Modus – werden alle gezeigt.)
+  const aktiv = state.aktiverSpielerId;
+  const eigenerTippDa = (spielId) => {
+    if (!aktiv) return true;
+    const t = state.tipps[aktiv]?.[spielId];
+    return !!(t && t.e1 !== null && t.e2 !== null);
+  };
+
+  // Kommende (noch nicht gespielte) Spiele, chronologisch, max 5 sichtbare
   const kommend = spieleChronologisch(false)
-    .filter(s => !s.gespielt)
+    .filter(s => !s.gespielt && eigenerTippDa(s.id))
     .slice(0, 5);
 
   const bloecke = kommend.map(spiel => {
