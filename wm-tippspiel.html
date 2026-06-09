@@ -756,6 +756,7 @@ let speicherVerfuegbar = true;
 let state = laden();
 let aktivesQuiz = null;
 let phasenFilter = "alle";   // aktive Filter-Auswahl in der Tippen-Ansicht
+let spieltagFilter = 0;      // 0 = alle Spieltage, 1/2/3 = konkreter Spieltag
 
 function standardState() {
   return {
@@ -1098,17 +1099,38 @@ function renderPhasenFilter() {
   const c = document.getElementById("phasenFilterBox");
   const phasen = [...new Set(state.spiele.map(s => s.phase))];
   if (phasen.length <= 1) { c.innerHTML = ""; return; }
-  const knopf = (wert, label) =>
-    `<button class="klein ${phasenFilter===wert?'':'sekundaer'}"
-      onclick="setzePhasenFilter('${esc(wert).replace(/'/g,"\\'")}')"
+
+  const pBtn = (wert, label, aktiv) =>
+    `<button class="klein ${aktiv?'':'sekundaer'}"
+      onclick="setzePhasenFilter('${esc(String(wert)).replace(/'/g,"\\'")}')"
       style="margin:2px">${esc(label)}</button>`;
-  c.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:2px">
-    ${knopf("alle","Alle")}
-    ${phasen.map(p => knopf(p, p)).join("")}
+  const stBtn = (st) =>
+    `<button class="klein ${spieltagFilter===st?'gold':'sekundaer'}"
+      onclick="setzeSpieltag(${st})" style="margin:2px">📅 Spieltag ${st}</button>`;
+
+  // Spieltag-Zeile nur anzeigen wenn Gruppenspiele mit spieltag-Feld vorhanden
+  const verfuegbareSpieltage = [...new Set(
+    state.spiele.filter(s => s.spieltag).map(s => s.spieltag)
+  )].sort((a,b) => a-b);
+
+  const stZeile = verfuegbareSpieltage.length > 1 ? `
+    <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:4px">
+      ${verfuegbareSpieltage.map(st => stBtn(st)).join("")}
+    </div>` : "";
+
+  c.innerHTML = stZeile + `<div style="display:flex;flex-wrap:wrap;gap:2px">
+    ${pBtn("alle","Alle", phasenFilter==="alle")}
+    ${phasen.map(p => pBtn(p, p, phasenFilter===p)).join("")}
   </div>`;
 }
 function setzePhasenFilter(wert) {
   phasenFilter = wert;
+  if (wert === "alle") spieltagFilter = 0;
+  renderPhasenFilter();
+  renderSpiele();
+}
+function setzeSpieltag(st) {
+  spieltagFilter = spieltagFilter === st ? 0 : st;
   renderPhasenFilter();
   renderSpiele();
 }
@@ -1135,7 +1157,12 @@ function renderSpiele() {
   if (phasenFilter !== "alle" && !state.spiele.some(s => s.phase === phasenFilter)) {
     phasenFilter = "alle";
   }
-  const sichtbar = state.spiele.filter(s => phasenFilter === "alle" || s.phase === phasenFilter);
+  const sichtbar = state.spiele.filter(s => {
+    const phasenMatch = phasenFilter === "alle" || s.phase === phasenFilter;
+    // Spieltag-Filter greift nur bei Spielen mit spieltag-Feld (Gruppenphase)
+    const spieltagMatch = spieltagFilter === 0 || !s.spieltag || s.spieltag === spieltagFilter;
+    return phasenMatch && spieltagMatch;
+  });
 
   c.innerHTML = sichtbar.map(spiel => {
     const t = (sp && state.tipps[sp] && state.tipps[sp][spiel.id]) || { e1:null, e2:null };
@@ -2255,15 +2282,20 @@ function kompletterWMPlanLaden() {
   )) return;
 
   // Echte Fixtures (Datum/Uhrzeit MESZ + Stadion) statt generiertem Rundenturnier.
-  state.spiele = WM_GRUPPEN_FIXTURES.map(f => ({
-    id: id(),
-    t1: f.t1,
-    t2: f.t2,
-    phase: `Gruppe ${f.g}`,
-    datum: f.datum,
-    ort: f.ort,
-    gespielt: false, e1: null, e2: null
-  }));
+  const _gz = {};
+  state.spiele = WM_GRUPPEN_FIXTURES.map(f => {
+    _gz[f.g] = (_gz[f.g] || 0) + 1;
+    return {
+      id: id(),
+      t1: f.t1,
+      t2: f.t2,
+      phase: `Gruppe ${f.g}`,
+      datum: f.datum,
+      ort: f.ort,
+      spieltag: Math.ceil(_gz[f.g] / 2),
+      gespielt: false, e1: null, e2: null
+    };
+  });
   speichern();
   alleRendern();
   toast(`🌍 Echter WM-Spielplan geladen: ${state.spiele.length} Spiele mit Terminen & Stadien!`);
@@ -2595,7 +2627,7 @@ function koZuruecksetzen() {
   Object.values(state.tipps).forEach(t => ids.forEach(i => delete t[i]));
   Object.keys(state.joker).forEach(p => { if (ids.includes(state.joker[p])) delete state.joker[p]; });
   speichern();
-  if (KO_PHASE_NAMEN.includes(phasenFilter)) phasenFilter = "alle";
+  if (KO_PHASE_NAMEN.includes(phasenFilter)) { phasenFilter = "alle"; spieltagFilter = 0; }
   alleRendern();
   toast("K.-o.-Spiele entfernt.");
 }
