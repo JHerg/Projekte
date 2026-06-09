@@ -281,7 +281,9 @@
     <div class="karte">
       <h2>⚽ Spiele & Tipps</h2>
       <p class="info-zeile" id="tippenHinweis"></p>
-      <div id="spieleListe"></div>
+      <div id="tippFortschritt"></div>
+      <div id="phasenFilterBox" style="margin-top:8px"></div>
+      <div id="spieleListe" style="margin-top:10px"></div>
     </div>
   </section>
 
@@ -498,6 +500,7 @@ const QUIZFRAGEN = [
 let speicherVerfuegbar = true;
 let state = laden();
 let aktivesQuiz = null;
+let phasenFilter = "alle";   // aktive Filter-Auswahl in der Tippen-Ansicht
 
 function standardState() {
   return { spieler: [], spiele: [], tipps: {}, bonusFragen: [], bonusTipps: {}, aktiverSpielerId: null };
@@ -539,6 +542,22 @@ function speicherWarnungZeigen() {
   document.querySelector("main").prepend(w);
 }
 const id = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+// Schützt vor HTML-Injection: Nutzer-Eingaben (Namen, Bonus-Fragen, Optionen)
+// werden per innerHTML eingefügt – Sonderzeichen wie < > " ' & müssen daher
+// maskiert werden, sonst zerschießen sie Layout oder onclick-Handler.
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+
+// Stabile Pseudo-Zufallszahl aus einer Zeichenkette (z.B. Spieler-ID),
+// damit zufällig wirkende, aber gleichbleibende Auswahlen möglich sind.
+function hashCode(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
 
 // ===================== NAVIGATION =====================
 function zeigeView(name) {
@@ -588,7 +607,7 @@ function renderSpielerListe() {
     return;
   }
   c.innerHTML = state.spieler.map(s =>
-    `<span class="spieler-chip">${s.avatar} ${s.name}
+    `<span class="spieler-chip">${s.avatar} ${esc(s.name)}
       <button onclick="spielerLoeschen('${s.id}')" title="entfernen">✕</button></span>`
   ).join("");
 }
@@ -613,7 +632,7 @@ function renderSpielerSelect() {
     return;
   }
   sel.innerHTML = state.spieler.map(s =>
-    `<option value="${s.id}" ${s.id===state.aktiverSpielerId?'selected':''}>${s.avatar} ${s.name}</option>`
+    `<option value="${s.id}" ${s.id===state.aktiverSpielerId?'selected':''}>${s.avatar} ${esc(s.name)}</option>`
   ).join("");
 }
 
@@ -645,6 +664,7 @@ function spielLoeschen(spid) {
   speichern();
   renderSpiele();
   renderTabelle();
+  renderAwards();
 }
 
 function tippSpeichern(spielId, feld, wert) {
@@ -663,9 +683,28 @@ function ergebnisSpeichern(spielId, feld, wert) {
   spiel[feld] = v;
   spiel.gespielt = (spiel.e1 !== null && spiel.e2 !== null);
   speichern();
-  renderSpiele();
+  // Wichtig: NICHT die ganze Liste neu rendern – sonst würde das gerade
+  // offene Eingabe-Panel zerstört und das zweite Tor-Feld verschwinden,
+  // während man noch tippt. Stattdessen nur die betroffene Karte gezielt
+  // aktualisieren (Punkte-Badge, Endstand, Tipp-Übersicht) plus Tabelle.
+  aktualisiereSpielKarte(spielId);
   renderTabelle();
+  renderAwards();
+  renderTippFortschritt();
   if (spiel.gespielt) pruefeExakteTreffer(spiel);
+}
+
+// Aktualisiert nur die Anzeige-Teile EINER Spielkarte, ohne die Eingabefelder
+// neu aufzubauen (damit eine laufende Ergebnis-Eingabe nicht abbricht).
+function aktualisiereSpielKarte(spielId) {
+  const card = document.querySelector(`.spiel[data-id="${spielId}"]`);
+  if (!card) return;
+  const spiel = state.spiele.find(s => s.id === spielId);
+  card.classList.toggle("gespielt", spiel.gespielt);
+  const kopf = card.querySelector(".kopf-rechts");
+  if (kopf) kopf.innerHTML = kopfRechtsHTML(spiel);
+  const dyn = card.querySelector(".spiel-dynamisch");
+  if (dyn) dyn.innerHTML = spielDynamischHTML(spiel);
 }
 
 // Konfetti, wenn der aktive Spieler exakt richtig lag
@@ -692,6 +731,76 @@ function punkteFuer(tipp, spiel) {
   return 0;
 }
 
+// Rechte Kopfzeile einer Spielkarte: Punkte-Badge des aktiven Spielers + Löschen
+function kopfRechtsHTML(spiel) {
+  const sp = state.aktiverSpielerId;
+  const t = (sp && state.tipps[sp] && state.tipps[sp][spiel.id]) || { e1:null, e2:null };
+  const pkt = punkteFuer(t, spiel);
+  const pktBadge = pkt !== null ? `<span class="punkte-badge p${pkt}">${pkt} P</span>` : "";
+  return `${pktBadge}
+    <button class="klein gefahr" onclick="spielLoeschen('${spiel.id}')" style="margin-left:6px">✕</button>`;
+}
+
+// Dynamischer Anzeige-Teil (Endstand + Tipp-Übersicht) – getrennt von den
+// Eingabefeldern, damit er gefahrlos einzeln neu gerendert werden kann.
+function spielDynamischHTML(spiel) {
+  let html = spiel.gespielt
+    ? `<div class="ergebnis-echt">⚽ Endstand: ${spiel.e1} : ${spiel.e2}</div>`
+    : "";
+  if (spiel.gespielt && state.spieler.length) {
+    const zeilen = state.spieler.map(s => {
+      const tt = state.tipps[s.id]?.[spiel.id];
+      const p = punkteFuer(tt, spiel);
+      const tippStr = (tt && tt.e1!==null && tt.e2!==null) ? `${tt.e1}:${tt.e2}` : "–";
+      return `<div class="zeile"><span>${s.avatar} ${esc(s.name)}: <b>${tippStr}</b></span>
+        <span class="punkte-badge p${p??0}">${p??0} P</span></div>`;
+    }).join("");
+    html += `<details><summary>Alle Tipps anzeigen</summary><div class="tipps-uebersicht">${zeilen}</div></details>`;
+  }
+  return html;
+}
+
+// Fortschrittsanzeige: wie viele Spiele hat der aktive Spieler schon getippt?
+function renderTippFortschritt() {
+  const c = document.getElementById("tippFortschritt");
+  const sp = state.aktiverSpielerId;
+  if (!sp || !state.spiele.length) { c.innerHTML = ""; return; }
+  const gesamt = state.spiele.length;
+  const getippt = state.spiele.filter(spiel => {
+    const t = state.tipps[sp]?.[spiel.id];
+    return t && t.e1 !== null && t.e2 !== null;
+  }).length;
+  const prozent = Math.round(getippt / gesamt * 100);
+  const fertig = getippt === gesamt;
+  c.innerHTML = `
+    <div style="font-size:.8rem;color:#555;margin-bottom:4px">
+      ${fertig ? "🎉 Alle Spiele getippt!" : `📝 ${getippt} von ${gesamt} Spielen getippt`}
+    </div>
+    <div style="background:#eee;border-radius:20px;height:10px;overflow:hidden">
+      <div style="width:${prozent}%;height:100%;background:linear-gradient(90deg,#4caf50,#2e7d32);transition:width .3s"></div>
+    </div>`;
+}
+
+// Filter-Buttons nach Phase/Gruppe (hilfreich bei vielen Spielen)
+function renderPhasenFilter() {
+  const c = document.getElementById("phasenFilterBox");
+  const phasen = [...new Set(state.spiele.map(s => s.phase))];
+  if (phasen.length <= 1) { c.innerHTML = ""; return; }
+  const knopf = (wert, label) =>
+    `<button class="klein ${phasenFilter===wert?'':'sekundaer'}"
+      onclick="setzePhasenFilter('${esc(wert).replace(/'/g,"\\'")}')"
+      style="margin:2px">${esc(label)}</button>`;
+  c.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:2px">
+    ${knopf("alle","Alle")}
+    ${phasen.map(p => knopf(p, p)).join("")}
+  </div>`;
+}
+function setzePhasenFilter(wert) {
+  phasenFilter = wert;
+  renderPhasenFilter();
+  renderSpiele();
+}
+
 function renderSpiele() {
   const c = document.getElementById("spieleListe");
   const hinweis = document.getElementById("tippenHinweis");
@@ -699,67 +808,54 @@ function renderSpiele() {
   const spObj = state.spieler.find(s => s.id === sp);
 
   hinweis.innerHTML = spObj
-    ? `Du tippst als <b>${spObj.avatar} ${spObj.name}</b>. Oben kannst du wechseln.`
+    ? `Du tippst als <b>${spObj.avatar} ${esc(spObj.name)}</b>. Oben kannst du wechseln.`
     : `⚠️ Lege zuerst unter <b>Familie</b> Mitspieler an!`;
+
+  renderTippFortschritt();
+  renderPhasenFilter();
 
   if (!state.spiele.length) {
     c.innerHTML = '<p class="leer-hinweis">Noch keine Spiele im Plan. Lege welche unter ⚙️ <b>Verwalten</b> an – oder lade die Beispiel-Daten!</p>';
     return;
   }
 
-  c.innerHTML = state.spiele.map(spiel => {
+  // Falls der gewählte Filter nicht mehr existiert: auf "alle" zurück
+  if (phasenFilter !== "alle" && !state.spiele.some(s => s.phase === phasenFilter)) {
+    phasenFilter = "alle";
+  }
+  const sichtbar = state.spiele.filter(s => phasenFilter === "alle" || s.phase === phasenFilter);
+  const disabled = sp ? "" : "disabled";
+
+  c.innerHTML = sichtbar.map(spiel => {
     const t = (sp && state.tipps[sp] && state.tipps[sp][spiel.id]) || { e1:null, e2:null };
-    const pkt = punkteFuer(t, spiel);
-    const pktBadge = pkt !== null ? `<span class="punkte-badge p${pkt}">${pkt} P</span>` : "";
-    const disabled = sp ? "" : "disabled";
-
-    // Übersicht aller Tipps (wenn gespielt)
-    let uebersicht = "";
-    if (spiel.gespielt && state.spieler.length) {
-      const zeilen = state.spieler.map(s => {
-        const tt = state.tipps[s.id]?.[spiel.id];
-        const p = punkteFuer(tt, spiel);
-        const tippStr = (tt && tt.e1!==null && tt.e2!==null) ? `${tt.e1}:${tt.e2}` : "–";
-        return `<div class="zeile"><span>${s.avatar} ${s.name}: <b>${tippStr}</b></span>
-          <span class="punkte-badge p${p??0}">${p??0} P</span></div>`;
-      }).join("");
-      uebersicht = `<details><summary>Alle Tipps anzeigen</summary><div class="tipps-uebersicht">${zeilen}</div></details>`;
-    }
-
     return `
-    <div class="spiel ${spiel.gespielt?'gespielt':''}">
+    <div class="spiel ${spiel.gespielt?'gespielt':''}" data-id="${spiel.id}">
       <div class="spiel-kopf">
-        <span>${spiel.phase}${spiel.datum?' · '+spiel.datum:''}</span>
-        <span>
-          ${pktBadge}
-          <button class="klein gefahr" onclick="spielLoeschen('${spiel.id}')" style="margin-left:6px">✕</button>
-        </span>
+        <span>${esc(spiel.phase)}${spiel.datum?' · '+esc(spiel.datum):''}</span>
+        <span class="kopf-rechts">${kopfRechtsHTML(spiel)}</span>
       </div>
       <div class="spiel-teams">
-        <div class="team"><span class="flagge">${flaggeVon(spiel.t1)}</span>${spiel.t1}</div>
+        <div class="team"><span class="flagge">${flaggeVon(spiel.t1)}</span>${esc(spiel.t1)}</div>
         <div class="tipp-eingabe">
-          <input type="number" min="0" ${disabled} value="${t.e1??''}"
+          <input type="number" min="0" inputmode="numeric" ${disabled} value="${t.e1??''}"
             onchange="tippSpeichern('${spiel.id}','e1',this.value)" placeholder="-">
           <span class="doppelpunkt">:</span>
-          <input type="number" min="0" ${disabled} value="${t.e2??''}"
+          <input type="number" min="0" inputmode="numeric" ${disabled} value="${t.e2??''}"
             onchange="tippSpeichern('${spiel.id}','e2',this.value)" placeholder="-">
         </div>
-        <div class="team"><span class="flagge">${flaggeVon(spiel.t2)}</span>${spiel.t2}</div>
+        <div class="team"><span class="flagge">${flaggeVon(spiel.t2)}</span>${esc(spiel.t2)}</div>
       </div>
-      ${spiel.gespielt
-        ? `<div class="ergebnis-echt">⚽ Endstand: ${spiel.e1} : ${spiel.e2}</div>`
-        : ''}
-      <details style="margin-top:8px">
+      <details class="ergebnis-details" style="margin-top:8px">
         <summary>📝 Echtes Ergebnis eintragen (Spielleiter)</summary>
         <div class="tipp-eingabe" style="margin-top:8px">
-          <input type="number" min="0" value="${spiel.e1??''}" placeholder="-"
+          <input type="number" min="0" inputmode="numeric" value="${spiel.e1??''}" placeholder="-"
             onchange="ergebnisSpeichern('${spiel.id}','e1',this.value)">
           <span class="doppelpunkt">:</span>
-          <input type="number" min="0" value="${spiel.e2??''}" placeholder="-"
+          <input type="number" min="0" inputmode="numeric" value="${spiel.e2??''}" placeholder="-"
             onchange="ergebnisSpeichern('${spiel.id}','e2',this.value)">
         </div>
       </details>
-      ${uebersicht}
+      <div class="spiel-dynamisch">${spielDynamischHTML(spiel)}</div>
     </div>`;
   }).join("");
 }
@@ -787,24 +883,31 @@ function bonusFrageLoeschen(bid) {
   speichern();
   renderBonus();
   renderTabelle();
+  renderAwards();
 }
 
-function bonusTippSpeichern(bid, antwort) {
+// Optionen werden über ihren Index referenziert (nicht über den rohen Text),
+// damit Anführungszeichen o.Ä. in Antworten die Handler nicht zerschießen.
+function bonusTippSpeichern(bid, idx) {
   const sp = state.aktiverSpielerId;
   if (!sp) { toast("Wähle oben zuerst einen Spieler!"); return; }
+  const b = state.bonusFragen.find(x => x.id === bid);
+  const antwort = b?.optionen[idx];
+  if (antwort === undefined) return;
   if (!state.bonusTipps[sp]) state.bonusTipps[sp] = {};
   state.bonusTipps[sp][bid] = antwort;
   speichern();
   renderBonus();
 }
 
-function bonusLoesungSetzen(bid, antwort) {
+function bonusLoesungSetzen(bid, idxStr) {
   const b = state.bonusFragen.find(x => x.id === bid);
-  b.loesung = antwort || null;
+  b.loesung = idxStr === "" ? null : (b.optionen[parseInt(idxStr)] ?? null);
   speichern();
   renderBonus();
   renderTabelle();
-  if (antwort) { konfettiRegen(50); }
+  renderAwards();
+  if (b.loesung) { konfettiRegen(50); }
 }
 
 function renderBonus() {
@@ -816,7 +919,7 @@ function renderBonus() {
   }
   c.innerHTML = state.bonusFragen.map(b => {
     const meinTipp = sp ? state.bonusTipps[sp]?.[b.id] : null;
-    const optBtns = b.optionen.map(o => {
+    const optBtns = b.optionen.map((o, i) => {
       let cls = "quiz-opt";
       if (b.loesung) {
         if (o === b.loesung) cls += " richtig";
@@ -825,8 +928,8 @@ function renderBonus() {
         cls += " richtig";
       }
       const dis = b.loesung ? "disabled" : "";
-      return `<button class="${cls}" ${dis} onclick="bonusTippSpeichern('${b.id}','${o.replace(/'/g,"\\'")}')">
-        ${o} ${o===meinTipp?'✓':''}</button>`;
+      return `<button class="${cls}" ${dis} onclick="bonusTippSpeichern('${b.id}',${i})">
+        ${esc(o)} ${o===meinTipp?'✓':''}</button>`;
     }).join("");
 
     const loesungSel = `
@@ -834,14 +937,14 @@ function renderBonus() {
         <summary>🏁 Auflösung festlegen (Spielleiter)</summary>
         <select onchange="bonusLoesungSetzen('${b.id}', this.value)" style="margin-top:8px">
           <option value="">– noch offen –</option>
-          ${b.optionen.map(o => `<option ${o===b.loesung?'selected':''}>${o}</option>`).join("")}
+          ${b.optionen.map((o, i) => `<option value="${i}" ${o===b.loesung?'selected':''}>${esc(o)}</option>`).join("")}
         </select>
       </details>`;
 
     return `
     <div class="bonus-frage ${b.loesung?'aufgeloest':''}">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div class="quiz-frage">🎲 ${b.frage} <small style="color:#999">(${b.punkte} P)</small></div>
+        <div class="quiz-frage">🎲 ${esc(b.frage)} <small style="color:#999">(${b.punkte} P)</small></div>
         <button class="klein gefahr" onclick="bonusFrageLoeschen('${b.id}')">✕</button>
       </div>
       ${optBtns}
@@ -874,8 +977,10 @@ function berechneStand() {
   }).sort((a,b) => b.punkte - a.punkte || b.treffer - a.treffer);
 }
 
-function titelFuer(rang, gesamt) {
-  const w = (arr) => arr[Math.floor(Math.random()*arr.length)];
+// Titel sind pro Spieler stabil (über die Spieler-ID „geseedet"), damit sie
+// nicht bei jedem Neu-Rendern der Tabelle zufällig hin- und herspringen.
+function titelFuer(rang, gesamt, spielerId) {
+  const w = (arr) => arr[hashCode(spielerId) % arr.length];
   if (gesamt === 1) return TITEL.erster[0];
   if (rang === 0) return w(TITEL.erster);
   if (rang === gesamt-1) return w(TITEL.letzter);
@@ -902,7 +1007,7 @@ function renderTabelle() {
     <div class="pokal-box">
       <span class="pokal-emoji">🏆</span>
       <div>Aktueller Träger des Familien-Wanderpokals:</div>
-      <div class="name">${fuehrend.avatar} ${fuehrend.name}</div>
+      <div class="name">${fuehrend.avatar} ${esc(fuehrend.name)}</div>
       <div style="font-size:.85rem;margin-top:4px">mit ${fuehrend.punkte} Punkten – alle anderen: aufgepasst! 👀</div>
     </div>` : "";
 
@@ -911,13 +1016,13 @@ function renderTabelle() {
       <thead><tr><th></th><th>Spieler</th><th style="text-align:center">🎯</th><th style="text-align:right">Punkte</th></tr></thead>
       <tbody>
       ${stand.map((s,i) => {
-        const titel = titelFuer(i, stand.length);
+        const titel = titelFuer(i, stand.length, s.id);
         const rangEmoji = i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1)+".";
         const klasse = i===0 && hatPunkte ? "fuehrend" : (i===stand.length-1 && stand.length>1 && hatPunkte ? "letzter" : "");
         return `<tr class="${klasse}">
           <td class="rang-emoji">${rangEmoji}</td>
           <td>
-            <span class="spieler-name">${s.avatar} ${s.name}</span>
+            <span class="spieler-name">${s.avatar} ${esc(s.name)}</span>
             <span class="titel-badge">${titel}${s.bonus?` · 🎲 +${s.bonus}`:''}</span>
           </td>
           <td style="text-align:center">${s.treffer}</td>
@@ -945,13 +1050,13 @@ function renderAwards() {
   const maxTreffer = Math.max(...stand.map(s => s.treffer));
   if (maxTreffer > 0) {
     const koenig = stand.filter(s => s.treffer === maxTreffer);
-    awards.push({ e:"🎯", t:"Der Scharfschütze", s:`${koenig.map(k=>k.avatar+" "+k.name).join(", ")} – ${maxTreffer}× exakt getippt!` });
+    awards.push({ e:"🎯", t:"Der Scharfschütze", s:`${koenig.map(k=>k.avatar+" "+esc(k.name)).join(", ")} – ${maxTreffer}× exakt getippt!` });
   }
 
   // Schwarze Laterne / schlechtester
   if (stand.length > 1 && gespielteSpiele > 0) {
     const letzter = stand[stand.length-1];
-    awards.push({ e:"🏮", t:"Schwarze Laterne", s:`${letzter.avatar} ${letzter.name} bildet das Schlusslicht. Kopf hoch! 🫂` });
+    awards.push({ e:"🏮", t:"Schwarze Laterne", s:`${letzter.avatar} ${esc(letzter.name)} bildet das Schlusslicht. Kopf hoch! 🫂` });
   }
 
   // Bauernopfer-Pokal: hat getippt, aber wenigste Punkte pro Tipp
@@ -959,7 +1064,7 @@ function renderAwards() {
   if (mitTipps.length > 1) {
     const mutigster = mitTipps.reduce((a,b) => (b.spielPunkte/b.getippt < a.spielPunkte/a.getippt ? b : a));
     if (mutigster.getippt >= 2) {
-      awards.push({ e:"🐔", t:"Bauernopfer-Pokal", s:`${mutigster.avatar} ${mutigster.name} – viel getippt, wenig geholt. Mutig! 😅` });
+      awards.push({ e:"🐔", t:"Bauernopfer-Pokal", s:`${mutigster.avatar} ${esc(mutigster.name)} – viel getippt, wenig geholt. Mutig! 😅` });
     }
   }
 
@@ -967,7 +1072,7 @@ function renderAwards() {
   const maxBonus = Math.max(...stand.map(s => s.bonus));
   if (maxBonus > 0) {
     const fuchs = stand.find(s => s.bonus === maxBonus);
-    awards.push({ e:"🦊", t:"Der Bonus-Fuchs", s:`${fuchs.avatar} ${fuchs.name} kassiert ${maxBonus} Bonus-Punkte. Schlau! 🧠` });
+    awards.push({ e:"🦊", t:"Der Bonus-Fuchs", s:`${fuchs.avatar} ${esc(fuchs.name)} kassiert ${maxBonus} Bonus-Punkte. Schlau! 🧠` });
   }
 
   c.innerHTML = awards.map(a =>
@@ -983,10 +1088,9 @@ function ziehStrafe() {
   if (!state.spiele.some(s=>s.gespielt)) { toast("Erst muss ein Spiel ausgewertet sein! ⚽"); return; }
   const letzter = stand[stand.length-1];
   const box = document.getElementById("strafeContainer");
-  const text = document.createElement("div");
 
   box.innerHTML = `<div class="strafe-box">
-    <div class="name">😈 ${letzter.avatar} ${letzter.name}, du bist dran!</div>
+    <div class="name">😈 ${letzter.avatar} ${esc(letzter.name)}, du bist dran!</div>
     <div class="strafe-text" id="strafeText">🎰 …</div>
   </div>`;
 
