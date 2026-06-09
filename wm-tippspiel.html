@@ -343,10 +343,9 @@
         🌍 Kompletten Gruppenplan laden (72 Spiele, 12 Gruppen)
       </button>
       <p class="info-zeile">
-        Die Gruppen-Spieltage sind mit ihren <b>Datumsfenstern</b> hinterlegt (Spieltag 1: 11.–16.6.,
-        2: 17.–23.6., 3: 24.–27.6.2026). Die K.-o.-Runden bekommen beim Erzeugen automatisch ihre
-        offiziellen Termine. Genaue Uhrzeiten pro Spiel sind bewusst nicht gesetzt (Ortszeiten der
-        Stadien) – die kannst du bei Bedarf beim jeweiligen Spiel unter „Anstoß" ergänzen.
+        Enthält jetzt den <b>echten Spielplan</b> mit Datum, <b>Anstoßzeit in deutscher Zeit (MESZ)</b>
+        und Stadion für alle Partien. Die K.-o.-Runden bekommen beim Erzeugen automatisch ihre echten
+        Termine/Orte. (Datenquelle: openfootball, gegengeprüft mit dem offiziellen FIFA-Spielplan.)
       </p>
     </div>
 
@@ -952,7 +951,7 @@ function renderSpiele() {
     return `
     <div class="spiel ${spiel.gespielt?'gespielt':''}" data-id="${spiel.id}">
       <div class="spiel-kopf">
-        <span>${esc(spiel.phase)}${spiel.datum?' · '+esc(spiel.datum):''}</span>
+        <span>${esc(spiel.phase)}${spiel.datum?' · '+esc(spiel.datum):''}${spiel.ort?' · 📍'+esc(spiel.ort):''}</span>
         <span class="kopf-rechts">${kopfRechtsHTML(spiel)}</span>
       </div>
       <div class="spiel-teams">
@@ -1357,7 +1356,127 @@ function allesZuruecksetzen() {
 // Jede Gruppe hat 4 Teams, die in einer Gruppenphase im Rundensystem
 // je einmal gegeneinander antreten – das ergibt die typischen 6 Partien
 // pro Gruppe, aufgeteilt auf 3 Spieltage (je 2 Spiele gleichzeitig).
-const GRUPPEN_PAARUNGEN = [[0,1],[2,3],[0,2],[1,3],[0,3],[1,2]];
+// ===== Echter WM-2026-Spielplan (Quelle: openfootball/worldcup, gegengeprüft
+//        mit offiziellem FIFA-Plan). Zeiten in deutscher Zeit (MESZ). =====
+const WM_GRUPPEN_FIXTURES = [
+  {g:"A",t1:"Mexiko",t2:"Südafrika",datum:"Do. 11.6., 21:00",ort:"Mexiko-Stadt"},
+  {g:"A",t1:"Südkorea",t2:"Tschechien",datum:"Fr. 12.6., 04:00",ort:"Guadalajara"},
+  {g:"A",t1:"Tschechien",t2:"Südafrika",datum:"Do. 18.6., 18:00",ort:"Atlanta"},
+  {g:"A",t1:"Mexiko",t2:"Südkorea",datum:"Fr. 19.6., 03:00",ort:"Guadalajara"},
+  {g:"A",t1:"Tschechien",t2:"Mexiko",datum:"Do. 25.6., 03:00",ort:"Mexiko-Stadt"},
+  {g:"A",t1:"Südafrika",t2:"Südkorea",datum:"Do. 25.6., 03:00",ort:"Monterrey"},
+  {g:"B",t1:"Kanada",t2:"Bosnien-Herzegowina",datum:"Fr. 12.6., 21:00",ort:"Toronto"},
+  {g:"B",t1:"Katar",t2:"Schweiz",datum:"Sa. 13.6., 21:00",ort:"San Francisco"},
+  {g:"B",t1:"Schweiz",t2:"Bosnien-Herzegowina",datum:"Do. 18.6., 21:00",ort:"Los Angeles"},
+  {g:"B",t1:"Kanada",t2:"Katar",datum:"Fr. 19.6., 00:00",ort:"Vancouver"},
+  {g:"B",t1:"Schweiz",t2:"Kanada",datum:"Mi. 24.6., 21:00",ort:"Vancouver"},
+  {g:"B",t1:"Bosnien-Herzegowina",t2:"Katar",datum:"Mi. 24.6., 21:00",ort:"Seattle"},
+  {g:"C",t1:"Brasilien",t2:"Marokko",datum:"So. 14.6., 00:00",ort:"New York/New Jersey"},
+  {g:"C",t1:"Haiti",t2:"Schottland",datum:"So. 14.6., 03:00",ort:"Boston"},
+  {g:"C",t1:"Schottland",t2:"Marokko",datum:"Sa. 20.6., 00:00",ort:"Boston"},
+  {g:"C",t1:"Brasilien",t2:"Haiti",datum:"Sa. 20.6., 02:30",ort:"Philadelphia"},
+  {g:"C",t1:"Schottland",t2:"Brasilien",datum:"Do. 25.6., 00:00",ort:"Miami"},
+  {g:"C",t1:"Marokko",t2:"Haiti",datum:"Do. 25.6., 00:00",ort:"Atlanta"},
+  {g:"D",t1:"USA",t2:"Paraguay",datum:"Sa. 13.6., 03:00",ort:"Los Angeles"},
+  {g:"D",t1:"Australien",t2:"Türkei",datum:"So. 14.6., 06:00",ort:"Vancouver"},
+  {g:"D",t1:"USA",t2:"Australien",datum:"Fr. 19.6., 21:00",ort:"Seattle"},
+  {g:"D",t1:"Türkei",t2:"Paraguay",datum:"Sa. 20.6., 05:00",ort:"San Francisco"},
+  {g:"D",t1:"Türkei",t2:"USA",datum:"Fr. 26.6., 04:00",ort:"Los Angeles"},
+  {g:"D",t1:"Paraguay",t2:"Australien",datum:"Fr. 26.6., 04:00",ort:"San Francisco"},
+  {g:"E",t1:"Deutschland",t2:"Curaçao",datum:"So. 14.6., 19:00",ort:"Houston"},
+  {g:"E",t1:"Elfenbeinküste",t2:"Ecuador",datum:"Mo. 15.6., 01:00",ort:"Philadelphia"},
+  {g:"E",t1:"Deutschland",t2:"Elfenbeinküste",datum:"Sa. 20.6., 22:00",ort:"Toronto"},
+  {g:"E",t1:"Ecuador",t2:"Curaçao",datum:"So. 21.6., 02:00",ort:"Kansas City"},
+  {g:"E",t1:"Curaçao",t2:"Elfenbeinküste",datum:"Do. 25.6., 22:00",ort:"Philadelphia"},
+  {g:"E",t1:"Ecuador",t2:"Deutschland",datum:"Do. 25.6., 22:00",ort:"New York/New Jersey"},
+  {g:"F",t1:"Niederlande",t2:"Japan",datum:"So. 14.6., 22:00",ort:"Dallas"},
+  {g:"F",t1:"Schweden",t2:"Tunesien",datum:"Mo. 15.6., 04:00",ort:"Monterrey"},
+  {g:"F",t1:"Niederlande",t2:"Schweden",datum:"Sa. 20.6., 19:00",ort:"Houston"},
+  {g:"F",t1:"Tunesien",t2:"Japan",datum:"So. 21.6., 06:00",ort:"Monterrey"},
+  {g:"F",t1:"Japan",t2:"Schweden",datum:"Fr. 26.6., 01:00",ort:"Dallas"},
+  {g:"F",t1:"Tunesien",t2:"Niederlande",datum:"Fr. 26.6., 01:00",ort:"Kansas City"},
+  {g:"G",t1:"Belgien",t2:"Ägypten",datum:"Mo. 15.6., 21:00",ort:"Seattle"},
+  {g:"G",t1:"Iran",t2:"Neuseeland",datum:"Di. 16.6., 03:00",ort:"Los Angeles"},
+  {g:"G",t1:"Belgien",t2:"Iran",datum:"So. 21.6., 21:00",ort:"Los Angeles"},
+  {g:"G",t1:"Neuseeland",t2:"Ägypten",datum:"Mo. 22.6., 03:00",ort:"Vancouver"},
+  {g:"G",t1:"Ägypten",t2:"Iran",datum:"Sa. 27.6., 05:00",ort:"Seattle"},
+  {g:"G",t1:"Neuseeland",t2:"Belgien",datum:"Sa. 27.6., 05:00",ort:"Vancouver"},
+  {g:"H",t1:"Spanien",t2:"Kap Verde",datum:"Mo. 15.6., 18:00",ort:"Atlanta"},
+  {g:"H",t1:"Saudi-Arabien",t2:"Uruguay",datum:"Di. 16.6., 00:00",ort:"Miami"},
+  {g:"H",t1:"Spanien",t2:"Saudi-Arabien",datum:"So. 21.6., 18:00",ort:"Atlanta"},
+  {g:"H",t1:"Uruguay",t2:"Kap Verde",datum:"Mo. 22.6., 00:00",ort:"Miami"},
+  {g:"H",t1:"Kap Verde",t2:"Saudi-Arabien",datum:"Sa. 27.6., 02:00",ort:"Houston"},
+  {g:"H",t1:"Uruguay",t2:"Spanien",datum:"Sa. 27.6., 02:00",ort:"Guadalajara"},
+  {g:"I",t1:"Frankreich",t2:"Senegal",datum:"Di. 16.6., 21:00",ort:"New York/New Jersey"},
+  {g:"I",t1:"Irak",t2:"Norwegen",datum:"Mi. 17.6., 00:00",ort:"Boston"},
+  {g:"I",t1:"Frankreich",t2:"Irak",datum:"Mo. 22.6., 23:00",ort:"Philadelphia"},
+  {g:"I",t1:"Norwegen",t2:"Senegal",datum:"Di. 23.6., 02:00",ort:"New York/New Jersey"},
+  {g:"I",t1:"Norwegen",t2:"Frankreich",datum:"Fr. 26.6., 21:00",ort:"Boston"},
+  {g:"I",t1:"Senegal",t2:"Irak",datum:"Fr. 26.6., 21:00",ort:"Toronto"},
+  {g:"J",t1:"Argentinien",t2:"Algerien",datum:"Mi. 17.6., 03:00",ort:"Kansas City"},
+  {g:"J",t1:"Österreich",t2:"Jordanien",datum:"Mi. 17.6., 06:00",ort:"San Francisco"},
+  {g:"J",t1:"Argentinien",t2:"Österreich",datum:"Mo. 22.6., 19:00",ort:"Dallas"},
+  {g:"J",t1:"Jordanien",t2:"Algerien",datum:"Di. 23.6., 05:00",ort:"San Francisco"},
+  {g:"J",t1:"Algerien",t2:"Österreich",datum:"So. 28.6., 04:00",ort:"Kansas City"},
+  {g:"J",t1:"Jordanien",t2:"Argentinien",datum:"So. 28.6., 04:00",ort:"Dallas"},
+  {g:"K",t1:"Portugal",t2:"DR Kongo",datum:"Mi. 17.6., 19:00",ort:"Houston"},
+  {g:"K",t1:"Usbekistan",t2:"Kolumbien",datum:"Do. 18.6., 04:00",ort:"Mexiko-Stadt"},
+  {g:"K",t1:"Portugal",t2:"Usbekistan",datum:"Di. 23.6., 19:00",ort:"Houston"},
+  {g:"K",t1:"Kolumbien",t2:"DR Kongo",datum:"Mi. 24.6., 04:00",ort:"Guadalajara"},
+  {g:"K",t1:"Kolumbien",t2:"Portugal",datum:"So. 28.6., 01:30",ort:"Miami"},
+  {g:"K",t1:"DR Kongo",t2:"Usbekistan",datum:"So. 28.6., 01:30",ort:"Atlanta"},
+  {g:"L",t1:"England",t2:"Kroatien",datum:"Mi. 17.6., 22:00",ort:"Dallas"},
+  {g:"L",t1:"Ghana",t2:"Panama",datum:"Do. 18.6., 01:00",ort:"Toronto"},
+  {g:"L",t1:"England",t2:"Ghana",datum:"Di. 23.6., 22:00",ort:"Boston"},
+  {g:"L",t1:"Panama",t2:"Kroatien",datum:"Mi. 24.6., 01:00",ort:"Toronto"},
+  {g:"L",t1:"Panama",t2:"England",datum:"Sa. 27.6., 23:00",ort:"New York/New Jersey"},
+  {g:"L",t1:"Kroatien",t2:"Ghana",datum:"Sa. 27.6., 23:00",ort:"Philadelphia"}
+];
+const WM_KO_DETAILS = {
+  73:{datum:"So. 28.6., 21:00",ort:"Los Angeles"},
+  74:{datum:"Mo. 29.6., 22:30",ort:"Boston"},
+  75:{datum:"Di. 30.6., 03:00",ort:"Monterrey"},
+  76:{datum:"Mo. 29.6., 19:00",ort:"Houston"},
+  77:{datum:"Di. 30.6., 23:00",ort:"New York/New Jersey"},
+  78:{datum:"Di. 30.6., 19:00",ort:"Dallas"},
+  79:{datum:"Mi. 1.7., 03:00",ort:"Mexiko-Stadt"},
+  80:{datum:"Mi. 1.7., 18:00",ort:"Atlanta"},
+  81:{datum:"Do. 2.7., 02:00",ort:"San Francisco"},
+  82:{datum:"Mi. 1.7., 22:00",ort:"Seattle"},
+  83:{datum:"Fr. 3.7., 01:00",ort:"Toronto"},
+  84:{datum:"Do. 2.7., 21:00",ort:"Los Angeles"},
+  85:{datum:"Fr. 3.7., 05:00",ort:"Vancouver"},
+  86:{datum:"Sa. 4.7., 00:00",ort:"Miami"},
+  87:{datum:"Sa. 4.7., 03:30",ort:"Kansas City"},
+  88:{datum:"Fr. 3.7., 20:00",ort:"Dallas"},
+  89:{datum:"Sa. 4.7., 23:00",ort:"Philadelphia"},
+  90:{datum:"Sa. 4.7., 19:00",ort:"Houston"},
+  91:{datum:"So. 5.7., 22:00",ort:"New York/New Jersey"},
+  92:{datum:"Mo. 6.7., 02:00",ort:"Mexiko-Stadt"},
+  93:{datum:"Mo. 6.7., 21:00",ort:"Dallas"},
+  94:{datum:"Di. 7.7., 02:00",ort:"Seattle"},
+  95:{datum:"Di. 7.7., 18:00",ort:"Atlanta"},
+  96:{datum:"Di. 7.7., 22:00",ort:"Vancouver"},
+  97:{datum:"Do. 9.7., 22:00",ort:"Boston"},
+  98:{datum:"Fr. 10.7., 21:00",ort:"Los Angeles"},
+  99:{datum:"Sa. 11.7., 23:00",ort:"Miami"},
+  100:{datum:"So. 12.7., 03:00",ort:"Kansas City"},
+  101:{datum:"Di. 14.7., 21:00",ort:"Dallas"},
+  102:{datum:"Mi. 15.7., 21:00",ort:"Atlanta"},
+  103:{datum:"Sa. 18.7., 23:00",ort:"Miami"},
+  104:{datum:"So. 19.7., 21:00",ort:"New York/New Jersey"}
+};
+// Match-Nummer einer K.-o.-Partie aus Runde + Position (entspricht offiz. Baum):
+const KO_MATCHNR = {
+  2:[89,90,93,94,91,92,95,96],  // Achtelfinale
+  3:[97,98,99,100],             // Viertelfinale
+  4:[101,102],                  // Halbfinale
+  5:[103,104]                   // Spiel um Platz 3 (103) + Finale (104)
+};
+function koMatchNr(runde, koIndex) {
+  if (runde === 1) return R32_STRUKTUR[koIndex] ? R32_STRUKTUR[koIndex].nr : null;
+  return (KO_MATCHNR[runde] || [])[koIndex] ?? null;
+}
 
 function kompletterWMPlanLaden() {
   if (state.spiele.length && !confirm(
@@ -1365,25 +1484,19 @@ function kompletterWMPlanLaden() {
     "tauchen aber nicht mehr auf, falls die Spiel-IDs nicht mehr existieren. Trotzdem fortfahren?"
   )) return;
 
-  const neueSpiele = [];
-  Object.entries(GRUPPEN).forEach(([buchstabe, teams]) => {
-    GRUPPEN_PAARUNGEN.forEach((paar, idx) => {
-      const spieltag = Math.floor(idx / 2) + 1;
-      neueSpiele.push({
-        id: id(),
-        t1: teams[paar[0]],
-        t2: teams[paar[1]],
-        phase: `Gruppe ${buchstabe}`,
-        datum: `Spieltag ${spieltag} · ${GRUPPEN_SPIELTAG_DATUM[spieltag]}`,
-        gespielt: false, e1: null, e2: null
-      });
-    });
-  });
-
-  state.spiele = neueSpiele;
+  // Echte Fixtures (Datum/Uhrzeit MESZ + Stadion) statt generiertem Rundenturnier.
+  state.spiele = WM_GRUPPEN_FIXTURES.map(f => ({
+    id: id(),
+    t1: f.t1,
+    t2: f.t2,
+    phase: `Gruppe ${f.g}`,
+    datum: f.datum,
+    ort: f.ort,
+    gespielt: false, e1: null, e2: null
+  }));
   speichern();
   alleRendern();
-  toast(`🌍 Kompletter Gruppenplan geladen: ${neueSpiele.length} Spiele in 12 Gruppen!`);
+  toast(`🌍 Echter WM-Spielplan geladen: ${state.spiele.length} Spiele mit Terminen & Stadien!`);
   konfettiRegen(70);
   zeigeView("tippen");
 }
@@ -1528,8 +1641,12 @@ function renderGruppenTabellen() {
 
 // Hilfsfunktionen für K.-o.-Spiele
 function mkKo(phase, runde, idx, t1, t2) {
-  return { id:id(), t1, t2, phase, datum: KO_DATUM[phase] || "K.-o.-Runde", gespielt:false,
-           e1:null, e2:null, sieger:null, koRunde:runde, koIndex:idx };
+  const nr = koMatchNr(runde, idx);
+  const det = nr != null ? WM_KO_DETAILS[nr] : null;
+  return { id:id(), t1, t2, phase,
+           datum: det ? det.datum : (KO_DATUM[phase] || "K.-o.-Runde"),
+           ort: det ? det.ort : null,
+           gespielt:false, e1:null, e2:null, sieger:null, koRunde:runde, koIndex:idx };
 }
 
 // Ordnet die 8 qualifizierten Gruppendritten den 8 Drittplatzierten-Slots zu –
