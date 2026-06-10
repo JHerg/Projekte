@@ -1212,7 +1212,9 @@ function renderSpiele() {
 
   hinweis.innerHTML = spObj
     ? `Du tippst als <b>${spObj.avatar} ${esc(spObj.name)}</b>. Oben kannst du wechseln.`
-    : `⚠️ Lege zuerst unter <b>Familie</b> Mitspieler an!`;
+    : state.spieler.length
+      ? `👀 Du schaust neutral zu (kein Spieler ausgewählt). Wähle oben jemanden aus, um selbst zu tippen.`
+      : `⚠️ Lege zuerst unter <b>Familie</b> Mitspieler an!`;
 
   renderTippFortschritt();
   renderPhasenFilter();
