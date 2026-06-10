@@ -933,10 +933,10 @@ function renderSpielerSelect() {
     sel.innerHTML = '<option value="">– noch keine Spieler –</option>';
     return;
   }
-  // Ohne aktive Auswahl IMMER einen Platzhalter zeigen – sonst wählt der
-  // Browser automatisch die erste Option aus, obwohl gar niemand ausgewählt
-  // ist (führt zu „Wähle oben zuerst einen Spieler!“ trotz sichtbarem Namen).
-  const platzhalter = state.aktiverSpielerId ? "" : '<option value="">– Spieler wählen –</option>';
+  // Immer eine "Niemand"-Option anbieten – damit kann man sich ohne PIN
+  // wieder neutral abmelden, z.B. bevor eine andere Person am selben Gerät
+  // tippt. Ohne aktive Auswahl ist sie automatisch vorausgewählt.
+  const platzhalter = `<option value="" ${state.aktiverSpielerId ? '' : 'selected'}>– Niemand (abmelden) –</option>`;
   sel.innerHTML = platzhalter + state.spieler.map(s =>
     `<option value="${s.id}" ${s.id===state.aktiverSpielerId?'selected':''}>${s.avatar} ${esc(s.name)}</option>`
   ).join("");
