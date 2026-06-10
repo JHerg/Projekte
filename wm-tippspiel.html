@@ -803,7 +803,8 @@ function speicherWarnungZeigen() {
     </div>`;
   document.querySelector("main").prepend(w);
 }
-const id = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+let _idZaehler = 0;
+const id = () => Date.now().toString(36) + (_idZaehler++).toString(36) + Math.random().toString(36).slice(2,7);
 
 // Schützt vor HTML-Injection: Nutzer-Eingaben (Namen, Bonus-Fragen, Optionen)
 // werden per innerHTML eingefügt – Sonderzeichen wie < > " ' & müssen daher
@@ -2392,6 +2393,30 @@ function migriereSpieltage() {
   if (geaendert) speichern();
 }
 
+// Bereinigt doppelte Bonus-Fragen (gleiche Frage oder gleiche ID), die durch
+// frühere Versionen entstanden sein könnten – sonst teilen sich zwei Fragen
+// denselben Speicherplatz für die Antworten.
+function migriereBonusFragen() {
+  const gesehen = new Map();   // frage -> behaltene Frage
+  const ersatz = new Map();    // verworfene id -> behaltene id
+  const bereinigt = [];
+  state.bonusFragen.forEach(b => {
+    const vorhanden = gesehen.get(b.frage);
+    if (vorhanden) { ersatz.set(b.id, vorhanden.id); return; }
+    gesehen.set(b.frage, b);
+    bereinigt.push(b);
+  });
+  if (!ersatz.size) return;
+  state.bonusFragen = bereinigt;
+  Object.values(state.bonusTipps).forEach(t => {
+    ersatz.forEach((behaltenId, verworfenId) => {
+      if (t[verworfenId] !== undefined && t[behaltenId] === undefined) t[behaltenId] = t[verworfenId];
+      delete t[verworfenId];
+    });
+  });
+  speichern();
+}
+
 // ----- Beispieldaten zum sofortigen Ausprobieren -----
 function beispielDatenLaden() {
   if (state.spieler.length && !confirm("Vorhandene Daten werden ersetzt. Fortfahren?")) return;
@@ -2879,6 +2904,7 @@ let _cloudBereit = false;      // true, sobald das Erst-Laden aus der Cloud fert
 let _cloudAnwenden = false;    // true, während ein Remote-Update eingespielt wird
 let _letzterSync = null;       // Schnappschuss des zuletzt synchronisierten Zustands
 let _reloadTimer = null;
+let _schreibtGerade = 0;       // Anzahl eigener, noch nicht abgeschlossener Schreibvorgänge
 
 function cloudKonfigDa() {
   const c = window.CLOUD_CONFIG;
@@ -2979,6 +3005,9 @@ function planeReload() {
     if (a && (a.tagName === "INPUT" || a.tagName === "SELECT") && a.closest("main")) {
       planeReload(); return;     // später erneut versuchen
     }
+    if (_schreibtGerade > 0) {
+      planeReload(); return;     // eigene Schreibvorgänge erst abschließen lassen
+    }
     cloudVollLaden().catch(() => {});
   }, 400);
 }
@@ -3034,6 +3063,7 @@ async function cloudVollLaden() {
   state.bonusTipps = {};
   bts.forEach(r => { (state.bonusTipps[r.player_id] = state.bonusTipps[r.player_id] || {})[r.question_id] = r.antwort; });
   state.adminPin = settings ? (settings.admin_pin || null) : null;
+  migriereBonusFragen();
 
   // Geräte-eigene Spielerwahl wiederherstellen (kommt nicht aus der Cloud).
   const gid = geraeteSpielerId();
@@ -3136,10 +3166,11 @@ function cloudDiffUndPush() {
   }
   _letzterSync = next;
   if (!tasks.length) return;
+  _schreibtGerade++;
   Promise.allSettled(tasks).then(rs => {
     const fehler = rs.some(r => r.status === "rejected" || (r.value && r.value.error));
     if (fehler) toast("⚠️ Cloud-Sync teilweise fehlgeschlagen – beim nächsten Speichern erneut.");
-  });
+  }).finally(() => { _schreibtGerade--; });
 }
 
 // ===================== INIT =====================
@@ -3165,6 +3196,7 @@ function alleRendern() {
 themeLaden();
 pruefeLinkImport();
 migriereSpieltage();
+migriereBonusFragen();
 renderTeamSelects();
 alleRendern();
 starteCountdown();
