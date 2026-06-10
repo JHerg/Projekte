@@ -2303,6 +2303,34 @@ function kompletterWMPlanLaden() {
   zeigeView("tippen");
 }
 
+// Migration: Bestehende (vor dem Spieltag-Update geladene) Gruppenspiele haben
+// noch kein `spieltag`-Feld. Hier tragen wir es nachträglich ein, indem wir die
+// gespeicherten Partien anhand der Mannschafts-Paarung im offiziellen Fixture-Plan
+// nachschlagen. So erscheint der Spieltag-Filter auch ohne erneutes Plan-Laden.
+function migriereSpieltage() {
+  // Nur nötig, wenn es Gruppenspiele ohne spieltag gibt.
+  const offen = state.spiele.filter(s => s.phase && s.phase.startsWith("Gruppe") && !s.spieltag);
+  if (!offen.length) return;
+
+  // Zähler je Gruppe → Spieltag = aufgerundete Position/2 (2 Spiele pro Spieltag).
+  const _gz = {};
+  const spieltagFuer = {};
+  WM_GRUPPEN_FIXTURES.forEach(f => {
+    _gz[f.g] = (_gz[f.g] || 0) + 1;
+    // Paarung richtungsunabhängig als Schlüssel ablegen.
+    const key = `${f.g}|${[f.t1, f.t2].sort().join("~")}`;
+    spieltagFuer[key] = Math.ceil(_gz[f.g] / 2);
+  });
+
+  let geaendert = 0;
+  offen.forEach(s => {
+    const g = s.phase.replace("Gruppe ", "").trim();
+    const key = `${g}|${[s.t1, s.t2].sort().join("~")}`;
+    if (spieltagFuer[key]) { s.spieltag = spieltagFuer[key]; geaendert++; }
+  });
+  if (geaendert) speichern();
+}
+
 // ----- Beispieldaten zum sofortigen Ausprobieren -----
 function beispielDatenLaden() {
   if (state.spieler.length && !confirm("Vorhandene Daten werden ersetzt. Fortfahren?")) return;
@@ -2799,6 +2827,7 @@ function alleRendern() {
 
 themeLaden();
 pruefeLinkImport();
+migriereSpieltage();
 renderTeamSelects();
 alleRendern();
 naechsteQuizFrage();
