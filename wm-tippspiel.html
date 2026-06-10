@@ -187,7 +187,7 @@
   .pokal-box .name { font-size: 1.4rem; font-weight: 800; margin-top: 4px; }
 
   .strafe-box {
-    background: linear-gradient(135deg, #ef9a9a, #e57373);
+    background: linear-gradient(135deg, #ffd54f, #ffb300);
     border-radius: 16px; padding: 16px; text-align: center; color: #fff;
     margin-bottom: 14px; box-shadow: var(--schatten);
   }
@@ -481,10 +481,10 @@
     </div>
 
     <div class="karte">
-      <h2>😈 Strafen-Generator</h2>
-      <p class="info-zeile">Der aktuell Letzte muss ran! Dreh am Rad des Schicksals…</p>
+      <h2>🎁 Aufgaben-Generator</h2>
+      <p class="info-zeile">Der aktuell Letzte sucht sich (oder lost) eine kleine, freundliche Aufgabe aus!</p>
       <div id="strafeContainer"></div>
-      <button onclick="ziehStrafe()" class="gefahr" style="width:100%;margin-top:10px">🎰 Strafe für die rote Laterne ziehen!</button>
+      <button onclick="ziehStrafe()" class="gold" style="width:100%;margin-top:10px">🎰 Aufgabe für die rote Laterne ziehen!</button>
     </div>
   </section>
 
@@ -736,20 +736,28 @@ const TITEL = {
   letzter: ["🏮 Rote Laterne", "🪦 Tipp-Totalschaden", "🙈 Pannen-Prophet"]
 };
 
-// ----- Strafen für den Letzten -----
+// ----- Freundliche Aufgaben für den Letzten -----
 const STRAFEN = [
-  "Eine Woche lang Abwasch! 🧽",
-  "Tor-Jubel-Tanz vor der ganzen Familie vorführen 💃",
+  "Einmal für die ganze Familie den Tisch decken 🍽️",
+  "Jedem Mitspieler eine kleine Lobeskarte mit einem Kompliment schreiben 💌",
   "Snacks für den nächsten Spieltag besorgen 🍿",
-  "Die Nationalhymne des Tabellenführers singen 🎤",
-  "Liegestütze machen – so viele wie Punkte Rückstand! 💪",
-  "Das nächste Spiel im Trikot des Erzrivalen schauen 👕",
   "Eine Runde Eis für alle ausgeben 🍦",
-  "Beim nächsten Spieltag Kommentator spielen (mit Begeisterung!) 🎙️",
-  "Müll rausbringen, bis sich die Tabelle dreht 🗑️",
-  "Kabinenpredigt halten und sich selbst motivieren 📣",
   "Den Kaffee/Kakao für die Familie kochen ☕",
-  "Eine Selfie-Grimasse machen und als neues Avatar nehmen 🤳"
+  "Allen ein High-Five geben und 'Gut gespielt!' sagen 🙌",
+  "Eine Selfie-Grimasse machen und als neues Avatar nehmen 🤳",
+  "Dem Tabellenführer eine Papierkrone basteln und überreichen 👑",
+  "Eine lustige Tanzeinlage zur WM-Hymne hinlegen 💃",
+  "Beim nächsten Spieltag als Kommentator durchs Spiel führen 🎙️",
+  "Einmal den Abwasch übernehmen 🧽",
+  "Jedem ein kleines Lieblings-Naschi mitbringen 🍫",
+  "Ein Loblied auf den Tabellenführer dichten und vortragen 🎶",
+  "Ein Bild vom besten Tipp-Moment der Saison malen 🎨",
+  "Eine Geschichte erzählen, warum der eigene Tipp danebenging 📖",
+  "Wäsche zusammenlegen oder einen kleinen Hausdienst übernehmen 🧺",
+  "Jedem ein Mini-Kompliment zu seinem Tippglück machen 🍀",
+  "Eine Massage-Minute für ein Familienmitglied der Wahl 💆",
+  "Einmal den Müll rausbringen 🗑️",
+  "Einen Tor-Jubel-Tanz vor der ganzen Familie vorführen 💃⚽"
 ];
 
 // ----- Quizfragen für die Pause -----
@@ -857,6 +865,17 @@ function zeigeView(name) {
 
 // ===================== SPIELER =====================
 function setzeAktivenSpieler(spid) {
+  if (spid && spid !== state.aktiverSpielerId) {
+    const sp = state.spieler.find(s => s.id === spid);
+    if (sp && sp.pin) {
+      const eingabe = (prompt(`🔒 ${sp.avatar} ${sp.name} hat ein Tipp-Passwort.\nBitte eingeben, um zu wechseln:`) || "").trim();
+      if (eingabe !== sp.pin) {
+        toast("❌ Falsches Passwort.");
+        renderSpielerSelect();
+        return;
+      }
+    }
+  }
   state.aktiverSpielerId = spid || null;
   // Im Cloud-Modus ist die Spielerwahl GERÄTE-eigen (jedes Handy = ein Spieler)
   // und wird NICHT in die gemeinsame Datenbank geschrieben.
@@ -871,7 +890,8 @@ function spielerHinzufuegen() {
   const avatar = document.querySelector("#avatarPicker .gewaehlt")?.dataset.emoji;
   if (!name) { toast("Bitte einen Namen eingeben! ✍️"); return; }
   if (!avatar) { toast("Bitte ein Avatar wählen! 🦁"); return; }
-  const neuerSpieler = { id: id(), name, avatar };
+  const pin = (prompt(`Optional: Vergib ein eigenes Tipp-Passwort für ${name} (z.B. 4 Ziffern).\nDamit kann nur ${name} selbst die eigenen Tipps ändern.\nLeer lassen = kein Passwort.`) || "").trim();
+  const neuerSpieler = { id: id(), name, avatar, pin: pin || null };
   state.spieler.push(neuerSpieler);
   document.getElementById("neuerSpielerName").value = "";
   if (!state.aktiverSpielerId) state.aktiverSpielerId = neuerSpieler.id;
@@ -885,6 +905,21 @@ function spielerHinzufuegen() {
   toast(avatar + " " + name + " ist im Team! ⚽");
   konfettiRegen(40);
   alleRendern();
+}
+
+function spielerPinAendern(spid) {
+  const sp = state.spieler.find(s => s.id === spid);
+  if (!sp) return;
+  if (sp.pin) {
+    const alt = (prompt(`🔒 Aktuelles Passwort von ${sp.name} eingeben (oder Admin-PIN):`) || "").trim();
+    const adminOk = istAdmin() && state.adminPin && alt === state.adminPin;
+    if (alt !== sp.pin && !adminOk) { toast("❌ Falsches Passwort."); return; }
+  }
+  const neu = (prompt(`Neues Tipp-Passwort für ${sp.name} (leer = kein Passwort):`) || "").trim();
+  sp.pin = neu || null;
+  speichern();
+  toast(neu ? "🔒 Passwort gesetzt." : "🔓 Passwort entfernt.");
+  renderSpielerListe();
 }
 
 function spielerLoeschen(spid) {
@@ -907,6 +942,7 @@ function renderSpielerListe() {
   }
   c.innerHTML = state.spieler.map(s =>
     `<span class="spieler-chip">${s.avatar} ${esc(s.name)}
+      <button class="klein" onclick="spielerPinAendern('${s.id}')" title="Tipp-Passwort ${s.pin?'ändern':'vergeben'}">${s.pin?'🔒':'🔓'}</button>
       <button class="nur-admin" onclick="spielerLoeschen('${s.id}')" title="entfernen">✕</button></span>`
   ).join("");
 }
@@ -2063,7 +2099,7 @@ function turnierVorhersagenHinzufuegen() {
   }
 }
 
-// ===================== STRAFEN-GENERATOR =====================
+// ===================== AUFGABEN-GENERATOR =====================
 function ziehStrafe() {
   const stand = berechneStand();
   if (stand.length < 2) { toast("Dafür braucht's mindestens 2 Mitspieler! 👬"); return; }
@@ -2072,7 +2108,7 @@ function ziehStrafe() {
   const box = document.getElementById("strafeContainer");
 
   box.innerHTML = `<div class="strafe-box">
-    <div class="name">😈 ${letzter.avatar} ${esc(letzter.name)}, du bist dran!</div>
+    <div class="name">🎁 ${letzter.avatar} ${esc(letzter.name)}, du bist dran!</div>
     <div class="strafe-text" id="strafeText">🎰 …</div>
   </div>`;
 
@@ -2988,7 +3024,7 @@ async function cloudVollLaden() {
   }
 
   _cloudAnwenden = true;
-  state.spieler = players.map(r => ({ id: r.id, name: r.name, avatar: r.avatar || "" }));
+  state.spieler = players.map(r => ({ id: r.id, name: r.name, avatar: r.avatar || "", pin: r.pin || null }));
   state.spiele = matches.slice()
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     .map(r => {
@@ -3055,7 +3091,7 @@ function cloudHochladen() {
 // --- Normalisierung & Diff-basiertes Schreiben (nur geänderte Zeilen) ---
 function cloudNorm(st) {
   const players = {};
-  st.spieler.forEach(s => { players[s.id] = { id: s.id, name: s.name, avatar: s.avatar || null }; });
+  st.spieler.forEach(s => { players[s.id] = { id: s.id, name: s.name, avatar: s.avatar || null, pin: s.pin || null }; });
   const matches = {};
   st.spiele.forEach((s, i) => {
     matches[s.id] = {
