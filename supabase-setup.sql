@@ -13,8 +13,11 @@ create table if not exists players (
   id         text primary key,        -- ID kommt aus der App (kein Auto-Wert)
   name       text not null,
   avatar     text,
+  pin        text,                    -- optionales Tipp-Passwort des Mitspielers
   created_at timestamptz default now()
 );
+-- Falls die Tabelle schon vorher existierte: Spalte nachrüsten.
+alter table players add column if not exists pin text;
 
 create table if not exists matches (
   id        text primary key,
