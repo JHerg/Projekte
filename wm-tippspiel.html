@@ -1013,6 +1013,14 @@ function spielLoeschen(spid) {
 function tippSpeichern(spielId, feld, wert) {
   const sp = state.aktiverSpielerId;
   if (!sp) return;
+  const spiel = state.spiele.find(s => s.id === spielId);
+  // Sicherheitsnetz: Falls die Seite noch von vor dem Anpfiff offen war,
+  // werden verspätete Tipps abgefangen statt gespeichert.
+  if (!spiel || !istTippbar(spiel)) {
+    toast("🔒 Tippabgabe für dieses Spiel ist geschlossen.");
+    renderSpiele();
+    return;
+  }
   if (!state.tipps[sp]) state.tipps[sp] = {};
   if (!state.tipps[sp][spielId]) state.tipps[sp][spielId] = { e1: null, e2: null };
   const v = wert === "" ? null : Math.max(0, parseInt(wert) || 0);
@@ -1101,7 +1109,7 @@ function jokerUmschalten(spielId) {
   const sp = state.aktiverSpielerId;
   if (!sp) { toast("Wähle oben zuerst einen Spieler!"); return; }
   const spiel = state.spiele.find(s => s.id === spielId);
-  if (spiel.gespielt || spiel.gesperrt) { toast("Für dieses Spiel ist der Joker gesperrt 🔒"); return; }
+  if (!istTippbar(spiel)) { toast("Für dieses Spiel ist der Joker gesperrt 🔒"); return; }
   if (state.joker[sp] === spielId) {
     delete state.joker[sp];
     toast("Joker entfernt.");
@@ -1119,11 +1127,12 @@ function jokerUmschalten(spielId) {
 function kopfRechtsHTML(spiel) {
   const sp = state.aktiverSpielerId;
   const joker = sp && istJoker(sp, spiel.id) ? `<span class="punkte-badge joker-badge">⭐ ×2</span>` : "";
-  const schloss = spiel.gesperrt ? `<span class="punkte-badge p0" title="gesperrt">🔒</span>` : "";
+  const schloss = (spiel.gesperrt || (!spiel.gespielt && spielHatBegonnen(spiel)))
+    ? `<span class="punkte-badge p0" title="Tippabgabe geschlossen">🔒</span>` : "";
   const pkt = sp ? punkteFuerSpieler(sp, spiel) : null;
   const pktBadge = pkt !== null ? `<span class="punkte-badge p${pkt>=4?4:pkt>=3?3:pkt>=2?2:0}">${pkt} P</span>` : "";
   return `${joker}${schloss}${pktBadge}
-    <button class="klein gefahr" onclick="spielLoeschen('${spiel.id}')" style="margin-left:6px">✕</button>`;
+    <button class="klein gefahr nur-admin" onclick="spielLoeschen('${spiel.id}')" style="margin-left:6px">✕</button>`;
 }
 
 // Dynamischer Anzeige-Teil (Endstand + Tipp-Übersicht) – getrennt von den
@@ -1132,17 +1141,23 @@ function spielDynamischHTML(spiel) {
   let html = spiel.gespielt
     ? `<div class="ergebnis-echt">⚽ Endstand: ${spiel.e1} : ${spiel.e2}${spiel.sieger?` · Sieger: ${flaggeVon(spiel.sieger)} ${esc(spiel.sieger)} (n.E.)`:''}</div>`
     : "";
-  if (spiel.gespielt && state.spieler.length) {
+  // Tipps aller Mitspieler erst ab Anpfiff zeigen (vorher geheim, damit
+  // niemand abschreiben kann). Vor dem Ergebnis ohne Punkte, danach mit.
+  if (tippsOffen(spiel) && state.spieler.length) {
     const zeilen = state.spieler.map(s => {
       const tt = state.tipps[s.id]?.[spiel.id];
-      const p = punkteFuerSpieler(s.id, spiel);
       const tippStr = (tt && tt.e1!==null && tt.e2!==null) ? `${tt.e1}:${tt.e2}` : "–";
       const stern = istJoker(s.id, spiel.id) ? " ⭐" : "";
-      const klasse = (p>=4?4:p>=3?3:p>=2?2:0);
-      return `<div class="zeile"><span>${s.avatar} ${esc(s.name)}: <b>${tippStr}</b>${stern}</span>
-        <span class="punkte-badge p${klasse}">${p??0} P</span></div>`;
+      let badge = "";
+      if (spiel.gespielt) {
+        const p = punkteFuerSpieler(s.id, spiel);
+        const klasse = (p>=4?4:p>=3?3:p>=2?2:0);
+        badge = `<span class="punkte-badge p${klasse}">${p??0} P</span>`;
+      }
+      return `<div class="zeile"><span>${s.avatar} ${esc(s.name)}: <b>${tippStr}</b>${stern}</span>${badge}</div>`;
     }).join("");
-    html += `<details><summary>Alle Tipps anzeigen</summary><div class="tipps-uebersicht">${zeilen}</div></details>`;
+    const titel = spiel.gespielt ? "Alle Tipps anzeigen" : "👀 So hat die Familie getippt";
+    html += `<details${spiel.gespielt ? "" : " open"}><summary>${titel}</summary><div class="tipps-uebersicht">${zeilen}</div></details>`;
   }
   return html;
 }
@@ -1240,15 +1255,15 @@ function renderSpiele() {
 
   c.innerHTML = sichtbar.map(spiel => {
     const t = (sp && state.tipps[sp] && state.tipps[sp][spiel.id]) || { e1:null, e2:null };
-    // Tippen gesperrt, wenn kein Spieler aktiv, das Spiel schon gespielt
-    // oder vom Spielleiter manuell gesperrt wurde.
-    const tippGesperrt = !sp || spiel.gespielt || spiel.gesperrt;
+    // Tippen gesperrt, wenn kein Spieler aktiv, das Spiel schon gespielt,
+    // vom Spielleiter gesperrt – oder der Anpfiff bereits erfolgt ist.
+    const tippGesperrt = !sp || !istTippbar(spiel);
     const dis = tippGesperrt ? "disabled" : "";
     const istKo = !spiel.phase.startsWith("Gruppe") && spiel.phase !== "Gruppenphase";
 
-    // Joker-Knopf (nur sinnvoll, solange noch nicht gespielt/gesperrt)
+    // Joker-Knopf (nur sinnvoll, solange das Spiel noch tippbar ist)
     const jokerAktiv = sp && istJoker(sp, spiel.id);
-    const jokerBtn = (sp && !spiel.gespielt && !spiel.gesperrt)
+    const jokerBtn = (sp && istTippbar(spiel))
       ? `<button class="klein ${jokerAktiv?'gold':'sekundaer'}" style="margin-top:6px"
            onclick="jokerUmschalten('${spiel.id}')">${jokerAktiv?'⭐ Joker aktiv (×2)':'⭐ Als Joker setzen'}</button>`
       : "";
@@ -1282,7 +1297,7 @@ function renderSpiele() {
         </div>
         <div class="team"><span class="flagge">${flaggeVon(spiel.t2)}</span>${esc(spiel.t2)}</div>
       </div>
-      ${tippGesperrt && sp && !spiel.gespielt ? '<div class="info-zeile" style="text-align:center">🔒 Tipp gesperrt</div>' : ''}
+      ${tippGesperrt && sp && !spiel.gespielt ? `<div class="info-zeile" style="text-align:center">🔒 ${spiel.gesperrt ? 'Vom Spielleiter gesperrt' : '⏱️ Anpfiff erfolgt – Tippabgabe geschlossen'}</div>` : ''}
       <div style="text-align:center">${jokerBtn}</div>
       <details class="ergebnis-details nur-admin" style="margin-top:8px">
         <summary>📝 Ergebnis / Sperre (Spielleiter)</summary>
@@ -1777,6 +1792,23 @@ function parseSpielDatum(spiel) {
   const tag = +m[1], monat = +m[2], std = +m[3], min = +m[4];
   return new Date(2026, monat - 1, tag, std, min, 0);
 }
+
+// ----- Tipp-Deadline & Tipp-Geheimhaltung (wie bei großen Tippspielen) -----
+// Hat das Spiel laut Anstoßzeit schon begonnen? (Ohne parsebares Datum: nein.)
+function spielHatBegonnen(spiel) {
+  const d = parseSpielDatum(spiel);
+  return !!d && d <= new Date();
+}
+// Tippen ist erlaubt bis zum Anpfiff – danach (oder bei manueller Sperre /
+// eingetragenem Ergebnis) ist automatisch Schluss.
+function istTippbar(spiel) {
+  return !spiel.gespielt && !spiel.gesperrt && !spielHatBegonnen(spiel);
+}
+// Die Tipps ALLER Mitspieler werden erst ab Anpfiff sichtbar (bzw. wenn das
+// Spiel gesperrt oder ausgewertet ist) – vorher bleibt jeder Tipp geheim.
+function tippsOffen(spiel) {
+  return spiel.gespielt || spiel.gesperrt || spielHatBegonnen(spiel);
+}
 // Spiele chronologisch (nach Anstoßzeit, falls vorhanden; sonst Listenreihenfolge).
 function spieleChronologisch(nurGespielt) {
   let arr = state.spiele.slice();
@@ -1806,10 +1838,26 @@ function naechstesSpielInfo() {
   return { kommend, laufend };
 }
 
+let _anpfiffMarke = null;   // Anstoßzeit des nächsten Spiels (für Auto-Update)
 function renderCountdown() {
   const box = document.getElementById("countdownBox");
   if (!box) return;
+  const jetzt = new Date();
+  // Genau beim Anpfiff einmal neu rendern: Tipp-Eingaben schließen sich und
+  // die Tipps aller Mitspieler werden sichtbar – ganz ohne Seiten-Reload.
+  // (Tippt gerade jemand in ein Feld, wird der nächste Tick abgewartet.)
+  if (_anpfiffMarke && jetzt >= _anpfiffMarke) {
+    const a = document.activeElement;
+    const tipptGerade = a && a.tagName === "INPUT" && a.closest("main");
+    if (!tipptGerade) {
+      _anpfiffMarke = null;
+      renderSpiele();
+      renderKonsens();
+    }
+  }
   const { kommend, laufend } = naechstesSpielInfo();
+  // Marker nicht überschreiben, solange ein fälliges Re-Render noch aussteht
+  if (!_anpfiffMarke || _anpfiffMarke > jetzt) _anpfiffMarke = kommend ? kommend.d : null;
 
   if (laufend && !kommend) {
     const s = laufend.s;
@@ -2047,7 +2095,11 @@ function renderKonsens() {
       if (einzel) {
         const tendenz = einzel === stimmen.heim ? `${esc(spiel.t1)}-Sieg`
           : einzel === stimmen.aus ? `${esc(spiel.t2)}-Sieg` : "Unentschieden";
-        hinweis = `<div class="konsens-aussenseiter">🎭 Außenseiter: ${einzel[0].avatar} ${esc(einzel[0].name)} setzt als Einzige:r auf ${tendenz}!</div>`;
+        // Geheimhaltung: Den Namen des Außenseiters gibt's erst ab Anpfiff –
+        // vorher bleibt anonym, WER gegen den Strom tippt.
+        hinweis = tippsOffen(spiel)
+          ? `<div class="konsens-aussenseiter">🎭 Außenseiter: ${einzel[0].avatar} ${esc(einzel[0].name)} setzt als Einzige:r auf ${tendenz}!</div>`
+          : `<div class="konsens-aussenseiter">🎭 Eine Person setzt als Einzige auf ${tendenz} – wer, zeigt sich beim Anpfiff!</div>`;
       }
     }
 
