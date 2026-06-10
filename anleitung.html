@@ -3,177 +3,107 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📖 So funktioniert unser Familien-WM-Tippspiel 2026</title>
+<title>📖 So geht unser Familien-WM-Tippspiel 2026</title>
 <style>
   :root {
     --gruen: #0d4d2b; --gruen-hell: #1b6e41; --gold: #ffd54f;
-    --karte: #ffffff; --text: #243329; --grau: #5b6b60;
-    --schatten: 0 3px 12px rgba(0,0,0,.10);
+    --text: #243329; --grau: #5b6b60; --schatten: 0 3px 12px rgba(0,0,0,.10);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    background: #eef3ee; color: var(--text); line-height: 1.55;
-    padding-bottom: 60px;
-  }
-  header {
-    background: linear-gradient(135deg, var(--gruen), var(--gruen-hell));
-    color: #fff; text-align: center; padding: 34px 18px 28px;
-  }
-  header .ball { font-size: 3rem; }
-  header h1 { font-size: 1.5rem; margin-top: 6px; text-shadow: 2px 2px 4px rgba(0,0,0,.35); }
-  header p { opacity: .92; margin-top: 8px; font-size: .95rem; max-width: 560px; margin-left:auto; margin-right:auto; }
-  main { max-width: 640px; margin: 0 auto; padding: 18px 14px; }
-  .karte {
-    background: var(--karte); border-radius: 16px; box-shadow: var(--schatten);
-    padding: 18px 16px; margin-bottom: 16px;
-  }
-  .karte h2 { font-size: 1.15rem; color: var(--gruen); margin-bottom: 10px; }
-  .schritt { display: flex; gap: 12px; align-items: flex-start; margin-top: 14px; }
-  .schritt .nr {
-    flex: 0 0 34px; height: 34px; border-radius: 50%;
-    background: var(--gruen); color: var(--gold); font-weight: 800;
-    display: flex; align-items: center; justify-content: center; font-size: 1.05rem;
-  }
-  .schritt .txt b { color: var(--gruen); }
-  .hinweis {
-    background: #fff8e1; border-left: 4px solid var(--gold);
-    border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: .92rem;
-  }
-  .geraet {
-    border: 2px solid #dfe8df; border-radius: 12px; padding: 12px 14px; margin-top: 12px;
-  }
-  .geraet h3 { font-size: 1rem; margin-bottom: 6px; }
-  .tabelle { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: .92rem; }
-  .tabelle th, .tabelle td { padding: 8px 6px; text-align: left; border-bottom: 1px solid #e7eee7; }
-  .tabelle th { color: var(--gruen); }
-  .tabelle td.p { text-align: center; font-weight: 800; color: var(--gruen); white-space: nowrap; }
-  .feature { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; }
-  .feature .emo { font-size: 1.5rem; flex: 0 0 34px; text-align: center; }
-  .feature b { color: var(--gruen); }
-  .start-knopf {
-    display: block; text-align: center; background: linear-gradient(135deg, #2e7d32, #43a047);
-    color: #fff; font-weight: 800; font-size: 1.05rem; text-decoration: none;
-    border-radius: 14px; padding: 14px; margin-top: 14px; box-shadow: var(--schatten);
-  }
-  .fusszeile { text-align: center; color: var(--grau); font-size: .85rem; margin-top: 24px; }
-  .chip {
-    display: inline-block; background: #e8f2ea; border-radius: 20px;
-    padding: 2px 10px; font-size: .85rem; color: var(--gruen); font-weight: 600;
-  }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+         background: #eef3ee; color: var(--text); line-height: 1.5; padding-bottom: 50px; }
+  header { background: linear-gradient(135deg, var(--gruen), var(--gruen-hell));
+           color: #fff; text-align: center; padding: 26px 16px 22px; }
+  header h1 { font-size: 1.35rem; margin-top: 4px; text-shadow: 2px 2px 4px rgba(0,0,0,.35); }
+  header p { opacity: .92; margin-top: 6px; font-size: .92rem; }
+  main { max-width: 620px; margin: 0 auto; padding: 16px 14px; }
+  .karte { background: #fff; border-radius: 16px; box-shadow: var(--schatten);
+           padding: 16px; margin-bottom: 14px; }
+  .karte h2 { font-size: 1.1rem; color: var(--gruen); margin-bottom: 8px; }
+  .schritt { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; }
+  .schritt .nr { flex: 0 0 30px; height: 30px; border-radius: 50%;
+                 background: var(--gruen); color: var(--gold); font-weight: 800;
+                 display: flex; align-items: center; justify-content: center; }
+  .schritt b { color: var(--gruen); }
+  .hinweis { background: #fff8e1; border-left: 4px solid var(--gold);
+             border-radius: 8px; padding: 9px 11px; margin-top: 10px; font-size: .9rem; }
+  .tabelle { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: .92rem; }
+  .tabelle td { padding: 7px 6px; border-bottom: 1px solid #e7eee7; }
+  .tabelle td.p { text-align: right; font-weight: 800; color: var(--gruen); white-space: nowrap; }
+  .start-knopf { display: block; text-align: center;
+                 background: linear-gradient(135deg, #2e7d32, #43a047);
+                 color: #fff; font-weight: 800; font-size: 1.05rem; text-decoration: none;
+                 border-radius: 14px; padding: 14px; margin-top: 12px; box-shadow: var(--schatten); }
+  .fusszeile { text-align: center; color: var(--grau); font-size: .85rem; margin-top: 20px; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="ball">⚽🏆</div>
+  <div style="font-size:2.4rem">⚽🏆</div>
   <h1>Unser Familien-WM-Tippspiel 2026</h1>
-  <p>Wir tippen alle gemeinsam die Fußball-WM – jede:r auf dem eigenen Handy,
-     alles zählt automatisch zusammen. Hier steht Schritt für Schritt, wie du mitmachst. 💚</p>
+  <p>Jede:r tippt auf dem eigenen Handy – alles zählt automatisch zusammen. So machst du mit:</p>
 </header>
 
 <main>
 
+  <a class="start-knopf" href="wm-tippspiel.html">⚽ Direkt zum Tippspiel</a>
+
   <div class="karte">
-    <h2>📲 Schritt 1: Die App aufs Handy holen</h2>
-    <p>Das Tippspiel ist eine Webseite, die sich wie eine App installieren lässt –
-       <b>kein App-Store, kein Konto, kostenlos</b>.</p>
-
-    <div class="geraet">
-      <h3>🤖 Android-Handy (z.&nbsp;B. Samsung, Xiaomi…)</h3>
-      <div class="schritt"><div class="nr">1</div><div class="txt">Öffne den Link unten in <b>Chrome</b>.</div></div>
-      <div class="schritt"><div class="nr">2</div><div class="txt">Tippe oben rechts auf das <b>⋮ Menü</b>.</div></div>
-      <div class="schritt"><div class="nr">3</div><div class="txt">Wähle <b>„App installieren“</b> (oder „Zum Startbildschirm hinzufügen“) und bestätige.</div></div>
-    </div>
-
-    <div class="geraet">
-      <h3>🍏 iPad / iPhone</h3>
-      <div class="schritt"><div class="nr">1</div><div class="txt">Öffne den Link unten in <b>Safari</b> (wichtig – nicht Chrome!).</div></div>
-      <div class="schritt"><div class="nr">2</div><div class="txt">Tippe auf das <b>Teilen-Symbol</b> <span class="chip">⬆️ Viereck mit Pfeil</span> unten bzw. oben in der Leiste.</div></div>
-      <div class="schritt"><div class="nr">3</div><div class="txt">Wähle <b>„Zum Home-Bildschirm“</b> → <b>Hinzufügen</b>.</div></div>
-    </div>
-
-    <a class="start-knopf" href="wm-tippspiel.html">⚽ Hier geht’s zum Tippspiel</a>
-    <div class="hinweis">💡 Danach liegt das ⚽-Symbol wie eine echte App auf deinem
-      Startbildschirm. Du kannst das Spiel aber genauso gut einfach im Browser öffnen.</div>
+    <h2>📲 1. App aufs Handy holen <span style="font-weight:400;font-size:.85rem;color:var(--grau)">(kein App-Store, kostenlos)</span></h2>
+    <div class="schritt"><div class="nr">🤖</div><div><b>Android:</b> Link in <b>Chrome</b> öffnen → ⋮ Menü oben rechts → <b>„App installieren“</b>.</div></div>
+    <div class="schritt"><div class="nr">🍏</div><div><b>iPhone/iPad:</b> Link in <b>Safari</b> öffnen → <b>Teilen-Symbol</b> (Viereck mit Pfeil ⬆️) → <b>„Zum Home-Bildschirm“</b>.</div></div>
   </div>
 
   <div class="karte">
-    <h2>🙋 Schritt 2: Einmal anmelden – das war’s</h2>
-    <div class="schritt"><div class="nr">1</div><div class="txt">Öffne die App und tippe unten auf den Tab <b>👨‍👩‍👧 Familie</b>.</div></div>
-    <div class="schritt"><div class="nr">2</div><div class="txt">Trage <b>deinen Namen</b> ein und such dir ein <b>Wappentier</b> aus. 🦁</div></div>
-    <div class="schritt"><div class="nr">3</div><div class="txt">Tippe auf <b>„➕ Mitspieler aufstellen“</b>. Du wirst gefragt, ob du ein <b>eigenes Tipp-Passwort</b> möchtest (z.&nbsp;B. 4 Ziffern) – mach das am besten, dann kann niemand außer dir an deinen Tipps herumspielen. 😉</div></div>
-    <div class="hinweis">✅ Fertig! Dein Gerät merkt sich ab jetzt, wer du bist.
-      Oben unter <b>„Wer tippt gerade?“</b> sollte immer <b>dein</b> Name stehen.</div>
+    <h2>🙋 2. Einmal anmelden</h2>
+    <div class="schritt"><div class="nr">1</div><div>Unten auf Tab <b>👨‍👩‍👧 Familie</b> tippen.</div></div>
+    <div class="schritt"><div class="nr">2</div><div><b>Name</b> eintragen, <b>Wappentier</b> aussuchen → <b>„➕ Mitspieler aufstellen“</b>.</div></div>
+    <div class="schritt"><div class="nr">3</div><div>Eigenes <b>Tipp-Passwort</b> vergeben (z. B. 4 Ziffern) – dann kann nur du deine Tipps ändern.</div></div>
+    <div class="hinweis">✅ Dein Gerät merkt sich, wer du bist. Oben bei <b>„Wer tippt gerade?“</b> sollte immer dein Name stehen.</div>
   </div>
 
   <div class="karte">
-    <h2>⚽ Schritt 3: Tippen!</h2>
-    <div class="schritt"><div class="nr">1</div><div class="txt">Geh auf den Tab <b>⚽ Tippen</b>. Dort findest du alle WM-Spiele.</div></div>
-    <div class="schritt"><div class="nr">2</div><div class="txt">Trag bei jedem Spiel deinen Tipp ein, z.&nbsp;B. <b>2 : 1</b>. Er wird sofort automatisch gespeichert – kein extra Knopf nötig.</div></div>
-    <div class="schritt"><div class="nr">3</div><div class="txt">Mit den Knöpfen <b>📅 Spieltag 1/2/3</b> und den <b>Gruppen-Filtern</b> oben behältst du den Überblick und kannst z.&nbsp;B. erst mal nur den 1. Spieltag durchtippen.</div></div>
-    <div class="hinweis">⏱️ <b>Wichtig:</b> Getippt werden kann nur <b>bis zum Anpfiff</b> –
-      danach schließt das Spiel automatisch. Bis dahin kannst du deinen Tipp jederzeit ändern.<br><br>
-      🤫 <b>Geheim:</b> Vor dem Anpfiff sieht <b>niemand</b> die Tipps der anderen.
-      Sobald das Spiel läuft, werden alle Familien-Tipps aufgedeckt – dann wird’s spannend!</div>
+    <h2>⚽ 3. Tippen</h2>
+    <div class="schritt"><div class="nr">1</div><div>Tab <b>⚽ Tippen</b> → bei jedem Spiel dein Ergebnis eintragen (z. B. <b>2:1</b>). Wird sofort gespeichert.</div></div>
+    <div class="schritt"><div class="nr">2</div><div>Mit <b>📅 Spieltag</b>- und <b>Gruppen-Filtern</b> behältst du den Überblick.</div></div>
+    <div class="schritt"><div class="nr">3</div><div><b>⭐ Joker</b> bei EINEM Spiel deiner Wahl setzen → dort zählen die Punkte <b>doppelt</b>!</div></div>
+    <div class="hinweis">⏱️ Tippen geht <b>bis zum Anpfiff</b> – bis dahin beliebig oft änderbar.
+      🤫 Vorher sieht niemand die Tipps der anderen, ab Anpfiff werden alle aufgedeckt!</div>
   </div>
 
   <div class="karte">
-    <h2>⭐ Dein Joker – doppelte Punkte!</h2>
-    <p>Du hast <b>einen Joker</b>. Setz ihn bei dem Spiel, bei dem du dir besonders sicher bist –
-       dort zählen deine Punkte <b>doppelt</b>! Einfach beim Spiel auf
-       <span class="chip">⭐ Als Joker setzen</span> tippen. Bis zum Anpfiff kannst du ihn
-       noch auf ein anderes Spiel verschieben.</p>
+    <h2>🎲 4. Bonus-Tipps – gleich am Anfang ausfüllen!</h2>
+    <p>Im Tab <b>🎲 Bonus</b> warten die großen Fragen: <b>Wer wird Weltmeister? Wie weit kommt
+       Deutschland?</b> … Die bringen <b>bis zu 15 Extra-Punkte</b> – also am besten sofort beantworten,
+       bevor das Turnier startet! 🏆</p>
   </div>
 
   <div class="karte">
-    <h2>🎲 Nicht vergessen: die Bonus-Tipps!</h2>
-    <p>Im Tab <b>🎲 Bonus</b> warten schon ein paar große Fragen auf dich, zum Beispiel:
-       <b>Wer wird Weltmeister? Wie weit kommt Deutschland? Wer ist das Überraschungsteam?</b></p>
-    <p style="margin-top:8px">Diese Tipps bringen <b>richtig viele Extra-Punkte</b> (bis zu 15!) –
-       also am besten <b>gleich am Anfang</b> einmal alle beantworten, bevor das Turnier losgeht. 🏆</p>
-    <p style="margin-top:8px">Außerdem gibt’s dort ein kleines <b>Fußball-Quiz</b> für die Halbzeitpause. 🧠</p>
-  </div>
-
-  <div class="karte">
-    <h2>🧮 So gibt’s Punkte</h2>
+    <h2>🧮 Punkte</h2>
     <table class="tabelle">
-      <tr><th>Dein Tipp…</th><th></th></tr>
-      <tr><td>🎯 Exaktes Ergebnis (z.&nbsp;B. 2:1 getippt, 2:1 gespielt)</td><td class="p">4 P</td></tr>
-      <tr><td>📐 Richtige Tordifferenz (3:2 getippt, 2:1 gespielt)</td><td class="p">3 P</td></tr>
-      <tr><td>✅ Richtiger Sieger (1:0 getippt, 3:1 gespielt)</td><td class="p">2 P</td></tr>
-      <tr><td>❌ Daneben</td><td class="p">0 P</td></tr>
-      <tr><td>⭐ Joker-Spiel</td><td class="p">Punkte ×2</td></tr>
+      <tr><td>🎯 Exaktes Ergebnis</td><td class="p">4 P</td></tr>
+      <tr><td>📐 Richtige Tordifferenz</td><td class="p">3 P</td></tr>
+      <tr><td>✅ Richtiger Sieger</td><td class="p">2 P</td></tr>
+      <tr><td>⭐ Joker-Spiel</td><td class="p">×2</td></tr>
       <tr><td>🎲 Bonus-Fragen</td><td class="p">bis 15 P</td></tr>
     </table>
-    <p style="margin-top:10px;font-size:.9rem;color:var(--grau)">Die Ergebnisse trägt unser
-      Spielleiter nach jedem Spiel ein – Punkte und Tabelle aktualisieren sich dann
-      bei allen automatisch.</p>
+    <p style="margin-top:8px;font-size:.88rem;color:var(--grau)">Ergebnisse trägt der Spielleiter ein –
+       Tabelle &amp; Punkte aktualisieren sich bei allen automatisch. In der App warten außerdem
+       🏆 Live-Tabelle, 🏅 lustige Awards, 🤜🤛 Direktduell, ⏱️ Anpfiff-Countdown – und wer am Ende
+       Letzte:r ist, lost eine <b>kleine liebe Aufgabe</b> (Tisch decken o. Ä. – alles harmlos 😄).</p>
   </div>
 
   <div class="karte">
-    <h2>🎁 Was die App sonst noch kann</h2>
-    <div class="feature"><div class="emo">🏆</div><div><b>Tabelle:</b> Wer führt? Live-Rangliste der ganzen Familie mit Pokal für die Spitze.</div></div>
-    <div class="feature"><div class="emo">🏅</div><div><b>Awards:</b> Lustige Auszeichnungen wie „Der Scharfschütze“ oder die „Nachteule“.</div></div>
-    <div class="feature"><div class="emo">🤜🤛</div><div><b>Direktduell:</b> Vergleich dich direkt mit einem anderen Familienmitglied.</div></div>
-    <div class="feature"><div class="emo">📈</div><div><b>Verlaufskurve:</b> Zeigt, wie sich alle über das Turnier schlagen.</div></div>
-    <div class="feature"><div class="emo">⏱️</div><div><b>Countdown:</b> Zählt zum nächsten Anpfiff – und warnt dich, falls du noch nicht getippt hast.</div></div>
-    <div class="feature"><div class="emo">📡</div><div><b>Tipp-Radar:</b> Zeigt anonym, wohin die Familie bei den nächsten Spielen tendiert (erst, nachdem du selbst getippt hast!).</div></div>
-    <div class="feature"><div class="emo">🎁</div><div><b>Aufgaben-Generator:</b> Wer am Ende Letzte:r ist, lost eine <b>kleine, liebe Aufgabe</b> – z.&nbsp;B. einmal Tisch decken oder allen eine Lobeskarte schreiben. Keine Angst, alles harmlos. 😄</div></div>
+    <h2>❓ Gut zu wissen</h2>
+    <div class="schritt"><div class="nr">🔄</div><div>Etwas wirkt nicht aktuell? Oben rechts aufs <b>🔄-Symbol</b> tippen.</div></div>
+    <div class="schritt"><div class="nr">🔑</div><div>Das <b>🔑-Symbol</b> ist nur für den Spielleiter – brauchst du nicht.</div></div>
+    <div class="schritt"><div class="nr">🔒</div><div><b>Passwort vergessen?</b> Der Spielleiter setzt es zurück.</div></div>
   </div>
 
-  <div class="karte">
-    <h2>❓ Kurze Fragen, kurze Antworten</h2>
-    <div class="feature"><div class="emo">✏️</div><div><b>Kann ich meinen Tipp ändern?</b> Ja, beliebig oft – bis zum Anpfiff.</div></div>
-    <div class="feature"><div class="emo">📶</div><div><b>Brauche ich Internet?</b> Zum Tippen ja – nur so kommt dein Tipp bei allen an.</div></div>
-    <div class="feature"><div class="emo">🔄</div><div><b>Etwas wirkt nicht aktuell?</b> Tipp oben rechts auf das <b>🔄-Symbol</b> – das holt den neuesten Stand.</div></div>
-    <div class="feature"><div class="emo">🔑</div><div><b>Wofür ist das 🔑-Symbol?</b> Das ist nur für den Spielleiter – du brauchst es nicht.</div></div>
-    <div class="feature"><div class="emo">🔒</div><div><b>Passwort vergessen?</b> Kein Drama – der Spielleiter kann es zurücksetzen.</div></div>
-  </div>
+  <a class="start-knopf" href="wm-tippspiel.html">🚀 Los geht’s – viel Glück! 🍀</a>
 
-  <a class="start-knopf" href="wm-tippspiel.html">🚀 Los geht’s – viel Glück beim Tippen!</a>
-
-  <p class="fusszeile">Bei Fragen einfach beim Spielleiter melden. 💌<br>Möge der beste Riecher gewinnen! 🍀⚽</p>
+  <p class="fusszeile">Fragen? Einfach beim Spielleiter melden. 💌</p>
 
 </main>
 </body>
