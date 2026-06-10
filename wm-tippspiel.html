@@ -353,6 +353,8 @@
     display: flex; align-items: center; justify-content: center;
   }
   .theme-toggle:hover { filter: brightness(1.12); }
+  .theme-toggle.dreht { animation: drehen .8s linear infinite; }
+  @keyframes drehen { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
   /* Cloud-Modus: Admin-only Elemente verstecken, wenn nicht als Admin angemeldet;
      reine Cloud-Elemente (z.B. Upload) nur im Cloud-Modus zeigen. */
@@ -418,6 +420,7 @@
   <span class="ball-deko l">⚽</span>
   <button id="themeToggle" class="theme-toggle" onclick="themeUmschalten()" title="Hell/Dunkel umschalten" aria-label="Design umschalten">🌙</button>
   <button id="adminToggle" class="theme-toggle" style="right:54px;display:none" onclick="adminKnopfKlick()" title="Als Admin anmelden" aria-label="Admin-Anmeldung">🔑</button>
+  <button id="syncToggle" class="theme-toggle nur-cloud" style="right:98px" onclick="cloudJetztSyncen()" title="Jetzt mit der Cloud synchronisieren" aria-label="Cloud-Sync">🔄</button>
   <h1>Familien-WM-Tippspiel 2026</h1>
   <p>Tippen, lachen, gewinnen – und der Letzte muss zittern! 😈</p>
 </header>
@@ -3020,6 +3023,23 @@ async function cloudVollLaden() {
   speichernNurLokal();
   _cloudAnwenden = false;
   alleRendern();
+}
+
+// Manueller Sync-Knopf: eigene Änderungen hochschicken und den aktuellen
+// Cloud-Stand neu laden – als Fallback, falls der Live-Push mal nicht ankam.
+async function cloudJetztSyncen() {
+  if (!cloudAktiv || !SB) { toast("Lokaler Modus: kein Cloud-Sync nötig."); return; }
+  const btn = document.getElementById("syncToggle");
+  if (btn) btn.classList.add("dreht");
+  try {
+    cloudDiffUndPush();
+    await cloudVollLaden();
+    toast("🔄 Synchronisiert!");
+  } catch (e) {
+    toast("⚠️ Sync fehlgeschlagen – bitte Internetverbindung prüfen.");
+  } finally {
+    if (btn) btn.classList.remove("dreht");
+  }
 }
 
 // Lokalen Stand einmalig in die (leere) Cloud hochladen.
