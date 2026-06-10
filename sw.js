@@ -1,12 +1,13 @@
 /* Service Worker für das Familien-WM-Tippspiel 2026.
    Macht die App offline-fähig (App-Shell-Caching) und installierbar.
    Aktiv nur, wenn die Seite über http(s) ausgeliefert wird. */
-const CACHE = "wm-tippspiel-v1";
+const CACHE = "wm-tippspiel-v4";
 const ASSETS = [
   "./",
   "./wm-tippspiel.html",
   "./manifest.json",
-  "./icon.svg"
+  "./icon.svg",
+  "./cloud-config.js"
 ];
 
 // Installation: App-Shell in den Cache legen (einzeln, damit ein fehlendes
