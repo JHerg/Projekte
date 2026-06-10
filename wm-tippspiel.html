@@ -1129,6 +1129,15 @@ function spielDynamischHTML(spiel) {
     }).join("");
     const titel = spiel.gespielt ? "Alle Tipps anzeigen" : "👀 So hat die Familie getippt";
     html += `<details${spiel.gespielt ? "" : " open"}><summary>${titel}</summary><div class="tipps-uebersicht">${zeilen}</div></details>`;
+  } else if (state.spieler.length) {
+    // Vor Anpfiff: nicht die Tipps selbst zeigen (Geheimhaltung), aber wer
+    // überhaupt schon abgegeben hat – damit klar ist, wer noch fehlt.
+    const zeilen = state.spieler.map(s => {
+      const tt = state.tipps[s.id]?.[spiel.id];
+      const abgegeben = !!(tt && tt.e1 !== null && tt.e2 !== null);
+      return `<div class="zeile"><span>${s.avatar} ${esc(s.name)}</span><span>${abgegeben ? '✅' : '❌'}</span></div>`;
+    }).join("");
+    html += `<details><summary>🙈 Wer hat schon getippt? (Ergebnisse bleiben bis Anpfiff geheim)</summary><div class="tipps-uebersicht">${zeilen}</div></details>`;
   }
   return html;
 }
