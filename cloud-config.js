@@ -14,6 +14,6 @@
    ⚠️ NIEMALS den "service_role"-Schlüssel hier eintragen! Nur "anon public".
    ========================================================================= */
 window.CLOUD_CONFIG = {
-  url: "",      // z.B. "https://abcd1234.supabase.co"
-  anonKey: ""   // der lange "anon public"-Schlüssel
+  url: "https://jqtcqsiuglmodxmilccu.supabase.co",
+  anonKey: "sb_publishable_-S_yeupTHkrl_XsG2KLb_g_VuaytjOb"
 };
