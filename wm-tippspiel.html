@@ -511,13 +511,6 @@
       <p class="info-zeile">Tippt aufs ganze Turnier – das bringt fette Extra-Punkte!</p>
       <div id="bonusListe"></div>
     </div>
-
-    <div class="karte">
-      <h2>🧠 Fußball-Quiz der Pause</h2>
-      <p class="info-zeile">Zeit totschlagen bis zum nächsten Anpfiff? Teste dein Wissen!</p>
-      <div id="quizContainer"></div>
-      <button onclick="naechsteQuizFrage()" class="gold" style="width:100%;margin-top:10px">🎲 Neue Quizfrage</button>
-    </div>
   </section>
 
   <!-- ====================== FAMILIE ====================== -->
@@ -615,24 +608,13 @@
     <div class="karte nur-admin">
       <h2>🏆 Turnier-Vorhersagen</h2>
       <p class="info-zeile">
-        Fügt mit einem Klick ein Paket vorbereiteter Turnier-Tipps als Bonus-Fragen hinzu –
-        Weltmeister, Finalist, Torschützenkönig, Überraschung & Co. Perfekt zum Anheizen
+        Richtet die 4 großen Bonus-Fragen ein: Weltmeister, Vize-Weltmeister,
+        Torschützenkönig (Nation) und wie weit Deutschland kommt. Perfekt zum Anheizen
         <b>vor</b> dem Anpfiff! Die Familie tippt im Tab 🎲 Bonus, du löst sie am Turnierende auf.
       </p>
       <button onclick="turnierVorhersagenHinzufuegen()" class="gold" style="width:100%;margin-top:10px">
-        🏆 Vorhersage-Paket hinzufügen (8 Fragen)
+        🏆 Die 4 Bonus-Fragen einrichten
       </button>
-    </div>
-
-    <div class="karte nur-admin">
-      <h2>🎲 Bonus-Frage anlegen</h2>
-      <label>Frage</label>
-      <input id="neuBonusFrage" placeholder="z.B. Wer wird Weltmeister?">
-      <label style="margin-top:8px">Antwort-Möglichkeiten (mit Komma trennen)</label>
-      <input id="neuBonusOptionen" placeholder="z.B. Deutschland, Brasilien, Frankreich">
-      <label style="margin-top:8px">Punkte für richtige Antwort</label>
-      <input id="neuBonusPunkte" type="number" value="5" min="1" max="20">
-      <button onclick="bonusFrageHinzufuegen()" style="width:100%;margin-top:12px">➕ Bonus-Frage erstellen</button>
     </div>
 
     <div class="karte">
@@ -761,22 +743,6 @@ const STRAFEN = [
   "Einen Tor-Jubel-Tanz vor der ganzen Familie vorführen 💃⚽"
 ];
 
-// ----- Quizfragen für die Pause -----
-const QUIZFRAGEN = [
-  { f: "Wie oft wurde Brasilien Fußball-Weltmeister?", o: ["3 mal","5 mal","7 mal"], r: 1 },
-  { f: "In welchem Land findet die WM 2026 (haupts.) statt?", o: ["Katar","USA/Kanada/Mexiko","Brasilien"], r: 1 },
-  { f: "Wie viele Teams spielen bei der WM 2026 mit?", o: ["32","40","48"], r: 2 },
-  { f: "Welcher Spieler erzielte das berühmte 'Hand-Gottes'-Tor?", o: ["Pelé","Maradona","Zidane"], r: 1 },
-  { f: "Wie lange dauert eine reguläre Halbzeit?", o: ["40 Min","45 Min","50 Min"], r: 1 },
-  { f: "Wer wurde 2014 Weltmeister?", o: ["Deutschland","Argentinien","Spanien"], r: 0 },
-  { f: "Wie viele Spieler stehen pro Team auf dem Feld?", o: ["10","11","12"], r: 1 },
-  { f: "Welche Farbe hat die Karte für einen Platzverweis?", o: ["Gelb","Rot","Blau"], r: 1 },
-  { f: "Wer gewann die WM 2022 in Katar?", o: ["Frankreich","Argentinien","Kroatien"], r: 1 },
-  { f: "Wie heißt der WM-Pokal?", o: ["Champions Cup","FIFA-WM-Pokal","Golden Goal"], r: 1 },
-  { f: "Was bedeutet ein 'Hattrick'?", o: ["3 Tore eines Spielers","3 Gegentore","3 Ecken"], r: 0 },
-  { f: "Welches Land hat die meisten WM-Titel?", o: ["Deutschland","Italien","Brasilien"], r: 2 }
-];
-
 // ===================== STATE =====================
 // Manche Browser (v.a. mobil oder bei "Datei öffnen" statt über einen Webserver)
 // blockieren den Zugriff auf localStorage mit einer SecurityError-Exception.
@@ -784,7 +750,6 @@ const QUIZFRAGEN = [
 // dauerhafte Speicherung weiter (nur für die aktuelle Sitzung im Arbeitsspeicher).
 let speicherVerfuegbar = true;
 let state = laden();
-let aktivesQuiz = null;
 let phasenFilter = "alle";   // aktive Filter-Auswahl in der Tippen-Ansicht
 let spieltagFilter = 0;      // 0 = alle Spieltage, 1/2/3 = konkreter Spieltag
 
@@ -1341,21 +1306,6 @@ function koSiegerSetzen(spielId, sieger) {
 }
 
 // ===================== BONUS-FRAGEN =====================
-function bonusFrageHinzufuegen() {
-  const frage = document.getElementById("neuBonusFrage").value.trim();
-  const optRoh = document.getElementById("neuBonusOptionen").value.trim();
-  const punkte = parseInt(document.getElementById("neuBonusPunkte").value) || 5;
-  if (!frage || !optRoh) { toast("Frage und Antworten ausfüllen! ✍️"); return; }
-  const optionen = optRoh.split(",").map(o => o.trim()).filter(Boolean);
-  if (optionen.length < 2) { toast("Mindestens 2 Antwort-Optionen (mit Komma)! "); return; }
-  state.bonusFragen.push({ id: id(), frage, optionen, punkte, loesung: null });
-  document.getElementById("neuBonusFrage").value = "";
-  document.getElementById("neuBonusOptionen").value = "";
-  speichern();
-  toast("Bonus-Frage erstellt! 🎲");
-  renderBonus();
-}
-
 function bonusFrageLoeschen(bid) {
   if (!confirm("Bonus-Frage löschen?")) return;
   state.bonusFragen = state.bonusFragen.filter(b => b.id !== bid);
@@ -2122,33 +2072,34 @@ function renderKonsens() {
 // ===================== TURNIER-VORHERSAGE-PAKET =====================
 function turnierVorhersagenHinzufuegen() {
   const favoriten = ["Frankreich","Brasilien","Argentinien","Spanien","England","Deutschland","Portugal","Niederlande"];
-  const ueberraschung = ["Marokko","Senegal","Japan","Kroatien","USA","Norwegen","Uruguay","Belgien"];
   const paket = [
     { frage:"🏆 Wer wird Weltmeister 2026?", optionen:favoriten, punkte:15 },
     { frage:"🥈 Wer steht im Finale, wird aber NICHT Weltmeister?", optionen:favoriten, punkte:10 },
-    { frage:"⚽ Wer wird Torschützenkönig (Nation)?", optionen:favoriten, punkte:8 },
-    { frage:"🌟 Überraschungsteam des Turniers?", optionen:ueberraschung, punkte:8 },
-    { frage:"😱 Welcher Favorit enttäuscht am meisten?", optionen:favoriten, punkte:6 },
     { frage:"🇩🇪 Wie weit kommt Deutschland?", optionen:["Vorrunde aus","Achtelfinale","Viertelfinale","Halbfinale","Finale","Weltmeister"], punkte:6 },
-    { frage:"🥅 Mehr als 2,7 Tore pro Spiel im Schnitt?", optionen:["Ja, Torfestival","Nein, eher mauern"], punkte:4 },
-    { frage:"🟥 Gibt es im Finale eine Rote Karte?", optionen:["Ja","Nein"], punkte:4 }
+    { frage:"⚽ Wer wird Torschützenkönig (Nation)?", optionen:favoriten, punkte:8 }
   ];
-  // Doppelte (bereits vorhandene) Fragen überspringen
-  const vorhandene = new Set(state.bonusFragen.map(b => b.frage));
+  // Andere/alte Bonus-Fragen (z.B. frühere Pakete) entfernen, damit nur
+  // diese 4 großen Turnier-Fragen übrig bleiben.
+  const gewuenscht = new Set(paket.map(p => p.frage));
+  const ueberfluessig = state.bonusFragen.filter(b => !gewuenscht.has(b.frage));
+  ueberfluessig.forEach(b => {
+    state.bonusFragen = state.bonusFragen.filter(x => x.id !== b.id);
+    Object.values(state.bonusTipps).forEach(t => delete t[b.id]);
+  });
   let hinzu = 0;
   paket.forEach(p => {
-    if (vorhandene.has(p.frage)) return;
+    if (state.bonusFragen.some(b => b.frage === p.frage)) return;
     state.bonusFragen.push({ id: id(), frage: p.frage, optionen: p.optionen, punkte: p.punkte, loesung: null });
     hinzu++;
   });
   speichern();
   renderBonus();
-  if (hinzu > 0) {
-    toast(`🏆 ${hinzu} Turnier-Vorhersagen hinzugefügt! Ab in den Tab 🎲 Bonus!`);
+  if (hinzu > 0 || ueberfluessig.length > 0) {
+    toast(`🏆 Die 4 Bonus-Fragen sind eingerichtet! Ab in den Tab 🎲 Bonus!`);
     konfettiRegen(60);
     zeigeView("bonus");
   } else {
-    toast("Die Turnier-Vorhersagen sind schon angelegt. 👍");
+    toast("Die 4 Bonus-Fragen sind schon eingerichtet. 👍");
   }
 }
 
@@ -2178,26 +2129,6 @@ function ziehStrafe() {
       konfettiRegen(30);
     }
   }, 90);
-}
-
-// ===================== QUIZ =====================
-function naechsteQuizFrage() {
-  aktivesQuiz = QUIZFRAGEN[Math.floor(Math.random()*QUIZFRAGEN.length)];
-  const c = document.getElementById("quizContainer");
-  c.innerHTML = `
-    <div class="quiz-frage">❓ ${aktivesQuiz.f}</div>
-    ${aktivesQuiz.o.map((o,i) =>
-      `<button class="quiz-opt" onclick="quizAntwort(${i}, this)">${o}</button>`).join("")}`;
-}
-function quizAntwort(i, btn) {
-  const richtig = i === aktivesQuiz.r;
-  document.querySelectorAll("#quizContainer .quiz-opt").forEach((b,idx) => {
-    b.disabled = true;
-    if (idx === aktivesQuiz.r) b.classList.add("richtig");
-    else if (idx === i) b.classList.add("falsch");
-  });
-  if (richtig) { toast("Richtig! 🎉 Du Fußball-Genie!"); konfettiRegen(30); }
-  else { toast("Leider falsch 😬 – die grüne war's!"); }
 }
 
 // ===================== EFFEKTE =====================
@@ -3236,7 +3167,6 @@ pruefeLinkImport();
 migriereSpieltage();
 renderTeamSelects();
 alleRendern();
-naechsteQuizFrage();
 starteCountdown();
 if (!speicherVerfuegbar) speicherWarnungZeigen();
 
