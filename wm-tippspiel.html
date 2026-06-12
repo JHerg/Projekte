@@ -445,7 +445,8 @@
           ↔️ <b>Richtige Tordifferenz</b> (z.B. 2:1 getippt, 3:2 passiert): <b>3 Punkte</b><br>
           ✅ <b>Richtige Tendenz</b> (Sieger/Unentschieden stimmt): <b>2 Punkte</b><br>
           ❌ <b>Daneben</b>: 0 Punkte<br>
-          ⭐ <b>Joker</b>: Markiere EIN Spiel als Joker – dort zählen die Punkte doppelt!<br>
+          ⭐ <b>Joker</b>: EINMAL im ganzen Turnier! Markiere EIN Spiel – dort zählen die Punkte doppelt.
+             Bis zum Anpfiff des Joker-Spiels kannst du ihn noch umlegen, danach ist er verbraucht.<br>
           🎲 <b>Bonus-Fragen</b> bringen Extra-Punkte!
         </div>
       </details>
@@ -508,7 +509,8 @@
   <section id="view-bonus" class="view">
     <div class="karte">
       <h2>🎲 Bonus-Fragen</h2>
-      <p class="info-zeile">Tippt aufs ganze Turnier – das bringt fette Extra-Punkte!</p>
+      <p class="info-zeile">Tippt aufs ganze Turnier – das bringt fette Extra-Punkte!
+        Änderbar nur bis zum Anpfiff des Eröffnungsspiels, danach ist alles eingeloggt. 🔒</p>
       <div id="bonusListe"></div>
     </div>
   </section>
@@ -1075,12 +1077,26 @@ function punkteFuerSpieler(spielerId, spiel) {
   return istJoker(spielerId, spiel.id) ? basis * 2 : basis;
 }
 
-// Joker setzen/entfernen für den aktiven Spieler (nur ein Joker gleichzeitig).
+// Der Joker ist verbraucht, sobald sein gewähltes Spiel begonnen/gespielt ist –
+// dann kann er nicht mehr entfernt oder auf ein anderes Spiel verschoben werden.
+function jokerVerbraucht(spielerId) {
+  const js = state.spiele.find(s => s.id === state.joker?.[spielerId]);
+  return !!js && !istTippbar(js);
+}
+
+// Joker setzen/entfernen für den aktiven Spieler.
+// Regel: genau EIN Joker im ganzen Turnier. Bis zum Anpfiff des gewählten
+// Spiels frei verschiebbar, ab Anpfiff endgültig verbraucht.
 function jokerUmschalten(spielId) {
   const sp = state.aktiverSpielerId;
   if (!sp) { toast("Wähle oben zuerst einen Spieler!"); return; }
   const spiel = state.spiele.find(s => s.id === spielId);
   if (!istTippbar(spiel)) { toast("Für dieses Spiel ist der Joker gesperrt 🔒"); return; }
+  if (jokerVerbraucht(sp)) {
+    const js = state.spiele.find(s => s.id === state.joker[sp]);
+    toast(`⭐ Dein Joker ist schon verbraucht (${js.t1} – ${js.t2}). Es gibt nur EINEN pro Turnier!`);
+    return;
+  }
   if (state.joker[sp] === spielId) {
     delete state.joker[sp];
     toast("Joker entfernt.");
@@ -1243,9 +1259,9 @@ function renderSpiele() {
     const dis = tippGesperrt ? "disabled" : "";
     const istKo = !spiel.phase.startsWith("Gruppe") && spiel.phase !== "Gruppenphase";
 
-    // Joker-Knopf (nur sinnvoll, solange das Spiel noch tippbar ist)
+    // Joker-Knopf (nur solange das Spiel tippbar und der Joker nicht verbraucht ist)
     const jokerAktiv = sp && istJoker(sp, spiel.id);
-    const jokerBtn = (sp && istTippbar(spiel))
+    const jokerBtn = (sp && istTippbar(spiel) && !jokerVerbraucht(sp))
       ? `<button class="klein ${jokerAktiv?'gold':'sekundaer'}" style="margin-top:6px"
            onclick="jokerUmschalten('${spiel.id}')">${jokerAktiv?'⭐ Joker aktiv (×2)':'⭐ Als Joker setzen'}</button>`
       : "";
@@ -1332,11 +1348,19 @@ function bonusFrageLoeschen(bid) {
   renderAwards();
 }
 
+// Bonus-Tipps sind nur bis zum Anpfiff des ALLERERSTEN Turnierspiels änderbar.
+// Sobald irgendein Spiel begonnen oder ein Ergebnis hat, sind sie eingeloggt –
+// sonst könnte man "Wer wird Weltmeister?" noch kurz vorm Finale anpassen.
+function bonusTippbar() {
+  return !state.spiele.some(s => s.gespielt || spielHatBegonnen(s));
+}
+
 // Optionen werden über ihren Index referenziert (nicht über den rohen Text),
 // damit Anführungszeichen o.Ä. in Antworten die Handler nicht zerschießen.
 function bonusTippSpeichern(bid, idx) {
   const sp = state.aktiverSpielerId;
   if (!sp) { toast("Wähle oben zuerst einen Spieler!"); return; }
+  if (!bonusTippbar()) { toast("🔒 Das Turnier läuft – die Bonus-Tipps sind eingeloggt und fix!"); return; }
   const b = state.bonusFragen.find(x => x.id === bid);
   const antwort = b?.optionen[idx];
   if (antwort === undefined) return;
@@ -1363,7 +1387,11 @@ function renderBonus() {
     c.innerHTML = '<p class="leer-hinweis">Noch keine Bonus-Fragen. Lege welche unter ⚙️ <b>Verwalten</b> an!</p>';
     return;
   }
-  c.innerHTML = state.bonusFragen.map(b => {
+  const eingeloggt = !bonusTippbar();
+  const sperrHinweis = eingeloggt
+    ? `<div class="info-zeile" style="text-align:center;margin-bottom:10px">🔒 Das Turnier läuft – alle Bonus-Tipps sind eingeloggt und nicht mehr änderbar.</div>`
+    : "";
+  c.innerHTML = sperrHinweis + state.bonusFragen.map(b => {
     const meinTipp = sp ? state.bonusTipps[sp]?.[b.id] : null;
     const optBtns = b.optionen.map((o, i) => {
       let cls = "quiz-opt";
@@ -1373,7 +1401,7 @@ function renderBonus() {
       } else if (o === meinTipp) {
         cls += " richtig";
       }
-      const dis = b.loesung ? "disabled" : "";
+      const dis = (b.loesung || eingeloggt) ? "disabled" : "";
       return `<button class="${cls}" ${dis} onclick="bonusTippSpeichern('${b.id}',${i})">
         ${esc(o)} ${o===meinTipp?'✓':''}</button>`;
     }).join("");
