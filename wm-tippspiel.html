@@ -1420,18 +1420,23 @@ function berechneStand() {
       if (b.loesung && state.bonusTipps[s.id]?.[b.id] === b.loesung) bonus += b.punkte;
     });
     return { ...s, punkte: punkte + bonus, spielPunkte: punkte, bonus, treffer, getippt };
-  }).sort((a,b) => b.punkte - a.punkte || b.treffer - a.treffer);
+  }).sort((a,b) => b.punkte - a.punkte || b.treffer - a.treffer)
+    // Geteilte Plätze: Punktgleiche bekommen denselben Rang, danach wird
+    // übersprungen (1, 1, 3, …) – sonst fühlt sich jemand zu Unrecht schlechter.
+    .map((s, i, arr) => ({ ...s, rang: 1 + arr.filter(x => x.punkte > s.punkte).length }));
 }
 
 // Titel sind pro Spieler stabil (über die Spieler-ID „geseedet"), damit sie
 // nicht bei jedem Neu-Rendern der Tabelle zufällig hin- und herspringen.
-function titelFuer(rang, gesamt, spielerId) {
+// rang/maxRang sind geteilte Plätze (1-basiert): Punktgleiche tragen
+// denselben Rang und damit auch gleichwertige Titel.
+function titelFuer(rang, maxRang, gesamt, spielerId) {
   const w = (arr) => arr[hashCode(spielerId) % arr.length];
   if (gesamt === 1) return TITEL.erster[0];
-  if (rang === 0) return w(TITEL.erster);
-  if (rang === gesamt-1) return w(TITEL.letzter);
-  if (rang === 1) return w(TITEL.zweiter);
-  if (rang === 2 && gesamt > 4) return w(TITEL.dritter);
+  if (rang === 1) return w(TITEL.erster);
+  if (rang === maxRang) return w(TITEL.letzter);
+  if (rang === 2) return w(TITEL.zweiter);
+  if (rang === 3 && gesamt > 4) return w(TITEL.dritter);
   return w(TITEL.mitte);
 }
 
@@ -1446,15 +1451,15 @@ function renderTabelle() {
     return;
   }
 
-  // Wanderpokal für den Führenden
-  const fuehrend = stand[0];
+  // Wanderpokal für die Führenden (bei Punktgleichheit teilen sie sich den Pokal)
+  const fuehrende = stand.filter(s => s.rang === 1);
   const hatPunkte = stand.some(s => s.punkte > 0);
   pokalC.innerHTML = hatPunkte ? `
     <div class="pokal-box">
       <span class="pokal-emoji">🏆</span>
-      <div>Aktueller Träger des Familien-Wanderpokals:</div>
-      <div class="name">${fuehrend.avatar} ${esc(fuehrend.name)}</div>
-      <div style="font-size:.85rem;margin-top:4px">mit ${fuehrend.punkte} Punkten – alle anderen: aufgepasst! 👀</div>
+      <div>${fuehrende.length > 1 ? 'Punktgleich an der Spitze – sie teilen sich den Familien-Wanderpokal:' : 'Aktueller Träger des Familien-Wanderpokals:'}</div>
+      <div class="name">${fuehrende.map(f => `${f.avatar} ${esc(f.name)}`).join(" & ")}</div>
+      <div style="font-size:.85rem;margin-top:4px">mit ${fuehrende[0].punkte} Punkten – alle anderen: aufgepasst! 👀</div>
     </div>` : "";
 
   c.innerHTML = `
@@ -1462,9 +1467,10 @@ function renderTabelle() {
       <thead><tr><th></th><th>Spieler</th><th style="text-align:center">🎯</th><th style="text-align:right">Punkte</th></tr></thead>
       <tbody>
       ${stand.map((s,i) => {
-        const titel = titelFuer(i, stand.length, s.id);
-        const rangEmoji = i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1)+".";
-        const klasse = (i===0 && hatPunkte ? "fuehrend" : (i===stand.length-1 && stand.length>1 && hatPunkte ? "letzter" : "")) + " klickbar";
+        const maxRang = stand[stand.length-1].rang;
+        const titel = titelFuer(s.rang, maxRang, stand.length, s.id);
+        const rangEmoji = s.rang===1?"🥇":s.rang===2?"🥈":s.rang===3?"🥉":s.rang+".";
+        const klasse = (s.rang===1 && hatPunkte ? "fuehrend" : (s.rang===maxRang && stand.length>1 && hatPunkte ? "letzter" : "")) + " klickbar";
         return `<tr class="${klasse}" onclick="zeigeSpielerstats('${s.id}')" title="Statistiken anzeigen">
           <td class="rang-emoji">${rangEmoji}</td>
           <td>
@@ -1492,7 +1498,7 @@ const BADGES = [
   { e:"🎲", n:"Bonus-Jäger",          pruef:c => c.bonus > 0 },
   { e:"🔥", n:"Heißer Lauf (3+)",     pruef:c => c.maxStreak >= 3 },
   { e:"💯", n:"Perfektionist",        pruef:c => c.getippt >= 5 && c.p0 === 0 },
-  { e:"👑", n:"Spitzenreiter",        pruef:c => c.rang === 0 && c.punkte > 0 },
+  { e:"👑", n:"Spitzenreiter",        pruef:c => c.rang === 1 && c.punkte > 0 },
   { e:"⭐", n:"50 Punkte-Klub",       pruef:c => c.punkte >= 50 }
 ];
 
@@ -1501,8 +1507,8 @@ function zeigeSpielerstats(spielerId) {
   const spieler = state.spieler.find(s => s.id === spielerId);
   if (!spieler) return;
   const stand = berechneStand();
-  const rang = stand.findIndex(s => s.id === spielerId);
-  const data = stand[rang];
+  const data = stand.find(s => s.id === spielerId);
+  const rang = data.rang;   // geteilter Platz (1-basiert, punktgleich = gleicher Rang)
 
   const gespielteSpiele = state.spiele.filter(s => s.gespielt);
   let p4=0, p3=0, p2=0, p0=0;
@@ -1537,7 +1543,7 @@ function zeigeSpielerstats(spielerId) {
   const maxMoeglich = getippt * 4;
   const effizienz = maxMoeglich > 0 ? Math.round(basisPunkte / maxMoeglich * 100) : 0;
   const abdeckung = gespielteSpiele.length > 0 ? Math.round(getippt / gespielteSpiele.length * 100) : 0;
-  const rangEmoji = rang===0?"🥇":rang===1?"🥈":rang===2?"🥉":`${rang+1}.`;
+  const rangEmoji = rang===1?"🥇":rang===2?"🥈":rang===3?"🥉":`${rang}.`;
 
   // Badges berechnen
   const ctx = { p4, p3, p2, p0, getippt, jokerBonus:jokerpunkte, bonus:data.bonus,
@@ -1568,7 +1574,7 @@ function zeigeSpielerstats(spielerId) {
       <span class="s-avatar">${spieler.avatar}</span>
       <div class="s-info">
         <h3>${esc(spieler.name)}</h3>
-        <div class="s-rang">${rangEmoji} Platz ${rang+1} von ${stand.length} · ${data.punkte} Punkte gesamt</div>
+        <div class="s-rang">${rangEmoji} Platz ${rang} von ${stand.length} · ${data.punkte} Punkte gesamt</div>
       </div>
     </div>
     <div class="stat-grid">
@@ -1659,10 +1665,12 @@ function renderAwards() {
     awards.push({ e:"🎯", t:"Der Scharfschütze", s:`${koenig.map(k=>k.avatar+" "+esc(k.name)).join(", ")} – ${maxTreffer}× exakt getippt!` });
   }
 
-  // 2. Schwarze Laterne 🏮
+  // 2. Schwarze Laterne 🏮 (bei Punktgleichheit teilen sich mehrere die Laterne)
   if (stand.length > 1 && anzGespielt > 0) {
-    const letzter = stand[stand.length-1];
-    awards.push({ e:"🏮", t:"Schwarze Laterne", s:`${letzter.avatar} ${esc(letzter.name)} bildet das Schlusslicht. Kopf hoch! 🫂` });
+    const maxRang = stand[stand.length-1].rang;
+    const letzte = stand.filter(s => s.rang === maxRang);
+    awards.push({ e:"🏮", t:"Schwarze Laterne",
+      s:`${letzte.map(l => `${l.avatar} ${esc(l.name)}`).join(" & ")} ${letzte.length > 1 ? 'bilden gemeinsam' : 'bildet'} das Schlusslicht. Kopf hoch! 🫂` });
   }
 
   // 3. Bauernopfer-Pokal 🐔 (viel getippt, wenig geholt)
@@ -2124,10 +2132,15 @@ function ziehStrafe() {
   const stand = berechneStand();
   if (stand.length < 2) { toast("Dafür braucht's mindestens 2 Mitspieler! 👬"); return; }
   if (!state.spiele.some(s=>s.gespielt)) { toast("Erst muss ein Spiel ausgewertet sein! ⚽"); return; }
-  const letzter = stand[stand.length-1];
+  // Bei Punktgleichheit auf dem letzten Platz entscheidet das Los, wer die
+  // Aufgabe übernimmt – niemand ist "alleine Letzter", wenn es ein Remis ist.
+  const maxRang = stand[stand.length-1].rang;
+  const letzte = stand.filter(s => s.rang === maxRang);
+  const letzter = letzte[Math.floor(Math.random() * letzte.length)];
   const box = document.getElementById("strafeContainer");
 
   box.innerHTML = `<div class="strafe-box">
+    ${letzte.length > 1 ? `<div style="font-size:.82rem;opacity:.9">🎲 ${letzte.length} punktgleiche Schlusslichter – das Los hat entschieden:</div>` : ''}
     <div class="name">🎁 ${letzter.avatar} ${esc(letzter.name)}, du bist dran!</div>
     <div class="strafe-text" id="strafeText">🎰 …</div>
   </div>`;
