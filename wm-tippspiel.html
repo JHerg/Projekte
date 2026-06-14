@@ -1628,8 +1628,7 @@ function renderTabelle() {
       ${stand.map((s,i) => {
         const maxRang = stand[stand.length-1].rang;
         const titel = titelFuer(s.rang, maxRang, stand.length, s.id);
-        const medaille = s.rang===1?"🥇":s.rang===2?"🥈":s.rang===3?"🥉":"";
-        const rangEmoji = medaille ? `${medaille} ${s.rang}.` : `${s.rang}.`;
+        const rangEmoji = `${s.rang}.`;
         const klasse = (s.rang===1 && hatPunkte ? "fuehrend" : (s.rang===maxRang && stand.length>1 && hatPunkte ? "letzter" : "")) + " klickbar";
         return `<tr class="${klasse}" onclick="zeigeSpielerstats('${s.id}')" title="Statistiken anzeigen">
           <td class="rang-emoji">${rangEmoji}</td>
