@@ -121,7 +121,7 @@
   td.pkt { font-weight: 800; color: var(--gruen); text-align: right; font-size: 1.1rem; }
   tr.fuehrend { background: linear-gradient(90deg, rgba(255,213,79,.35), transparent); }
   tr.letzter { background: linear-gradient(90deg, rgba(229,57,53,.12), transparent); }
-  .rang-emoji { font-size: 1.2rem; }
+  .rang-emoji { font-size: 1.2rem; white-space: nowrap; }
   .titel-badge { font-size: .7rem; color: #777; display: block; }
   .spieler-name { font-weight: 700; }
 
@@ -1628,7 +1628,8 @@ function renderTabelle() {
       ${stand.map((s,i) => {
         const maxRang = stand[stand.length-1].rang;
         const titel = titelFuer(s.rang, maxRang, stand.length, s.id);
-        const rangEmoji = s.rang===1?"🥇":s.rang===2?"🥈":s.rang===3?"🥉":s.rang+".";
+        const medaille = s.rang===1?"🥇":s.rang===2?"🥈":s.rang===3?"🥉":"";
+        const rangEmoji = medaille ? `${medaille} ${s.rang}.` : `${s.rang}.`;
         const klasse = (s.rang===1 && hatPunkte ? "fuehrend" : (s.rang===maxRang && stand.length>1 && hatPunkte ? "letzter" : "")) + " klickbar";
         return `<tr class="${klasse}" onclick="zeigeSpielerstats('${s.id}')" title="Statistiken anzeigen">
           <td class="rang-emoji">${rangEmoji}</td>
