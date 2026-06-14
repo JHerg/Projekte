@@ -1552,6 +1552,27 @@ function renderTagesform() {
   const tagesSieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
   const datumTxt = `${WOCHENTAGE_KURZ[fensterDatum.getDay()]}. ${fensterDatum.getDate()}.${fensterDatum.getMonth()+1}.`;
 
+  // Ist der Aufsteiger gleichzeitig Tagessieger, gibt es nur EINE kombinierte
+  // Box – sonst wäre die Aussage doppelt (Tagessieger UND Aufsteiger).
+  const kombiniert = aufsteiger && aufsteiger.rang === 1;
+  const awardsHtml = kombiniert ? `
+      <div class="award">
+        <div class="emoji">🏅🚀</div>
+        <div class="txt"><strong>Tages-Sieger &amp; Aufsteiger des Tages</strong>
+        <span>${tagesSieger.map(s => `${s.avatar} ${esc(s.name)}`).join(" & ")} mit ${tagesSieger[0].punkte} Punkten in dieser Nacht ganz vorne – ${esc(aufsteiger.name)} kommt dabei von Platz ${aufsteiger.gesamtRang} und legt eine echte Aufholjagd hin! 🎉💪</span></div>
+      </div>` : `
+      <div class="award">
+        <div class="emoji">🏅</div>
+        <div class="txt"><strong>Tages-Sieger${tagesSieger.length>1?'innen':''}</strong>
+        <span>${tagesSieger.map(s => `${s.avatar} ${esc(s.name)}`).join(" & ")} mit ${tagesSieger[0].punkte} Punkten in dieser Nacht! 🎉</span></div>
+      </div>
+      ${aufsteiger ? `
+      <div class="award">
+        <div class="emoji">🚀</div>
+        <div class="txt"><strong>Aufsteiger des Tages</strong>
+        <span>${aufsteiger.avatar} ${esc(aufsteiger.name)} springt heute von Platz ${aufsteiger.gesamtRang} auf Platz ${aufsteiger.rang} – weiter so! 💪</span></div>
+      </div>` : ''}`;
+
   tc.innerHTML = `
     <div class="karte tagesform-box">
       <h2>🌅 Aufsteiger des Tages</h2>
@@ -1570,17 +1591,7 @@ function renderTagesform() {
         }).join("")}
         </tbody>
       </table>
-      <div class="award">
-        <div class="emoji">🏅</div>
-        <div class="txt"><strong>Tages-Sieger${tagesSieger.length>1?'innen':''}</strong>
-        <span>${tagesSieger.map(s => `${s.avatar} ${esc(s.name)}`).join(" & ")} mit ${tagesSieger[0].punkte} Punkten in dieser Nacht! 🎉</span></div>
-      </div>
-      ${aufsteiger ? `
-      <div class="award">
-        <div class="emoji">🚀</div>
-        <div class="txt"><strong>Aufsteiger des Tages</strong>
-        <span>${aufsteiger.avatar} ${esc(aufsteiger.name)} springt heute von Platz ${aufsteiger.gesamtRang} auf Platz ${aufsteiger.rang} – weiter so! 💪</span></div>
-      </div>` : ''}
+      ${awardsHtml}
     </div>`;
 }
 
