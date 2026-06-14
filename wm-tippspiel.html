@@ -186,6 +186,12 @@
   @keyframes wackeln { 0%,100%{transform:rotate(-6deg)} 50%{transform:rotate(6deg)} }
   .pokal-box .name { font-size: 1.4rem; font-weight: 800; margin-top: 4px; }
 
+  .tagesform-box { border-top: 4px solid var(--gold); }
+  .tagesform-box .untertitel { font-size: .82rem; color: #888; margin-bottom: 10px; }
+  .tagesform-box table { margin-bottom: 10px; }
+  .tagesform-box .award:last-child { margin-bottom: 0; }
+  .tagesform-box .award .emoji { font-size: 1.6rem; }
+
   .strafe-box {
     background: linear-gradient(135deg, #ffd54f, #ffb300);
     border-radius: 16px; padding: 16px; text-align: center; color: #fff;
@@ -435,6 +441,7 @@
   <section id="view-tabelle" class="view aktiv">
     <div id="countdownBox"></div>
     <div id="pokalContainer"></div>
+    <div id="tagesformContainer"></div>
     <div class="karte">
       <h2>🏆 Die Tabelle</h2>
       <div id="tabelleInhalt"></div>
@@ -1468,14 +1475,125 @@ function titelFuer(rang, maxRang, gesamt, spielerId) {
   return w(TITEL.mitte);
 }
 
+const WOCHENTAGE_KURZ = ["So","Mo","Di","Mi","Do","Fr","Sa"];
+
+// Ordnet einen Zeitpunkt dem morgendlichen "Spieltag" zu: Spiele ab 20:00 Uhr
+// zählen zum Spieltag des folgenden Kalendertags, Spiele vor 08:00 Uhr zum
+// Spieltag des aktuellen Kalendertags (Nacht- bzw. Zeitzonen-Spiele rutschen
+// so gemeinsam in das morgendliche Auswertungsfenster). Tagsüber (08–20 Uhr)
+// gehört ein Spiel zu keinem solchen Fenster.
+function tagesfensterDatum(d) {
+  const std = d.getHours();
+  if (std >= 20) return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+  if (std < 8) return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return null;
+}
+
+// "Aufsteiger des Tages": wertet das jüngste 20:00–08:00-Spieltagsfenster aus,
+// in dem mindestens ein Spiel ein Ergebnis hat, und zeigt, wer darin
+// besonders gut getippt hat – auch als Mutmacher für Spieler, die in der
+// Gesamttabelle weiter hinten stehen.
+function berechneTagesform() {
+  const fenster = new Map();
+  state.spiele.forEach(spiel => {
+    if (!spiel.gespielt) return;
+    const d = parseSpielDatum(spiel);
+    if (!d) return;
+    const f = tagesfensterDatum(d);
+    if (!f) return;
+    const key = f.getTime();
+    if (!fenster.has(key)) fenster.set(key, []);
+    fenster.get(key).push(spiel);
+  });
+  if (!fenster.size) return null;
+
+  const neuesterKey = Math.max(...fenster.keys());
+  const spieleDesTages = fenster.get(neuesterKey);
+  const fensterDatum = new Date(neuesterKey);
+
+  const gesamtRang = new Map(berechneStand().map(s => [s.id, s.rang]));
+
+  const tagesStand = state.spieler.map(s => {
+    let punkte = 0, treffer = 0;
+    spieleDesTages.forEach(spiel => {
+      const t = state.tipps[s.id]?.[spiel.id];
+      if (t && t.e1 !== null && t.e2 !== null) {
+        const basis = punkteFuer(t, spiel);
+        punkte += punkteFuerSpieler(s.id, spiel);
+        if (basis === 4) treffer++;
+      }
+    });
+    return { ...s, punkte, treffer };
+  }).sort((a,b) => b.punkte - a.punkte || b.treffer - a.treffer)
+    .map((s, i, arr) => ({ ...s, rang: 1 + arr.filter(x => x.punkte > s.punkte).length }));
+
+  // Größter positiver Sprung vom Gesamt- zum Tages-Rang – aber nur, wenn der
+  // Sprung von jemandem kommt, der insgesamt NICHT vorne liegt (sonst keine
+  // echte Überraschung).
+  let aufsteiger = null, sprung = 0;
+  tagesStand.forEach(s => {
+    const gr = gesamtRang.get(s.id) || 1;
+    const diff = gr - s.rang;
+    if (gr > 1 && s.punkte > 0 && diff > sprung) {
+      sprung = diff;
+      aufsteiger = { ...s, gesamtRang: gr };
+    }
+  });
+
+  return { fensterDatum, anzahlSpiele: spieleDesTages.length, tagesStand, aufsteiger, sprung };
+}
+
+function renderTagesform() {
+  const tc = document.getElementById("tagesformContainer");
+  const tf = berechneTagesform();
+  if (!tf || !tf.tagesStand.some(s => s.punkte > 0)) { tc.innerHTML = ""; return; }
+
+  const { fensterDatum, anzahlSpiele, tagesStand, aufsteiger, sprung } = tf;
+  const tagesSieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
+  const datumTxt = `${WOCHENTAGE_KURZ[fensterDatum.getDay()]}. ${fensterDatum.getDate()}.${fensterDatum.getMonth()+1}.`;
+
+  tc.innerHTML = `
+    <div class="karte tagesform-box">
+      <h2>🌅 Aufsteiger des Tages</h2>
+      <div class="untertitel">Spieltag ${datumTxt} · ${anzahlSpiele} Spiel${anzahlSpiele===1?'':'e'} ausgewertet (20:00–08:00 Uhr)</div>
+      <table>
+        <thead><tr><th></th><th>Spieler</th><th style="text-align:center">🎯</th><th style="text-align:right">Punkte</th></tr></thead>
+        <tbody>
+        ${tagesStand.filter(s => s.punkte > 0 || s.treffer > 0).map(s => {
+          const rangEmoji = s.rang===1?"🥇":s.rang===2?"🥈":s.rang===3?"🥉":s.rang+".";
+          return `<tr>
+            <td class="rang-emoji">${rangEmoji}</td>
+            <td>${s.avatar} ${esc(s.name)}</td>
+            <td style="text-align:center">${s.treffer}</td>
+            <td class="pkt">${s.punkte}</td>
+          </tr>`;
+        }).join("")}
+        </tbody>
+      </table>
+      <div class="award">
+        <div class="emoji">🏅</div>
+        <div class="txt"><strong>Tages-Sieger${tagesSieger.length>1?'innen':''}</strong>
+        <span>${tagesSieger.map(s => `${s.avatar} ${esc(s.name)}`).join(" & ")} mit ${tagesSieger[0].punkte} Punkten in dieser Nacht! 🎉</span></div>
+      </div>
+      ${aufsteiger ? `
+      <div class="award">
+        <div class="emoji">🚀</div>
+        <div class="txt"><strong>Aufsteiger des Tages</strong>
+        <span>${aufsteiger.avatar} ${esc(aufsteiger.name)} springt heute von Platz ${aufsteiger.gesamtRang} auf Platz ${aufsteiger.rang} – weiter so! 💪</span></div>
+      </div>` : ''}
+    </div>`;
+}
+
 function renderTabelle() {
   const c = document.getElementById("tabelleInhalt");
   const stand = berechneStand();
   const pokalC = document.getElementById("pokalContainer");
+  const tagesformC = document.getElementById("tagesformContainer");
 
   if (!stand.length) {
     c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler. Geh zu 👨‍👩‍👧 <b>Familie</b> und stell dein Team auf!</p>';
     pokalC.innerHTML = "";
+    tagesformC.innerHTML = "";
     return;
   }
 
@@ -1489,6 +1607,8 @@ function renderTabelle() {
       <div class="name">${fuehrende.map(f => `${f.avatar} ${esc(f.name)}`).join(" & ")}</div>
       <div style="font-size:.85rem;margin-top:4px">mit ${fuehrende[0].punkte} Punkten – alle anderen: aufgepasst! 👀</div>
     </div>` : "";
+
+  renderTagesform();
 
   c.innerHTML = `
     <table>
