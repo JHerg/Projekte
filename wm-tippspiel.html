@@ -228,6 +228,7 @@
   }
   .haupttabelle-box td.pkt { font-size: 1.3rem; }
   .haupttabelle-box table th { font-weight: 700; }
+  .haupttabelle-box .teilen-btn { display: block; margin: -4px auto 12px; }
 
   /* Auf-/Absteiger-Pfeile in der Tabelle */
   .bewegung { font-size: .62rem; font-weight: 800; display: block; margin-top: 1px; line-height: 1; }
@@ -522,6 +523,7 @@
     <div class="karte haupttabelle-box">
       <h2>🏆 Gesamtplatzierung</h2>
       <span class="haupttabelle-untertitel">Das zählt am Ende</span>
+      <button class="klein sekundaer teilen-btn" onclick="tabelleTeilen()">📤 Tabelle teilen</button>
       <div id="tabelleInhalt"></div>
       <details>
         <summary>So gibt's Punkte</summary>
@@ -2736,6 +2738,107 @@ function toast(text) {
   t.classList.add("zeigen");
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.classList.remove("zeigen"), 2800);
+}
+
+// ===================== TABELLE ALS BILD TEILEN =====================
+// Zeichnet die aktuelle Gesamtplatzierung als Bild und öffnet das System-
+// Teilen-Menü (WhatsApp, Nachrichten, Mail, ...) – Fallback: Bild herunterladen.
+function tabelleAlsCanvas(stand) {
+  const breite = 640;
+  const zeilenHoehe = 64;
+  const kopfHoehe = 140;
+  const hoehe = kopfHoehe + stand.length * zeilenHoehe + 60;
+  const canvas = document.createElement("canvas");
+  canvas.width = breite * 2;
+  canvas.height = hoehe * 2;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(2, 2);
+
+  // Hintergrund
+  const grad = ctx.createLinearGradient(0, 0, 0, hoehe);
+  grad.addColorStop(0, "#1b3a2b");
+  grad.addColorStop(1, "#2e7d32");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, breite, hoehe);
+
+  // Titel
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 30px -apple-system, Segoe UI, sans-serif";
+  ctx.fillText("🏆 Gesamtplatzierung", breite / 2, 50);
+  ctx.font = "16px -apple-system, Segoe UI, sans-serif";
+  ctx.fillStyle = "#cde9d2";
+  const datum = new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+  ctx.fillText(`Familien-WM-Tippspiel 2026 · ${datum}`, breite / 2, 78);
+
+  // Weiße Tabellenkarte
+  const tabX = 20, tabY = kopfHoehe - 20, tabW = breite - 40, tabH = stand.length * zeilenHoehe + 20;
+  ctx.fillStyle = "#fff";
+  bildAbgerundetesRechteck(ctx, tabX, tabY, tabW, tabH, 16);
+  ctx.fill();
+
+  stand.forEach((s, i) => {
+    const yMitte = tabY + 20 + i * zeilenHoehe + zeilenHoehe / 2;
+    if (s.rang === 1) {
+      ctx.fillStyle = "#fff8e1";
+      bildAbgerundetesRechteck(ctx, tabX + 8, yMitte - zeilenHoehe / 2 + 4, tabW - 16, zeilenHoehe - 8, 10);
+      ctx.fill();
+    }
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#1b3a2b";
+    ctx.font = "bold 22px -apple-system, Segoe UI, sans-serif";
+    ctx.fillText(`${s.rang}.`, tabX + 24, yMitte + 8);
+    ctx.font = "22px -apple-system, Segoe UI, sans-serif";
+    ctx.fillText(`${s.avatar}  ${s.name}`, tabX + 70, yMitte + 8);
+    ctx.textAlign = "right";
+    ctx.font = "bold 24px -apple-system, Segoe UI, sans-serif";
+    ctx.fillStyle = "#2e7d32";
+    ctx.fillText(`${s.punkte} P`, tabX + tabW - 24, yMitte + 8);
+  });
+
+  // Footer
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#cde9d2";
+  ctx.font = "14px -apple-system, Segoe UI, sans-serif";
+  ctx.fillText("Tippen, lachen, gewinnen – und der Letzte muss zittern! 😱", breite / 2, hoehe - 18);
+
+  return canvas;
+}
+
+function bildAbgerundetesRechteck(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+async function tabelleTeilen() {
+  const stand = berechneStand();
+  if (!stand.length) { toast("Noch keine Mitspieler – nichts zu teilen. 🤷"); return; }
+  try {
+    const canvas = tabelleAlsCanvas(stand);
+    const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+    if (!blob) throw new Error("kein Bild");
+    const dateiname = `wm-tabelle-${new Date().toISOString().slice(0,10)}.png`;
+    const file = new File([blob], dateiname, { type: "image/png" });
+    const text = "🏆 Familien-WM-Tippspiel 2026 – aktueller Stand!";
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Gesamtplatzierung", text });
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = dateiname;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast("📥 Bild gespeichert – jetzt per WhatsApp, Nachrichten o.ä. anhängen! 📎");
+    }
+  } catch (err) {
+    if (err.name !== "AbortError") toast("😕 Teilen hat nicht geklappt – versuch's nochmal.");
+  }
 }
 
 // ===================== DATEN: Export / Import / Reset =====================
