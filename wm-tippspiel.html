@@ -4176,7 +4176,9 @@ function renderStatGenau() {
   }).filter(x => x.schnitt !== null).sort((a,b) => a.schnitt - b.schnitt);
   let genauHtml = "";
   if (genau.length) {
-    genauHtml = `<div class="stat-section-titel">🎯 Tor-Genauigkeit (Ø Abweichung pro Spiel – kleiner ist besser)</div>` +
+    genauHtml = `<div class="stat-section-titel">🎯 Tor-Genauigkeit</div>
+      <p class="info-zeile" style="margin-top:0">Wie nah liegen die getippten <b>Tore</b> am echten Ergebnis? Pro Spiel zählen wir, um wie viele Tore Heim- und Auswärts-Tipp danebenliegen, und bilden den Schnitt. <b>Kleiner = besser</b>, <b>0,00 = perfekt.</b><br>
+      <span style="color:#999">Beispiel: Tipp 2:1, echtes Ergebnis 3:1 → 1 Tor daneben (Heim um 1, Auswärts genau) = Wert 1.</span></p>` +
       genau.map((g,i) => `<div class="stat-vrow" style="grid-template-columns:1.8rem 1fr 3rem">
         <span>${i===0?'🥇':(i+1)+'.'}</span>
         <span>${g.sp.avatar} ${esc(g.sp.name)}</span>
