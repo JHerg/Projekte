@@ -255,6 +255,10 @@
     color: #5d4000; cursor: pointer; box-shadow: var(--schatten);
   }
   body.dark .erinnerung-box { background: #3a2f1a; color: #ffd9a0; border-left-color: #ffb74d; }
+  .erinnerung-box.erinnerung-ok {
+    background: #e8f5e9; border-left-color: var(--gruen-hell); color: #1b5e20; cursor: default;
+  }
+  body.dark .erinnerung-box.erinnerung-ok { background: #1f3a24; color: #c8f0c8; border-left-color: var(--gruen-hell); }
 
   .strafe-box {
     background: linear-gradient(135deg, #ffd54f, #ffb300);
@@ -2301,19 +2305,26 @@ function tippErinnerung() {
     const t = state.tipps[sp]?.[s.id];
     return !(t && t.e1 !== null && t.e2 !== null);
   });
-  if (!offen.length) return null;
 
-  return { offenAnzahl: offen.length, gesamt: anstehend.length, heuteCutoff };
+  return { offenAnzahl: offen.length, gesamt: anstehend.length, heuteCutoff, alleGetippt: offen.length === 0 };
 }
 
 // Füllt ein evtl. vorhandenes Erinnerungs-Banner in Tabelle- und Tippen-Reiter.
 function renderTippErinnerung() {
   const info = tippErinnerung();
-  const html = info ? `
-    <div class="erinnerung-box" onclick="zeigeView('tippen')">
-      ⏰ Noch <b>${info.offenAnzahl} von ${info.gesamt}</b> Spiel${info.gesamt===1?'':'en'}
-      bis ${info.heuteCutoff ? 'heute' : 'morgen'} 8:00 Uhr ungetippt – ran an die Tipps! 👉
-    </div>` : "";
+  let html = "";
+  if (info) {
+    const wann = info.heuteCutoff ? "heute" : "morgen";
+    html = info.alleGetippt
+      ? `<div class="erinnerung-box erinnerung-ok">
+          ✅ Alles getippt! Du hast alle <b>${info.gesamt}</b> Spiel${info.gesamt===1?'':'e'}
+          bis ${wann} 8:00 Uhr abgegeben. 🎉
+        </div>`
+      : `<div class="erinnerung-box" onclick="zeigeView('tippen')">
+          ⏰ Noch <b>${info.offenAnzahl} von ${info.gesamt}</b> Spiel${info.gesamt===1?'':'en'}
+          bis ${wann} 8:00 Uhr ungetippt – ran an die Tipps! 👉
+        </div>`;
+  }
   ["erinnerungBoxTabelle", "erinnerungBoxTippen"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = html;
