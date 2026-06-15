@@ -2412,7 +2412,7 @@ function renderAwards() {
 
   // --- Per-Spieler-Detailstats für Awards berechnen ---
   const stats = state.spieler.map(sp => {
-    let p4=0, p3=0, p2=0, p0=0, jokerBonus=0, unentschieden=0, spaetNacht=0;
+    let p4=0, p3=0, p2=0, p0=0, jokerBonus=0, unentschieden=0;
     gespielteSpiele.forEach(spiel => {
       const basis = punkteFuer(state.tipps[sp.id]?.[spiel.id], spiel);
       if (basis === null) return;
@@ -2422,13 +2422,10 @@ function renderAwards() {
       // Unentschieden korrekt getippt
       const tipp = state.tipps[sp.id]?.[spiel.id];
       if (tipp && spiel.e1===spiel.e2 && tipp.e1===tipp.e2) unentschieden++;
-      // Spätspiel (Anstoß nach 23:00 oder vor 05:00 MESZ)
-      const stunde = parseInt((spiel.datum||"").match(/(\d{1,2}):\d{2}$/)?.[1] ?? "12");
-      if ((stunde >= 23 || stunde <= 4) && basis >= 2) spaetNacht++;
     });
     const getippt = p4+p3+p2+p0;
     const effizienz = getippt>0 ? (p4*4+p3*3+p2*2) / (getippt*4) : 0;
-    return { sp, p4, p3, p2, p0, jokerBonus, unentschieden, spaetNacht, getippt, effizienz };
+    return { sp, p4, p3, p2, p0, jokerBonus, unentschieden, getippt, effizienz };
   });
 
   // --- Punkte nach Phasen (für Aufsteiger) ---
@@ -2486,16 +2483,7 @@ function renderAwards() {
     awards.push({ e:"🔮", t:"Der Tor-Prophet", s:`${prophet.map(p=>p.sp.avatar+" "+esc(p.sp.name)).join(", ")} – ${maxP3}× richtige Tordifferenz getippt! Beeindruckend!` });
   }
 
-  // 7. Tipp-Maschine 🏟️ (höchste Abdeckung, min 5 abgegebene Tipps)
-  const mitAbdeckung = stats.filter(s => s.getippt >= 5 && anzGespielt > 0);
-  if (mitAbdeckung.length) {
-    const maxGetippt = Math.max(...mitAbdeckung.map(s => s.getippt));
-    const maschinen = mitAbdeckung.filter(s => s.getippt === maxGetippt);
-    const prozent = Math.round(maxGetippt / anzGespielt * 100);
-    awards.push({ e:"🏟️", t:"Die Tipp-Maschine", s:`${maschinen.map(m=>m.sp.avatar+" "+esc(m.sp.name)).join(", ")} ${maschinen.length>1?'haben':'hat'} ${prozent}% aller Spiele getippt – ${maxGetippt} von ${anzGespielt}! Fleißig! 💪` });
-  }
-
-  // 8. Glückspilz 🍀 (meiste 2-Punkte-Tendenzen, aber kaum Volltreffer)
+  // 7. Glückspilz 🍀 (meiste 2-Punkte-Tendenzen, aber kaum Volltreffer)
   const glueckStats = stats.filter(s => s.getippt >= 3 && s.p2 > s.p4);
   if (glueckStats.length) {
     const maxP2g = Math.max(...glueckStats.map(s => s.p2));
@@ -2505,7 +2493,7 @@ function renderAwards() {
     }
   }
 
-  // 9. Aufsteiger 😎 (meiste Punkte in der letzten Phase)
+  // 8. Aufsteiger 😎 (meiste Punkte in der letzten Phase)
   if (letztePhase && letztePhaseSpiele.length && stand.length > 1) {
     const aufstieg = state.spieler.map(sp => {
       let p = 0;
@@ -2519,21 +2507,14 @@ function renderAwards() {
     }
   }
 
-  // 10. Unentschieden-Prophet 🤝 (meiste korrekt getippte Remis)
+  // 9. Unentschieden-Prophet 🤝 (meiste korrekt getippte Remis)
   const maxUnent = Math.max(...stats.map(s => s.unentschieden));
   if (maxUnent >= 2) {
     const remis = stats.filter(s => s.unentschieden === maxUnent);
     awards.push({ e:"🤝", t:"Der Remis-Experte", s:`${remis.map(r=>r.sp.avatar+" "+esc(r.sp.name)).join(", ")} – ${maxUnent}× ein Unentschieden exakt vorhergesehen! Filosoph des Fußballs! 🧘` });
   }
 
-  // 11. Nachteule 🦉 (korrekte Tipps bei Spät-/Nachtspielen)
-  const maxNacht = Math.max(...stats.map(s => s.spaetNacht));
-  if (maxNacht >= 1) {
-    const eule = stats.filter(s => s.spaetNacht === maxNacht);
-    awards.push({ e:"🦉", t:"Die Nachteule", s:`${eule.map(e=>e.sp.avatar+" "+esc(e.sp.name)).join(", ")} – ${maxNacht}× einen Nachtanstoß erfolgreich getippt! Wer schläft, verliert! 🌙` });
-  }
-
-  // 12. Effizienz-König 📊 (höchste Punkte/Tipp-Rate, min 4 Tipps)
+  // 10. Effizienz-König 📊 (höchste Punkte/Tipp-Rate, min 4 Tipps)
   const effStats = stats.filter(s => s.getippt >= 4);
   if (effStats.length > 1) {
     const maxEff = Math.max(...effStats.map(s => s.effizienz));
@@ -2544,7 +2525,7 @@ function renderAwards() {
     }
   }
 
-  // 13. + 14. Tipp-Zwillinge 👯 & Antipoden 🧲 (rein sozialer Spaß)
+  // 11. + 12. Tipp-Zwillinge 👯 & Antipoden 🧲 (rein sozialer Spaß)
   if (state.spieler.length >= 2 && anzGespielt >= 3) {
     let bestGleich = null, bestGegen = null;
     for (let i = 0; i < state.spieler.length; i++) {
