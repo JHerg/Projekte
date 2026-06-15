@@ -249,6 +249,20 @@
     font-size: .9rem; font-weight: 600; text-align: center; box-shadow: var(--schatten);
   }
 
+  /* Schlagzeile des Tages: reißerische "Sportschau"-Meldung zu den Nacht-Ergebnissen */
+  .schlagzeile-box {
+    background: linear-gradient(135deg, #b71c1c, #e53935);
+    color: #fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px;
+    box-shadow: var(--schatten); text-align: center;
+  }
+  .schlagzeile-box .label {
+    display: inline-block; background: #fff; color: #b71c1c; font-weight: 800;
+    font-size: .68rem; letter-spacing: 1px; text-transform: uppercase;
+    border-radius: 6px; padding: 1px 7px; margin-bottom: 5px;
+  }
+  .schlagzeile-box .text { font-size: .92rem; font-weight: 700; line-height: 1.35; }
+  body.dark .schlagzeile-box { background: linear-gradient(135deg, #7f0000, #b71c1c); }
+
   /* Tipp-Erinnerung: noch offene Spiele bis zur nächsten 8-Uhr-Grenze */
   .erinnerung-box {
     background: #fff3e0; border-left: 4px solid #fb8c00; border-radius: 10px;
@@ -517,6 +531,7 @@
   <!-- ====================== TABELLE ====================== -->
   <section id="view-tabelle" class="view aktiv">
     <div id="erinnerungBoxTabelle"></div>
+    <div id="schlagzeileBox"></div>
     <div id="spruchBox"></div>
     <div id="countdownBox"></div>
     <div id="pokalContainer"></div>
@@ -1805,6 +1820,99 @@ function spruchDesTages(stand) {
   return pool[tag % pool.length];
 }
 
+// ===================== SCHLAGZEILE DES TAGES =====================
+// Reißerische "Familien-Sportschau"-Meldung zu den Ergebnissen des jüngsten
+// Tagesfensters (18:00–08:00 Uhr – derselbe Zeitraum wie beim Tagessieger).
+// Mehrere Formulierungs-Varianten pro Kategorie, tagesfest ausgewählt, damit
+// die Schlagzeile sich nicht bei jedem Neu-Rendern ändert.
+const SCHLAGZEILEN = {
+  perfekt: [
+    "👑 PERFEKTER TAG! {name} räumt ALLES ab – {punkte} von {max} möglichen Punkten! Unfassbar! 🤯",
+    "🚨 EILMELDUNG: {name} tippt einen MAKELLOSEN Spieltag – {punkte}/{max} Punkte! Wie geht das?! 😱",
+    "💯 VOLLTREFFER-ORGIE! {name} holt das Maximum – {punkte} von {max} Punkten am Stück! 🎯"
+  ],
+  aufsteiger: [
+    "🚀 ERDBEBEN IN DER TABELLE! {name} katapultiert sich von Platz {gr} auf Platz {rang} – wer hätte DAS gedacht?! 😲",
+    "📈 SENSATIONS-COMEBACK! {name} springt {sprung} Plätze nach vorne – die Konkurrenz zittert! 😨",
+    "🔥 SIEGESZUG! {name} pflügt sich von Platz {gr} auf Platz {rang} – stoppt diesen Lauf, wenn ihr könnt! 💪"
+  ],
+  tagessiegKnapp: [
+    "🥊 KOPF-AN-KOPF-RENNEN! {name} sichert sich den Tagessieg hauchdünn mit {punkte} Punkten! 🔥",
+    "⚡ NERVENKITZEL! Nur ein Wimpernschlag trennt {name} vom Rest – Tagessieg mit {punkte} Punkten! 😬"
+  ],
+  tagessieg: [
+    "🏅 TAGESSIEGER {name}! Mit {punkte} Punkten lässt die Familie heute hinter sich! 🎉",
+    "📰 {name} dominiert den Tag mit {punkte} Punkten – Hut ab! 🎩",
+    "🌟 STAR DES TAGES: {name} mit starken {punkte} Punkten – Applaus, Applaus! 👏"
+  ],
+  niete: [
+    "😱 KATASTROPHE! {name} geht heute komplett LEER aus – 0 Punkte! Morgen wird alles besser. 🫣",
+    "🪦 SCHWARZER TAG für {name}: kein einziger Punkt heute. Kopf hoch und weitertippen! 🤗",
+    "💔 AUTSCH! {name} liegt heute bei ALLEN Tipps daneben – 0 Punkte! Kommt schon wieder! 💪"
+  ]
+};
+function schlagzeileVorlage(tpl, vals) {
+  return tpl.replace(/\{(\w+)\}/g, (_, k) => vals[k] ?? "");
+}
+function schlagzeileDesTages() {
+  const tf = berechneTagesform();
+  if (!tf) return null;
+  const { tagesStand, aufsteiger, sprung, anzahlSpiele, fensterDatum, fensterSpielIds } = tf;
+  if (!tagesStand.some(s => s.punkte > 0 || s.treffer > 0)) return null;
+
+  const tagessieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
+  const zweiter = tagesStand.find(s => s.rang === 2);
+  const maxPunkte = anzahlSpiele * 4;
+  // "Niete des Tages": hat alle Spiele des Fensters getippt, aber 0 Punkte kassiert.
+  const niete = tagesStand.filter(s => {
+    if (s.punkte !== 0 || s.treffer !== 0) return false;
+    return [...fensterSpielIds].every(id => {
+      const t = state.tipps[s.id]?.[id];
+      return t && t.e1 !== null && t.e2 !== null;
+    });
+  });
+
+  const seed = Math.floor(fensterDatum.getTime() / 86400000);
+  const wahl = (arr) => arr[seed % arr.length];
+  const namen = (liste) => liste.map(s => `${s.avatar} ${esc(s.name)}`).join(" & ");
+
+  const kandidaten = [];
+  if (tagessieger.length && tagessieger.length < tagesStand.length && tagessieger[0].punkte === maxPunkte) {
+    kandidaten.push({ prio: 4, text: schlagzeileVorlage(wahl(SCHLAGZEILEN.perfekt),
+      { name: namen(tagessieger), punkte: tagessieger[0].punkte, max: maxPunkte }) });
+  }
+  if (aufsteiger && sprung >= 2) {
+    kandidaten.push({ prio: 3, text: schlagzeileVorlage(wahl(SCHLAGZEILEN.aufsteiger),
+      { name: `${aufsteiger.avatar} ${esc(aufsteiger.name)}`, gr: aufsteiger.gesamtRang, rang: aufsteiger.rang, sprung }) });
+  }
+  if (tagessieger.length && zweiter && (tagessieger[0].punkte - zweiter.punkte <= 1) && tagesStand.length > 2) {
+    kandidaten.push({ prio: 2, text: schlagzeileVorlage(wahl(SCHLAGZEILEN.tagessiegKnapp),
+      { name: namen(tagessieger), punkte: tagessieger[0].punkte }) });
+  }
+  if (tagessieger.length) {
+    kandidaten.push({ prio: 1, text: schlagzeileVorlage(wahl(SCHLAGZEILEN.tagessieg),
+      { name: namen(tagessieger), punkte: tagessieger[0].punkte }) });
+  }
+  if (niete.length && niete.length < tagesStand.length && anzahlSpiele >= 2) {
+    kandidaten.push({ prio: niete.length === 1 ? 1.5 : 0.5, text: schlagzeileVorlage(wahl(SCHLAGZEILEN.niete),
+      { name: namen(niete) }) });
+  }
+
+  if (!kandidaten.length) return null;
+  kandidaten.sort((a,b) => b.prio - a.prio);
+  return kandidaten[0].text;
+}
+function renderSchlagzeile() {
+  const c = document.getElementById("schlagzeileBox");
+  if (!c) return;
+  const text = schlagzeileDesTages();
+  c.innerHTML = text ? `
+    <div class="schlagzeile-box">
+      <span class="label">📰 Familien-Sportschau</span>
+      <div class="text">${text}</div>
+    </div>` : "";
+}
+
 function renderTabelle() {
   const c = document.getElementById("tabelleInhalt");
   const stand = berechneStand();
@@ -1813,6 +1921,7 @@ function renderTabelle() {
   const spruchC = document.getElementById("spruchBox");
 
   if (spruchC) spruchC.innerHTML = stand.length ? `<div class="spruch-box">💬 ${spruchDesTages(stand)}</div>` : "";
+  renderSchlagzeile();
 
   if (!stand.length) {
     c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler. Geh zu 👨‍👩‍👧 <b>Familie</b> und stell dein Team auf!</p>';
