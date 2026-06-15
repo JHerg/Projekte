@@ -1084,8 +1084,13 @@ function tippSpeichern(spielId, feld, wert) {
   const v = wert === "" ? null : Math.max(0, parseInt(wert) || 0);
   state.tipps[sp][spielId][feld] = v;
   speichern();
-  renderKonsens();    // Außenseiter-Radar hängt von den abgegebenen Tipps ab
-  renderCountdown();  // Deadline-Warnung hängt davon ab, ob schon getippt wurde
+  renderKonsens();      // Außenseiter-Radar hängt von den abgegebenen Tipps ab
+  renderCountdown();    // Deadline-Warnung hängt davon ab, ob schon getippt wurde
+  renderTippFortschritt(); // Erinnerungs-Banner & Fortschritt sofort aktualisieren
+  const t = state.tipps[sp][spielId];
+  if (t.e1 !== null && t.e2 !== null) {
+    toast(`✅ Tipp gespeichert: ${flaggeVon(spiel.t1)} ${t.e1}:${t.e2} ${flaggeVon(spiel.t2)}`);
+  }
 }
 
 function ergebnisSpeichern(spielId, feld, wert) {
