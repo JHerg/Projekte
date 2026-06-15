@@ -1782,8 +1782,10 @@ function renderTabelle() {
   // Turniergröße von 104 Spielen (72 Gruppenspiele + 32 K.-o.-Spiele) – die
   // K.-o.-Partien werden erst nach und nach automatisch erzeugt, sollen aber
   // von Anfang an im Nenner stehen. Bei Demo-/Eigenplänen zählt der echte Umfang.
-  const gruppenSpiele = state.spiele.filter(s => /^Gruppe /.test(s.phase || "")).length;
-  const istWMPlan = gruppenSpiele >= 48;
+  const gruppenSpiele = state.spiele.filter(s => /gruppe/i.test(s.phase || "")).length;
+  // Echter WM-Plan: entweder viele Gruppenspiele oder schlicht ein großer Plan
+  // (≥ 50 Spiele) – beides klar abgegrenzt vom 4-Spiele-Demoplan.
+  const istWMPlan = gruppenSpiele >= 48 || state.spiele.length >= 50;
   const gesamtSpiele = istWMPlan ? Math.max(104, state.spiele.length) : state.spiele.length;
   const fertigeSpiele = state.spiele.filter(s => s.gespielt).length;
   const prozent = gesamtSpiele ? Math.round(fertigeSpiele / gesamtSpiele * 100) : 0;
@@ -3705,7 +3707,24 @@ cloudInit();
 // PWA: Service Worker registrieren – nur über http(s) (per file:// nicht möglich).
 // Schlägt es fehl (z.B. lokale Datei), läuft die App ganz normal ohne PWA weiter.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  // War beim Laden bereits ein Service Worker aktiv? Dann ist ein späterer
+  // Controller-Wechsel ein echtes Update → einmalig neu laden, damit die neue
+  // App-Version (HTML/JS) wirklich greift. Beim allerersten Install (noch kein
+  // Controller) NICHT neu laden, um einen unnötigen Reload zu vermeiden.
+  if (navigator.serviceWorker.controller) {
+    let neugeladen = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (neugeladen) return;
+      neugeladen = true;
+      location.reload();
+    });
+  }
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      reg.update();                                  // sofort nach neuer Version suchen
+      setInterval(() => reg.update(), 60 * 60 * 1000); // stündlich erneut prüfen
+    }).catch(() => {});
+  });
 }
 </script>
 
