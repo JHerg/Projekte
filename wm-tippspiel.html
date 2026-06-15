@@ -1999,6 +1999,11 @@ const SCHLAGZEILEN = {
     "😱 KATASTROPHE! {name} geht heute komplett LEER aus – 0 Punkte! Morgen wird alles besser. 🫣",
     "🪦 SCHWARZER TAG für {name}: kein einziger Punkt heute. Kopf hoch und weitertippen! 🤗",
     "💔 AUTSCH! {name} liegt heute bei ALLEN Tipps daneben – 0 Punkte! Kommt schon wieder! 💪"
+  ],
+  ruhetag: [
+    "😴 NULLNUMMER! Heute hat's bei der GANZEN Familie nicht geklappt – 0 Punkte für alle. Morgen ist ein neuer Tag! 🌅",
+    "🤷 KEIN GLÜCK HEUTE: Niemand konnte heute punkten – Aufgeben gilt aber nicht! 💪",
+    "🌫️ STILLER SPIELTAG: Heute gab's für niemanden Punkte – Zeit, sich fürs nächste Spiel warmzulaufen! 🔥"
   ]
 };
 // Passende Fußballer-Weisheiten je Kategorie – täglich wechselnd, zur
@@ -2033,6 +2038,12 @@ const FUSSBALL_ZITATE = {
     { z: "Verlieren ist erlaubt, aufgeben nicht.", w: "Jürgen Klopp" },
     { z: "Auch aus einer Niederlage kann man lernen – wenn man will.", w: "Joachim Löw" },
     { z: "Morgen ist auch noch ein Tag.", w: "Volksmund" }
+  ],
+  ruhetag: [
+    { z: "Nach dem Spiel ist vor dem Spiel.", w: "Sepp Herberger" },
+    { z: "Der Ball ist rund, ein Spiel dauert 90 Minuten – alles andere ist Theorie.", w: "Sepp Herberger" },
+    { z: "Morgen ist auch noch ein Tag.", w: "Volksmund" },
+    { z: "Auch aus einer Niederlage kann man lernen – wenn man will.", w: "Joachim Löw" }
   ]
 };
 function schlagzeileVorlage(tpl, vals) {
@@ -2042,7 +2053,17 @@ function schlagzeileDesTages() {
   const tf = berechneTagesform();
   if (!tf) return null;
   const { tagesStand, aufsteiger, sprung, anzahlSpiele, fensterDatum, fensterSpielIds } = tf;
-  if (!tagesStand.some(s => s.punkte > 0 || s.treffer > 0)) return null;
+
+  const seed = Math.floor(fensterDatum.getTime() / 86400000);
+  const wahl = (arr) => arr[seed % arr.length];
+  const namen = (liste) => liste.map(s => `${s.avatar} ${esc(s.name)}`).join(" & ");
+
+  // Ruhetag: An diesem Spieltag hat niemand gepunktet – statt die Rundschau
+  // komplett auszublenden, gibt's eine eigene "Nullnummer"-Schlagzeile.
+  if (!tagesStand.some(s => s.punkte > 0 || s.treffer > 0)) {
+    const zitateRuhe = FUSSBALL_ZITATE.ruhetag;
+    return { text: wahl(SCHLAGZEILEN.ruhetag), zitat: zitateRuhe[(seed + 3) % zitateRuhe.length], datum: fensterDatum };
+  }
 
   const tagessieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
   const zweiter = tagesStand.find(s => s.rang === 2);
@@ -2055,10 +2076,6 @@ function schlagzeileDesTages() {
       return t && t.e1 !== null && t.e2 !== null;
     });
   });
-
-  const seed = Math.floor(fensterDatum.getTime() / 86400000);
-  const wahl = (arr) => arr[seed % arr.length];
-  const namen = (liste) => liste.map(s => `${s.avatar} ${esc(s.name)}`).join(" & ");
 
   const kandidaten = [];
   if (tagessieger.length && tagessieger.length < tagesStand.length && tagessieger[0].punkte === maxPunkte) {
