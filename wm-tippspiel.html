@@ -229,6 +229,31 @@
   .stat-section-titel { font-size: .8rem; font-weight: 800; color: #555; margin: 16px 0 6px; text-transform: uppercase; letter-spacing: .4px; }
   body.dark .stat-section-titel { color: #aaa; }
 
+  /* Heatmap (Spieltage) & Kreuztabelle (Direktduell alle gegen alle) */
+  .stat-heatmap-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 4px; }
+  .stat-heatmap { border-collapse: collapse; font-size: .72rem; white-space: nowrap; }
+  .stat-heatmap th, .stat-heatmap td { padding: 5px 7px; text-align: center; border: 1px solid #eee; }
+  .stat-heatmap thead th { font-size: .65rem; color: #999; font-weight: 600; }
+  .stat-heatmap tbody th { text-align: left; font-weight: 700; position: sticky; left: 0; background: var(--karte); }
+  body.dark .stat-heatmap th, body.dark .stat-heatmap td { border-color: #3a3a3a; }
+  .stat-kreuz td.diag { color: #ccc; background: #f4f4f4; }
+  body.dark .stat-kreuz td.diag { background: #2a2a2a; color: #555; }
+  .stat-kreuz td.fuehrt { background: #e8f5e9; font-weight: 700; color: var(--gruen); }
+  body.dark .stat-kreuz td.fuehrt { background: #1b3a1d; color: var(--gruen-hell); }
+
+  /* Tipp-Tendenz (Heim/Remis/Auswärts) */
+  .stat-tendenz-legende { display: flex; gap: 10px; font-size: .68rem; color: #888; margin-bottom: 6px; }
+  .stat-tendenz-legende .seg { padding: 2px 7px; border-radius: 5px; color: #fff; }
+  .stat-tendenz-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .stat-tendenz-row .lbl { flex: 0 0 7.5rem; font-size: .78rem; }
+  .stat-tendenz-row .bar { flex: 1; display: flex; height: 20px; border-radius: 6px; overflow: hidden; background: #eee; }
+  .stat-tendenz-row.real { margin-top: 4px; padding-top: 6px; border-top: 1px dashed #ddd; font-weight: 700; }
+  body.dark .stat-tendenz-row.real { border-color: #444; }
+  .seg { display: flex; align-items: center; justify-content: center; font-size: .65rem; color: #fff; font-weight: 700; min-width: 0; overflow: hidden; }
+  .seg.heim { background: #43a047; }
+  .seg.remis { background: #fbc02d; color: #555; }
+  .seg.ausw { background: #e53935; }
+
   /* Gesamttabelle: die entscheidende Tabelle kräftig hervorheben */
   .haupttabelle-box {
     border: 3px solid var(--gruen);
@@ -646,6 +671,31 @@
       <details>
         <summary><h2 style="display:inline">🎯 Genauigkeit & Bonus</h2></summary>
         <div id="statGenau"></div>
+      </details>
+    </div>
+
+    <!-- E) Spieltags-Heatmap -->
+    <div class="karte">
+      <details>
+        <summary><h2 style="display:inline">🔥 Spieltags-Heatmap</h2></summary>
+        <p class="info-zeile">Punkte je Spieltag auf einen Blick – je grüner, desto mehr Punkte. „–" heißt: an diesem Tag nichts getippt.</p>
+        <div id="statHeatmap"></div>
+      </details>
+    </div>
+
+    <!-- F) Kreuztabelle: Alle gegen alle -->
+    <div class="karte">
+      <details>
+        <summary><h2 style="display:inline">⚔️ Alle gegen alle</h2></summary>
+        <div id="statKreuz"></div>
+      </details>
+    </div>
+
+    <!-- G) Tipp-Tendenz -->
+    <div class="karte">
+      <details>
+        <summary><h2 style="display:inline">🎚️ Tipp-Tendenz</h2></summary>
+        <div id="statTendenz"></div>
       </details>
     </div>
 
@@ -3899,6 +3949,9 @@ function renderStatistik() {
   renderStatDna();
   renderStatRekorde();
   renderStatGenau();
+  renderStatHeatmap();
+  renderStatKreuz();
+  renderStatTendenz();
 }
 
 // Sammelt für einen Spieler je Mannschaft: Anzahl gewerteter Spiele, Summe der
@@ -4205,6 +4258,147 @@ function renderStatGenau() {
 
   c.innerHTML = (genauHtml + bonusHtml) ||
     '<p class="leer-hinweis">Genauigkeits-Statistiken erscheinen, sobald Ergebnisse oder Bonus-Auflösungen vorliegen. 🎯</p>';
+}
+
+// --- E) Spieltags-Heatmap: Punkte je Spieler & Spieltag ---
+function tagesPunkteMatrix() {
+  const reihenfolge = [], map = {}, datumMap = {};
+  spieleChronologisch(true).forEach(s => {
+    const d = parseSpielDatum(s);
+    const fd = d ? tagesfensterDatum(d) : null;
+    const key = fd ? fensterKeyLokal(fd) : ("x" + s.id);
+    if (!map[key]) { map[key] = []; reihenfolge.push(key); if (fd) datumMap[key] = fd; }
+    map[key].push(s);
+  });
+  return reihenfolge.map(key => {
+    const punkte = {};
+    state.spieler.forEach(p => {
+      let summe = 0, hat = false;
+      map[key].forEach(s => {
+        const x = punkteFuerSpieler(p.id, s);
+        if (x !== null) { summe += x; hat = true; }
+      });
+      punkte[p.id] = hat ? summe : null;
+    });
+    return { key, datum: datumMap[key], punkte };
+  });
+}
+function renderStatHeatmap() {
+  const c = document.getElementById("statHeatmap");
+  if (!c) return;
+  if (!state.spieler.length) { c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler.</p>'; return; }
+  const matrix = tagesPunkteMatrix();
+  if (!matrix.length) {
+    c.innerHTML = '<p class="leer-hinweis">Die Heatmap füllt sich, sobald die ersten Spieltage ausgewertet sind. 🔥</p>';
+    return;
+  }
+  let maxPunkte = 1;
+  matrix.forEach(tag => state.spieler.forEach(p => {
+    if (tag.punkte[p.id] !== null) maxPunkte = Math.max(maxPunkte, tag.punkte[p.id]);
+  }));
+  const farbe = (pts) => {
+    if (pts === null) return "transparent";
+    if (pts === 0) return "#e5393555";
+    const anteil = pts / maxPunkte;
+    if (anteil < 0.34) return "#fbc02d55";
+    if (anteil < 0.67) return "#7cb34277";
+    return "#43a04799";
+  };
+  const kopf = matrix.map(tag => `<th>${tag.datum ? tag.datum.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}) : "?"}</th>`).join("");
+  const zeilen = state.spieler.map(p => {
+    const zellen = matrix.map(tag => {
+      const pts = tag.punkte[p.id];
+      return `<td style="background:${farbe(pts)}">${pts === null ? "–" : pts}</td>`;
+    }).join("");
+    return `<tr><th>${p.avatar} ${esc(p.name)}</th>${zellen}</tr>`;
+  }).join("");
+  c.innerHTML = `<div class="stat-heatmap-wrap"><table class="stat-heatmap">
+    <thead><tr><th></th>${kopf}</tr></thead>
+    <tbody>${zeilen}</tbody>
+  </table></div>`;
+}
+
+// --- F) Kreuztabelle: Direktduell-Bilanz alle gegen alle ---
+function head2headAlle() {
+  const gespielt = state.spiele.filter(s => s.gespielt);
+  const ergebnis = {};
+  state.spieler.forEach(a => {
+    ergebnis[a.id] = {};
+    state.spieler.forEach(b => {
+      if (a.id === b.id) return;
+      let aWins = 0, bWins = 0;
+      gespielt.forEach(spiel => {
+        const pa = punkteFuer(state.tipps[a.id]?.[spiel.id], spiel);
+        const pb = punkteFuer(state.tipps[b.id]?.[spiel.id], spiel);
+        if (pa === null && pb === null) return;
+        const va = pa || 0, vb = pb || 0;
+        if (va > vb) aWins++; else if (vb > va) bWins++;
+      });
+      ergebnis[a.id][b.id] = { aWins, bWins };
+    });
+  });
+  return ergebnis;
+}
+function renderStatKreuz() {
+  const c = document.getElementById("statKreuz");
+  if (!c) return;
+  if (state.spieler.length < 2) { c.innerHTML = '<p class="leer-hinweis">Mindestens 2 Mitspieler nötig fürs Duell. 👥</p>'; return; }
+  if (!state.spiele.some(s => s.gespielt)) {
+    c.innerHTML = '<p class="leer-hinweis">Die Kreuztabelle füllt sich, sobald die ersten Spiele gewertet sind. ⚔️</p>';
+    return;
+  }
+  const h2h = head2headAlle();
+  const kopf = state.spieler.map(p => `<th title="${esc(p.name)}">${p.avatar}</th>`).join("");
+  const zeilen = state.spieler.map(a => {
+    const zellen = state.spieler.map(b => {
+      if (a.id === b.id) return `<td class="diag">–</td>`;
+      const x = h2h[a.id][b.id];
+      return `<td class="${x.aWins > x.bWins ? 'fuehrt' : ''}">${x.aWins}:${x.bWins}</td>`;
+    }).join("");
+    return `<tr><th>${a.avatar} ${esc(a.name)}</th>${zellen}</tr>`;
+  }).join("");
+  c.innerHTML = `<p class="info-zeile">Pro gewertetem Spiel: Wer hatte öfter mehr Punkte (ohne Joker)? Zeile gegen Spalte zeigt <b>Siege:Niederlagen</b>, grün = Zeile vorn.</p>
+    <div class="stat-heatmap-wrap"><table class="stat-heatmap stat-kreuz">
+      <thead><tr><th></th>${kopf}</tr></thead>
+      <tbody>${zeilen}</tbody>
+    </table></div>`;
+}
+
+// --- G) Tipp-Tendenz: Heimsieg / Remis / Auswärtssieg ---
+function renderStatTendenz() {
+  const c = document.getElementById("statTendenz");
+  if (!c) return;
+  if (!state.spieler.length) { c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler.</p>'; return; }
+
+  const zeile = (label, h, u, a, gesamt, hervorheben) => {
+    if (!gesamt) return `<div class="stat-tendenz-row${hervorheben?' real':''}"><span class="lbl">${label}</span><span class="mini" style="font-size:.78rem;color:#999">noch keine Tipps</span></div>`;
+    const ph = Math.round(h/gesamt*100), pu = Math.round(u/gesamt*100), pa = 100 - ph - pu;
+    const teil = (klasse, pct) => pct > 0 ? `<div class="seg ${klasse}" style="width:${pct}%">${pct}%</div>` : "";
+    return `<div class="stat-tendenz-row${hervorheben?' real':''}">
+      <span class="lbl">${label}</span>
+      <div class="bar">${teil("heim",ph)}${teil("remis",pu)}${teil("ausw",pa)}</div>
+    </div>`;
+  };
+
+  const zeilen = state.spieler.map(sp => {
+    let h = 0, u = 0, a = 0;
+    state.spiele.forEach(spiel => {
+      const t = state.tipps[sp.id]?.[spiel.id];
+      if (!t || t.e1 === null || t.e2 === null) return;
+      if (t.e1 > t.e2) h++; else if (t.e1 < t.e2) a++; else u++;
+    });
+    return zeile(`${sp.avatar} ${esc(sp.name)}`, h, u, a, h+u+a, false);
+  }).join("");
+
+  let rh = 0, ru = 0, ra = 0;
+  state.spiele.filter(s => s.gespielt).forEach(spiel => {
+    if (spiel.e1 > spiel.e2) rh++; else if (spiel.e1 < spiel.e2) ra++; else ru++;
+  });
+  const realZeile = zeile("📊 Reale Ergebnisse", rh, ru, ra, rh+ru+ra, true);
+
+  c.innerHTML = `<p class="info-zeile">Wie tippt jeder im Schnitt – Heimsieg, Remis oder Auswärtssieg? Zum Vergleich die tatsächliche Verteilung der bisherigen Ergebnisse.</p>
+    <div class="stat-tendenz-legende"><span class="seg heim">Heimsieg</span><span class="seg remis">Remis</span><span class="seg ausw">Auswärtssieg</span></div>
+    ${zeilen}${realZeile}`;
 }
 
 // ===================== TEILEN: LINK & QR =====================
