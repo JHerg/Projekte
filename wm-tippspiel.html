@@ -1762,7 +1762,7 @@ function renderTagesform() {
   tc.innerHTML = `
     <div class="karte tagesform-box">
       <details>
-        <summary><h2 style="display:inline">🌅 Aufsteiger des Tages</h2></summary>
+        <summary><h2 style="display:inline">📋 Spieltagsbericht</h2></summary>
         <div class="untertitel">Spieltag ${datumTxt} · ${anzahlSpiele} Spiel${anzahlSpiele===1?'':'e'} ausgewertet (18:00–08:00 Uhr)</div>
         <table>
           <thead><tr><th></th><th>Spieler</th><th style="text-align:center">🎯</th><th style="text-align:right">Punkte</th></tr></thead>
@@ -1970,7 +1970,7 @@ function renderSchlagzeile(ergebnis) {
   c.innerHTML = ergebnis ? `
     <div class="schlagzeile-box">
       <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
-      <div class="datum">${esc(ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
+      <div class="datum">Spieltag vom ${esc(ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
       <div class="text">${ergebnis.text}</div>
       <div class="zitat">💬 „${esc(ergebnis.zitat.z)}“ — ${esc(ergebnis.zitat.w)}</div>
       <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Rundschau teilen</button>
@@ -3009,7 +3009,7 @@ function tabelleAlsCanvas(stand, schlagzeile) {
     ctx.fillText("L A D R I È R E   R U N D S C H A U", breite / 2, 23);
     ctx.fillStyle = "#999";
     ctx.font = "13px Georgia, 'Times New Roman', serif";
-    const schlagzeileDatum = schlagzeile.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    const schlagzeileDatum = "Spieltag vom " + schlagzeile.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
     ctx.fillText(schlagzeileDatum, breite / 2, 34 + 16);
     ctx.fillStyle = "#1a1a1a";
     ctx.font = "bold 22px Georgia, 'Times New Roman', serif";
@@ -3147,7 +3147,7 @@ function schlagzeileAlsCanvas(ergebnis) {
   // Datum
   ctx.fillStyle = "#999";
   ctx.font = "15px Georgia, 'Times New Roman', serif";
-  const datumText = ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const datumText = "Spieltag vom " + ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   ctx.fillText(datumText, breite / 2, kopfHoehe + 24);
 
   // Schlagzeile
