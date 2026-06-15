@@ -199,6 +199,21 @@
   .tagesform-box .award:last-child { margin-bottom: 0; }
   .tagesform-box .award .emoji { font-size: 1.6rem; }
 
+  /* Gesamttabelle: die entscheidende Tabelle deutlich hervorheben */
+  .haupttabelle-box {
+    border: 2px solid var(--gruen-hell);
+    box-shadow: 0 8px 22px rgba(46,125,50,.28);
+  }
+  .haupttabelle-box h2 {
+    margin: -16px -16px 14px;
+    padding: 14px 16px;
+    border-radius: 14px 14px 0 0;
+    background: linear-gradient(135deg, var(--gruen), var(--gruen-hell));
+    color: #fff;
+    font-size: 1.3rem;
+  }
+  .haupttabelle-box td.pkt { font-size: 1.25rem; }
+
   .strafe-box {
     background: linear-gradient(135deg, #ffd54f, #ffb300);
     border-radius: 16px; padding: 16px; text-align: center; color: #fff;
@@ -387,6 +402,7 @@
   }
   body.dark .karte h2,
   body.dark summary { color: var(--gruen-hell); }
+  body.dark .karte.haupttabelle-box h2 { color: #fff; }
   body.dark .karte h3,
   body.dark .stats-kopf .s-info h3 { color: #cfe8d8; }
   body.dark input, body.dark select,
@@ -451,7 +467,7 @@
     <div id="countdownBox"></div>
     <div id="pokalContainer"></div>
     <div id="tagesformContainer"></div>
-    <div class="karte">
+    <div class="karte haupttabelle-box">
       <h2>🏆 Die Tabelle</h2>
       <div id="tabelleInhalt"></div>
       <details>
