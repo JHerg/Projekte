@@ -236,7 +236,7 @@
   .bewegung.gleich { color: #c4c4c4; }
 
   /* Turnier-Fortschrittsbalken */
-  .fortschritt { margin-bottom: 14px; }
+  .fortschritt { margin-top: 14px; }
   .fortschritt-text { font-size: .78rem; color: #666; margin-bottom: 5px; }
   .fortschritt-bar { height: 10px; background: #e9e9e9; border-radius: 6px; overflow: hidden; }
   .fortschritt-fill { height: 100%; background: linear-gradient(90deg, var(--gruen), var(--gruen-hell)); border-radius: 6px; transition: width .6s ease; }
@@ -1801,7 +1801,7 @@ function renderTabelle() {
 
   renderTagesform();
 
-  c.innerHTML = fortschrittHTML + `
+  c.innerHTML = `
     <table>
       <thead><tr><th></th><th>Spieler</th><th style="text-align:center">🎯</th><th style="text-align:right">Punkte</th></tr></thead>
       <tbody>
@@ -1829,7 +1829,7 @@ function renderTabelle() {
         </tr>`;
       }).join("")}
       </tbody>
-    </table>`;
+    </table>` + fortschrittHTML;
 }
 
 // ===================== SAMMEL-ABZEICHEN (BADGES) =====================
