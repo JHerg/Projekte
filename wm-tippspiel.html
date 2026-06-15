@@ -686,7 +686,7 @@
     <!-- F) Kreuztabelle: Alle gegen alle -->
     <div class="karte">
       <details>
-        <summary><h2 style="display:inline">⚔️ Alle gegen alle</h2></summary>
+        <summary><h2 style="display:inline">🔀 Alle gegen alle</h2></summary>
         <div id="statKreuz"></div>
       </details>
     </div>
@@ -696,6 +696,55 @@
       <details>
         <summary><h2 style="display:inline">🎚️ Tipp-Tendenz</h2></summary>
         <div id="statTendenz"></div>
+      </details>
+    </div>
+
+    <!-- H) Mannschafts-Bilanz (alle Teams pro Spieler) -->
+    <div class="karte">
+      <details>
+        <summary><h2 style="display:inline">🌍 Mannschafts-Bilanz</h2></summary>
+        <p class="info-zeile">Die komplette Team-Bilanz eines Mitspielers – sortiert vom besten zum schlechtesten Schnitt.</p>
+        <div id="statTeamMatrix"></div>
+      </details>
+    </div>
+
+    <!-- I) Gruppenphase vs. K.-o.-Runde -->
+    <div class="karte">
+      <details>
+        <summary><h2 style="display:inline">🆚 Gruppenphase vs. K.-o.</h2></summary>
+        <div id="statPhasen"></div>
+      </details>
+    </div>
+
+    <!-- J) Konsistenz -->
+    <div class="karte">
+      <details>
+        <summary><h2 style="display:inline">📉 Konsistenz</h2></summary>
+        <div id="statKonsistenz"></div>
+      </details>
+    </div>
+
+    <!-- K) Formkurve -->
+    <div class="karte">
+      <details>
+        <summary><h2 style="display:inline">📈 Formkurve</h2></summary>
+        <div id="statForm"></div>
+      </details>
+    </div>
+
+    <!-- L) Schwarm-Intelligenz -->
+    <div class="karte">
+      <details>
+        <summary><h2 style="display:inline">🐝 Schwarm-Intelligenz</h2></summary>
+        <div id="statSchwarm"></div>
+      </details>
+    </div>
+
+    <!-- M) Joker-Ranking -->
+    <div class="karte">
+      <details>
+        <summary><h2 style="display:inline">🃏 Joker-Ranking</h2></summary>
+        <div id="statJoker"></div>
       </details>
     </div>
 
@@ -3950,6 +3999,12 @@ function renderStatistik() {
   renderStatHeatmap();
   renderStatKreuz();
   renderStatTendenz();
+  renderStatTeamMatrix();
+  renderStatPhasen();
+  renderStatKonsistenz();
+  renderStatForm();
+  renderStatSchwarm();
+  renderStatJoker();
 }
 
 // Sammelt für einen Spieler je Mannschaft: Anzahl gewerteter Spiele, Summe der
@@ -4397,6 +4452,239 @@ function renderStatTendenz() {
   c.innerHTML = `<p class="info-zeile">Wie tippt jeder im Schnitt – Heimsieg, Remis oder Auswärtssieg? Zum Vergleich die tatsächliche Verteilung der bisherigen Ergebnisse.</p>
     <div class="stat-tendenz-legende"><span class="seg heim">Heimsieg</span><span class="seg remis">Remis</span><span class="seg ausw">Auswärtssieg</span></div>
     ${zeilen}${realZeile}`;
+}
+
+// --- H) Mannschafts-Bilanz: alle Teams eines Spielers, sortiert ---
+let statTeamSpieler = null;
+function renderStatTeamMatrix() {
+  const c = document.getElementById("statTeamMatrix");
+  if (!c) return;
+  if (!state.spieler.length) { c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler.</p>'; return; }
+  if (!statTeamSpieler || !state.spieler.some(s => s.id === statTeamSpieler)) {
+    statTeamSpieler = (state.aktiverSpielerId && state.spieler.some(s => s.id === state.aktiverSpielerId))
+      ? state.aktiverSpielerId : state.spieler[0].id;
+  }
+  const sp = state.spieler.find(s => s.id === statTeamSpieler);
+  const opt = state.spieler.map(s => `<option value="${s.id}" ${s.id===statTeamSpieler?'selected':''}>${s.avatar} ${esc(s.name)}</option>`).join("");
+  const wahl = `<div class="stat-wahl"><select onchange="statTeamWahl(this.value)">${opt}</select></div>`;
+
+  const ts = teamStatsFuer(sp.id).sort((a,b) => b.schnitt - a.schnitt || b.spiele - a.spiele);
+  if (!ts.length) {
+    c.innerHTML = wahl + '<p class="leer-hinweis">Für diesen Mitspieler gibt es noch keine gewerteten Tipps. ✍️</p>';
+    return;
+  }
+  const zeilen = ts.map(t => `<div class="stat-vrow" style="grid-template-columns:1fr 3.6rem 5rem">
+    <span>${flaggeVon(t.team)} ${esc(t.team)}</span>
+    <span class="anz">Ø ${t.schnitt.toFixed(1)}</span>
+    <span class="mini" style="font-size:.68rem;color:#999;text-align:right">${t.spiele}× getippt</span></div>`).join("");
+  c.innerHTML = wahl + zeilen;
+}
+function statTeamWahl(id) { statTeamSpieler = id; renderStatTeamMatrix(); }
+
+// --- I) Gruppenphase vs. K.-o.-Runde ---
+function renderStatPhasen() {
+  const c = document.getElementById("statPhasen");
+  if (!c) return;
+  if (!state.spieler.length) { c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler.</p>'; return; }
+  const gespielt = state.spiele.filter(s => s.gespielt);
+  const istGruppe = (s) => /gruppe/i.test(s.phase || "");
+  const gruppenSpiele = gespielt.filter(istGruppe);
+  const koSpiele = gespielt.filter(s => !istGruppe(s));
+  if (!gruppenSpiele.length || !koSpiele.length) {
+    c.innerHTML = '<p class="leer-hinweis">Dieser Vergleich erscheint, sobald sowohl Gruppen- als auch K.-o.-Spiele gewertet sind. 🆚</p>';
+    return;
+  }
+
+  const schnittFuer = (sp, spiele) => {
+    let summe = 0, n = 0;
+    spiele.forEach(spiel => {
+      const x = punkteFuer(state.tipps[sp.id]?.[spiel.id], spiel);
+      if (x !== null) { summe += x; n++; }
+    });
+    return n ? summe / n : null;
+  };
+  const reihen = state.spieler.map(sp => ({ sp, g: schnittFuer(sp, gruppenSpiele), k: schnittFuer(sp, koSpiele) }))
+    .filter(r => r.g !== null && r.k !== null);
+  if (!reihen.length) {
+    c.innerHTML = '<p class="leer-hinweis">Noch keine gewerteten Tipps in beiden Phasen.</p>';
+    return;
+  }
+
+  const zeilen = reihen.map(r => `<div class="stat-vrow" style="grid-template-columns:1fr 4rem 4rem">
+    <span>${r.sp.avatar} ${esc(r.sp.name)}</span>
+    <span class="anz">⚽ ${r.g.toFixed(1)}</span>
+    <span class="anz">🏆 ${r.k.toFixed(1)}</span></div>`).join("");
+
+  const beste = reihen.slice().sort((a,b) => (b.k-b.g) - (a.k-a.g))[0];
+  const schlechteste = reihen.slice().sort((a,b) => (a.k-a.g) - (b.k-b.g))[0];
+  let highlight = "";
+  if (beste.k > beste.g + 0.3) {
+    highlight += `<div class="stat-highlight"><div class="em">🔥</div><div class="tx">
+      <b>K.-o.-Held:</b> ${beste.sp.avatar} ${esc(beste.sp.name)} steigert sich in der K.-o.-Runde von Ø ${beste.g.toFixed(1)} auf Ø ${beste.k.toFixed(1)} Punkte!</div></div>`;
+  }
+  if (schlechteste.k < schlechteste.g - 0.3 && schlechteste.sp.id !== beste.sp.id) {
+    highlight += `<div class="stat-highlight"><div class="em">🥶</div><div class="tx">
+      <b>Gruppenphasen-Spezialist:</b> ${schlechteste.sp.avatar} ${esc(schlechteste.sp.name)} ist in der K.-o.-Runde schwächer (Ø ${schlechteste.g.toFixed(1)} → Ø ${schlechteste.k.toFixed(1)}).</div></div>`;
+  }
+
+  c.innerHTML = `<p class="info-zeile">Ø Punkte pro Spiel: ⚽ Gruppenphase vs. 🏆 K.-o.-Runde – wer wird, wenn's eng wird, besser oder schlechter?</p>` + zeilen + highlight;
+}
+
+// --- J) Konsistenz: Schwankung der Tagespunkte ---
+function renderStatKonsistenz() {
+  const c = document.getElementById("statKonsistenz");
+  if (!c) return;
+  if (!state.spieler.length) { c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler.</p>'; return; }
+  const matrix = tagesPunkteMatrix();
+  if (matrix.length < 2) {
+    c.innerHTML = '<p class="leer-hinweis">Diese Statistik braucht mindestens 2 ausgewertete Spieltage. 📉</p>';
+    return;
+  }
+  const reihen = state.spieler.map(sp => {
+    const werte = matrix.map(t => t.punkte[sp.id]).filter(v => v !== null);
+    if (werte.length < 2) return null;
+    const schnitt = werte.reduce((a,b) => a+b, 0) / werte.length;
+    const varianz = werte.reduce((a,b) => a + (b-schnitt)**2, 0) / werte.length;
+    return { sp, schnitt, stdev: Math.sqrt(varianz) };
+  }).filter(Boolean).sort((a,b) => a.stdev - b.stdev);
+  if (!reihen.length) {
+    c.innerHTML = '<p class="leer-hinweis">Diese Statistik braucht mindestens 2 ausgewertete Spieltage pro Mitspieler. 📉</p>';
+    return;
+  }
+  const zeilen = reihen.map((r,i) => `<div class="stat-vrow" style="grid-template-columns:1.8rem 1fr 3.4rem">
+    <span>${i===0?'🛡️':(i+1)+'.'}</span>
+    <span>${r.sp.avatar} ${esc(r.sp.name)} <span style="font-size:.68rem;color:#999">Ø${r.schnitt.toFixed(1)}</span></span>
+    <span class="anz">±${r.stdev.toFixed(1)}</span></div>`).join("");
+  c.innerHTML = `<p class="info-zeile">Wie stark schwanken die Tagespunkte? <b>Kleiner Wert (±)</b> = gleichbleibender Tipper, großer Wert = "Berg-und-Tal-Fahrt".</p>` + zeilen;
+}
+
+// --- K) Formkurve: letzte Spieltage im Trend ---
+function renderStatForm() {
+  const c = document.getElementById("statForm");
+  if (!c) return;
+  if (!state.spieler.length) { c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler.</p>'; return; }
+  const matrix = tagesPunkteMatrix();
+  if (matrix.length < 2) {
+    c.innerHTML = '<p class="leer-hinweis">Die Formkurve erscheint, sobald mehrere Spieltage ausgewertet sind. 📈</p>';
+    return;
+  }
+  const letzte = matrix.slice(-5);
+  const mitte = Math.max(1, Math.floor(letzte.length / 2));
+  const reihen = state.spieler.map(sp => {
+    const werte = letzte.map(t => t.punkte[sp.id] ?? 0);
+    const alt = werte.slice(0, mitte);
+    const neu = werte.slice(mitte);
+    const altSchnitt = alt.reduce((a,b) => a+b, 0) / alt.length;
+    const neuSchnitt = neu.length ? neu.reduce((a,b) => a+b, 0) / neu.length : altSchnitt;
+    return { sp, werte, diff: neuSchnitt - altSchnitt };
+  });
+  const zeilen = reihen.map(r => {
+    const pfeil = r.diff > 0.5 ? "📈" : (r.diff < -0.5 ? "📉" : "➡️");
+    return `<div class="stat-vrow" style="grid-template-columns:1.6rem 1fr 6rem">
+      <span>${pfeil}</span>
+      <span>${r.sp.avatar} ${esc(r.sp.name)}</span>
+      <span class="anz" style="font-size:.7rem;font-weight:400">${r.werte.join(" – ")}</span></div>`;
+  }).join("");
+  c.innerHTML = `<p class="info-zeile">Punkte der letzten ${letzte.length} Spieltage (älteste → neueste) – wer ist gerade in Form? 📈 steigend · 📉 fallend · ➡️ stabil.</p>` + zeilen;
+}
+
+// --- L) Schwarm-Intelligenz: Mehrheits-Tendenz vs. Realität ---
+function renderStatSchwarm() {
+  const c = document.getElementById("statSchwarm");
+  if (!c) return;
+  if (state.spieler.length < 2) { c.innerHTML = '<p class="leer-hinweis">Mindestens 2 Mitspieler nötig. 👥</p>'; return; }
+  const gespielt = state.spiele.filter(s => s.gespielt);
+  if (!gespielt.length) {
+    c.innerHTML = '<p class="leer-hinweis">Die Schwarm-Auswertung erscheint, sobald die ersten Spiele gewertet sind. 🐝</p>';
+    return;
+  }
+  const tendenz = (e1, e2) => e1 > e2 ? "H" : (e1 < e2 ? "A" : "U");
+
+  let schwarmTreffer = 0, schwarmGesamt = 0;
+  const uebereinstimmung = {};
+  state.spieler.forEach(sp => uebereinstimmung[sp.id] = { treffer: 0, gesamt: 0 });
+
+  gespielt.forEach(spiel => {
+    const zaehl = { H: 0, U: 0, A: 0 };
+    const spielerTend = {};
+    state.spieler.forEach(sp => {
+      const t = state.tipps[sp.id]?.[spiel.id];
+      if (!t || t.e1 === null || t.e2 === null) return;
+      const td = tendenz(t.e1, t.e2);
+      zaehl[td]++;
+      spielerTend[sp.id] = td;
+    });
+    if (zaehl.H + zaehl.U + zaehl.A < 2) return;
+    const mehrheit = Object.entries(zaehl).sort((a,b) => b[1]-a[1])[0][0];
+    if (mehrheit === tendenz(spiel.e1, spiel.e2)) schwarmTreffer++;
+    schwarmGesamt++;
+    Object.entries(spielerTend).forEach(([id, td]) => {
+      uebereinstimmung[id].gesamt++;
+      if (td === mehrheit) uebereinstimmung[id].treffer++;
+    });
+  });
+
+  if (!schwarmGesamt) {
+    c.innerHTML = '<p class="leer-hinweis">Noch zu wenige gemeinsame Tipps für die Schwarm-Auswertung.</p>';
+    return;
+  }
+  const schwarmQuote = Math.round(schwarmTreffer / schwarmGesamt * 100);
+  const zeilen = state.spieler.map(sp => {
+    const u = uebereinstimmung[sp.id];
+    if (!u.gesamt) return `<div class="stat-vrow"><span>${sp.avatar} ${esc(sp.name)}</span><span style="grid-column:2/4;font-size:.78rem;color:#999">noch keine Tipps</span></div>`;
+    return `<div class="stat-vrow" style="grid-template-columns:1fr 3.6rem">
+      <span>${sp.avatar} ${esc(sp.name)}</span>
+      <span class="anz">${Math.round(u.treffer/u.gesamt*100)}%</span></div>`;
+  }).join("");
+
+  c.innerHTML = `<div class="stat-highlight"><div class="em">🐝</div><div class="tx">
+      <b>Schwarm-Tendenz:</b> Die Mehrheits-Tendenz der Familie lag bei ${schwarmQuote}% von ${schwarmGesamt} Spielen richtig.</div></div>
+    <p class="info-zeile">Wie oft tippt jeder die gleiche Tendenz (Heimsieg/Remis/Auswärtssieg) wie die Mehrheit der Familie?</p>` + zeilen;
+}
+
+// --- M) Joker-Ranking: tatsächlicher vs. bestmöglicher Joker-Bonus ---
+function renderStatJoker() {
+  const c = document.getElementById("statJoker");
+  if (!c) return;
+  if (!state.spieler.length) { c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler.</p>'; return; }
+  const gespielt = state.spiele.filter(s => s.gespielt);
+
+  const reihen = state.spieler.map(sp => {
+    let bestMoeglich = null;
+    gespielt.forEach(spiel => {
+      const basis = punkteFuer(state.tipps[sp.id]?.[spiel.id], spiel);
+      if (basis !== null && (bestMoeglich === null || basis > bestMoeglich)) bestMoeglich = basis;
+    });
+    const jokerSpielId = state.joker?.[sp.id];
+    let aktuell = null, jokerGespielt = false;
+    if (jokerSpielId) {
+      const js = state.spiele.find(s => s.id === jokerSpielId);
+      if (js && js.gespielt) { aktuell = punkteFuer(state.tipps[sp.id]?.[js.id], js); jokerGespielt = true; }
+    }
+    return { sp, jokerSpielId, jokerGespielt, aktuell, bestMoeglich };
+  });
+
+  if (!reihen.some(r => r.jokerGespielt || r.bestMoeglich !== null)) {
+    c.innerHTML = '<p class="leer-hinweis">Das Joker-Ranking erscheint, sobald die ersten Spiele gewertet sind. 🃏</p>';
+    return;
+  }
+
+  const zeilen = reihen.map(r => {
+    let info;
+    if (!r.jokerSpielId) info = `<span style="font-size:.78rem;color:#999">Joker noch nicht gesetzt</span>`;
+    else if (!r.jokerGespielt) info = `<span style="font-size:.78rem;color:#999">Joker-Spiel noch offen</span>`;
+    else {
+      const optimal = r.bestMoeglich !== null && r.aktuell === r.bestMoeglich && r.aktuell > 0;
+      info = `<span class="anz">+${r.aktuell ?? 0}${optimal ? ' 🎯' : ''}</span>` +
+        (r.bestMoeglich !== null && r.aktuell < r.bestMoeglich
+          ? `<div style="font-size:.65rem;color:#999">bestmöglich wären +${r.bestMoeglich} gewesen</div>` : "");
+    }
+    return `<div class="stat-vrow" style="grid-template-columns:1fr 8rem;align-items:start">
+      <span>${r.sp.avatar} ${esc(r.sp.name)}</span>
+      <span style="text-align:right">${info}</span></div>`;
+  }).join("");
+
+  c.innerHTML = `<p class="info-zeile">Wie viele Extra-Punkte hat der Joker tatsächlich gebracht – und wäre rückblickend mehr drin gewesen? 🎯 = optimal eingesetzt.</p>` + zeilen;
 }
 
 // ===================== TEILEN: LINK & QR =====================
