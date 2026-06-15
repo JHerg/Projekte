@@ -767,7 +767,7 @@ const TITEL = {
   zweiter: ["🥈 Co-Trainer", "🎯 Vize-Visionär"],
   dritter: ["🥉 Sofa-Experte", "📺 TV-Taktiker"],
   mitte:   ["🗣️ Quoten-Quassler", "🤷 Mitläufer der Liga", "🍻 Stammtisch-Stratege", "📊 Mittelfeld-Maestro"],
-  letzter: ["🏮 Rote Laterne", "🪦 Tipp-Totalschaden", "🙈 Pannen-Prophet"]
+  letzter: ["🌱 Spätzünder", "🚀 Aufholjäger", "🍀 Geheimfavorit von morgen", "💪 Comeback-Kandidat"]
 };
 
 // ----- Freundliche Aufgaben für den Letzten -----
@@ -1896,21 +1896,21 @@ function renderAwards() {
     awards.push({ e:"🎯", t:"Der Scharfschütze", s:`${koenig.map(k=>k.avatar+" "+esc(k.name)).join(", ")} – ${maxTreffer}× exakt getippt!` });
   }
 
-  // 2. Schwarze Laterne 🏮 (bei Punktgleichheit teilen sich mehrere die Laterne)
+  // 2. Comeback-Kandidat 🚀 (bei Punktgleichheit teilen sich mehrere den Platz)
   if (stand.length > 1 && anzGespielt > 0) {
     const maxRang = stand[stand.length-1].rang;
     const letzte = stand.filter(s => s.rang === maxRang);
-    awards.push({ e:"🏮", t:"Schwarze Laterne",
-      s:`${letzte.map(l => `${l.avatar} ${esc(l.name)}`).join(" & ")} ${letzte.length > 1 ? 'bilden gemeinsam' : 'bildet'} das Schlusslicht. Kopf hoch! 🫂` });
+    awards.push({ e:"🚀", t:"Comeback-Kandidat",
+      s:`${letzte.map(l => `${l.avatar} ${esc(l.name)}`).join(" & ")} ${letzte.length > 1 ? 'starten gemeinsam' : 'startet'} die Aufholjagd – jetzt kann's nur bergauf gehen! 🫂` });
   }
 
-  // 3. Bauernopfer-Pokal 🐔 (viel getippt, wenig geholt)
+  // 3. Mutmacher-Pokal 💪 (viel getippt, Punkte kommen noch)
   const mitTipps = stand.filter(s => s.getippt > 0);
   if (mitTipps.length > 1) {
     const minRatio = Math.min(...mitTipps.map(s => s.spielPunkte/s.getippt));
     const opfer = mitTipps.filter(s => s.spielPunkte/s.getippt === minRatio && s.getippt >= 2);
     if (opfer.length)
-      awards.push({ e:"🐔", t:"Bauernopfer-Pokal", s:`${opfer.map(o=>o.avatar+" "+esc(o.name)).join(", ")} – viel getippt, wenig geholt. Mutig! 😅` });
+      awards.push({ e:"💪", t:"Mutmacher-Pokal", s:`${opfer.map(o=>o.avatar+" "+esc(o.name)).join(", ")} – immer fleißig dabei, die Punkte kommen bestimmt noch! 😊` });
   }
 
   // 4. Bonus-Fuchs 🦊
@@ -1949,7 +1949,7 @@ function renderAwards() {
     const maxP2g = Math.max(...glueckStats.map(s => s.p2));
     if (maxP2g >= 2) {
       const glueck = glueckStats.filter(s => s.p2 === maxP2g);
-      awards.push({ e:"🍀", t:"Der Glückspilz", s:`${glueck.map(g=>g.sp.avatar+" "+esc(g.sp.name)).join(", ")} – ${maxP2g}× richtige Tendenz, aber das genaue Ergebnis… keine Ahnung! 😂` });
+      awards.push({ e:"🍀", t:"Der Glückspilz", s:`${glueck.map(g=>g.sp.avatar+" "+esc(g.sp.name)).join(", ")} – ${maxP2g}× die richtige Tendenz erwischt, das genaue Ergebnis war reine Glückssache! 😄` });
     }
   }
 
@@ -2380,7 +2380,7 @@ function ziehStrafe() {
   const box = document.getElementById("strafeContainer");
 
   box.innerHTML = `<div class="strafe-box">
-    ${letzte.length > 1 ? `<div style="font-size:.82rem;opacity:.9">🎲 ${letzte.length} punktgleiche Schlusslichter – das Los hat entschieden:</div>` : ''}
+    ${letzte.length > 1 ? `<div style="font-size:.82rem;opacity:.9">🎲 ${letzte.length} punktgleich am Tabellenende – das Los hat entschieden:</div>` : ''}
     <div class="name">🎁 ${letzter.avatar} ${esc(letzter.name)}, du bist dran!</div>
     <div class="strafe-text" id="strafeText">🎰 …</div>
   </div>`;
