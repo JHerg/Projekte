@@ -249,19 +249,25 @@
     font-size: .9rem; font-weight: 600; text-align: center; box-shadow: var(--schatten);
   }
 
-  /* Schlagzeile des Tages: reißerische "Sportschau"-Meldung zu den Nacht-Ergebnissen */
+  /* Schlagzeile des Tages: reißerische "Boulevard"-Meldung zu den Nacht-Ergebnissen,
+     im Stil einer Zeitungs-Titelseite (Kopfleiste + große fette Schlagzeile). */
   .schlagzeile-box {
-    background: linear-gradient(135deg, #b71c1c, #e53935);
-    color: #fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px;
-    box-shadow: var(--schatten); text-align: center;
+    background: #fff; color: #1a1a1a; border-radius: 12px; margin-bottom: 10px;
+    box-shadow: var(--schatten); text-align: center; overflow: hidden;
+    border: 3px solid #1a1a1a;
   }
   .schlagzeile-box .label {
-    display: inline-block; background: #fff; color: #b71c1c; font-weight: 800;
-    font-size: .68rem; letter-spacing: 1px; text-transform: uppercase;
-    border-radius: 6px; padding: 1px 7px; margin-bottom: 5px;
+    background: #e53935; color: #fff; font-weight: 900;
+    font-size: .82rem; letter-spacing: 2px; text-transform: uppercase;
+    padding: 5px 10px; font-family: Georgia, "Times New Roman", serif;
+    border-bottom: 3px solid #1a1a1a;
   }
-  .schlagzeile-box .text { font-size: .92rem; font-weight: 700; line-height: 1.35; }
-  body.dark .schlagzeile-box { background: linear-gradient(135deg, #7f0000, #b71c1c); }
+  .schlagzeile-box .text {
+    font-size: 1.05rem; font-weight: 800; line-height: 1.35;
+    padding: 10px 14px; font-family: Georgia, "Times New Roman", serif;
+  }
+  body.dark .schlagzeile-box { background: #2a2a2a; color: #fff; border-color: #555; }
+  body.dark .schlagzeile-box .label { border-bottom-color: #555; }
 
   /* Tipp-Erinnerung: noch offene Spiele bis zur nächsten 8-Uhr-Grenze */
   .erinnerung-box {
@@ -1908,7 +1914,7 @@ function renderSchlagzeile() {
   const text = schlagzeileDesTages();
   c.innerHTML = text ? `
     <div class="schlagzeile-box">
-      <span class="label">📰 Familien-Sportschau</span>
+      <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
       <div class="text">${text}</div>
     </div>` : "";
 }
@@ -2880,11 +2886,37 @@ function toast(text) {
 // ===================== TABELLE ALS BILD TEILEN =====================
 // Zeichnet die aktuelle Gesamtplatzierung als Bild und öffnet das System-
 // Teilen-Menü (WhatsApp, Nachrichten, Mail, ...) – Fallback: Bild herunterladen.
-function tabelleAlsCanvas(stand) {
+// Bricht einen Text in Zeilen um, die innerhalb von maxWidth passen (für die
+// Schlagzeile, deren Länge je nach Tagesereignis variiert).
+function bildZeilenUmbruch(ctx, text, maxWidth) {
+  const woerter = text.split(" ");
+  const zeilen = [];
+  let zeile = "";
+  woerter.forEach(w => {
+    const test = zeile ? zeile + " " + w : w;
+    if (ctx.measureText(test).width > maxWidth && zeile) {
+      zeilen.push(zeile);
+      zeile = w;
+    } else {
+      zeile = test;
+    }
+  });
+  if (zeile) zeilen.push(zeile);
+  return zeilen;
+}
+
+function tabelleAlsCanvas(stand, schlagzeile) {
   const breite = 640;
   const zeilenHoehe = 64;
   const kopfHoehe = 140;
-  const hoehe = kopfHoehe + stand.length * zeilenHoehe + 60;
+
+  // Schlagzeilen-Banner im Zeitungs-Look (nur falls vorhanden)
+  const messCtx = document.createElement("canvas").getContext("2d");
+  messCtx.font = "bold 22px Georgia, 'Times New Roman', serif";
+  const schlagzeileZeilen = schlagzeile ? bildZeilenUmbruch(messCtx, schlagzeile, breite - 80) : [];
+  const schlagzeileHoehe = schlagzeile ? 34 + schlagzeileZeilen.length * 30 + 26 : 0;
+
+  const hoehe = schlagzeileHoehe + kopfHoehe + stand.length * zeilenHoehe + 60;
   const canvas = document.createElement("canvas");
   canvas.width = breite * 2;
   canvas.height = hoehe * 2;
@@ -2898,18 +2930,37 @@ function tabelleAlsCanvas(stand) {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, breite, hoehe);
 
+  // Schlagzeilen-Banner: roter Kopf "LADRIÈRE RUNDSCHAU" + fette Headline
+  if (schlagzeile) {
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, breite, schlagzeileHoehe);
+    ctx.fillStyle = "#e53935";
+    ctx.fillRect(0, 0, breite, 34);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#fff";
+    ctx.font = "900 16px Georgia, 'Times New Roman', serif";
+    ctx.fillText("L A D R I È R E   R U N D S C H A U", breite / 2, 23);
+    ctx.fillStyle = "#1a1a1a";
+    ctx.font = "bold 22px Georgia, 'Times New Roman', serif";
+    schlagzeileZeilen.forEach((zeile, i) => {
+      ctx.fillText(zeile, breite / 2, 34 + 30 + i * 30);
+    });
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(0, schlagzeileHoehe - 3, breite, 3);
+  }
+
   // Titel
   ctx.textAlign = "center";
   ctx.fillStyle = "#fff";
   ctx.font = "bold 30px -apple-system, Segoe UI, sans-serif";
-  ctx.fillText("🏆 Gesamtplatzierung", breite / 2, 50);
+  ctx.fillText("🏆 Gesamtplatzierung", breite / 2, schlagzeileHoehe + 50);
   ctx.font = "16px -apple-system, Segoe UI, sans-serif";
   ctx.fillStyle = "#cde9d2";
   const datum = new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
-  ctx.fillText(`Familien-WM-Tippspiel 2026 · ${datum}`, breite / 2, 78);
+  ctx.fillText(`Familien-WM-Tippspiel 2026 · ${datum}`, breite / 2, schlagzeileHoehe + 78);
 
   // Weiße Tabellenkarte
-  const tabX = 20, tabY = kopfHoehe - 20, tabW = breite - 40, tabH = stand.length * zeilenHoehe + 20;
+  const tabX = 20, tabY = schlagzeileHoehe + kopfHoehe - 20, tabW = breite - 40, tabH = stand.length * zeilenHoehe + 20;
   ctx.fillStyle = "#fff";
   bildAbgerundetesRechteck(ctx, tabX, tabY, tabW, tabH, 16);
   ctx.fill();
@@ -2956,7 +3007,7 @@ async function tabelleTeilen() {
   const stand = berechneStand();
   if (!stand.length) { toast("Noch keine Mitspieler – nichts zu teilen. 🤷"); return; }
   try {
-    const canvas = tabelleAlsCanvas(stand);
+    const canvas = tabelleAlsCanvas(stand, schlagzeileDesTages());
     const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
     if (!blob) throw new Error("kein Bild");
     const dateiname = `wm-tabelle-${new Date().toISOString().slice(0,10)}.png`;
