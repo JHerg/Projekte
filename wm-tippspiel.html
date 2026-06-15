@@ -1477,19 +1477,19 @@ function titelFuer(rang, maxRang, gesamt, spielerId) {
 
 const WOCHENTAGE_KURZ = ["So","Mo","Di","Mi","Do","Fr","Sa"];
 
-// Ordnet einen Zeitpunkt dem morgendlichen "Spieltag" zu: Spiele ab 20:00 Uhr
+// Ordnet einen Zeitpunkt dem morgendlichen "Spieltag" zu: Spiele ab 18:00 Uhr
 // zählen zum Spieltag des folgenden Kalendertags, Spiele vor 08:00 Uhr zum
 // Spieltag des aktuellen Kalendertags (Nacht- bzw. Zeitzonen-Spiele rutschen
-// so gemeinsam in das morgendliche Auswertungsfenster). Tagsüber (08–20 Uhr)
+// so gemeinsam in das morgendliche Auswertungsfenster). Tagsüber (08–18 Uhr)
 // gehört ein Spiel zu keinem solchen Fenster.
 function tagesfensterDatum(d) {
   const std = d.getHours();
-  if (std >= 20) return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+  if (std >= 18) return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
   if (std < 8) return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   return null;
 }
 
-// "Aufsteiger des Tages": wertet das jüngste 20:00–08:00-Spieltagsfenster aus,
+// "Aufsteiger des Tages": wertet das jüngste 18:00–08:00-Spieltagsfenster aus,
 // in dem mindestens ein Spiel ein Ergebnis hat, und zeigt, wer darin
 // besonders gut getippt hat – auch als Mutmacher für Spieler, die in der
 // Gesamttabelle weiter hinten stehen.
@@ -1576,7 +1576,7 @@ function renderTagesform() {
   tc.innerHTML = `
     <div class="karte tagesform-box">
       <h2>🌅 Aufsteiger des Tages</h2>
-      <div class="untertitel">Spieltag ${datumTxt} · ${anzahlSpiele} Spiel${anzahlSpiele===1?'':'e'} ausgewertet (20:00–08:00 Uhr)</div>
+      <div class="untertitel">Spieltag ${datumTxt} · ${anzahlSpiele} Spiel${anzahlSpiele===1?'':'e'} ausgewertet (18:00–08:00 Uhr)</div>
       <table>
         <thead><tr><th></th><th>Spieler</th><th style="text-align:center">🎯</th><th style="text-align:right">Punkte</th></tr></thead>
         <tbody>
