@@ -140,6 +140,13 @@
   .tipp-eingabe { display: flex; align-items: center; justify-content: center; gap: 6px; }
   .tipp-eingabe input { width: 52px; text-align: center; font-size: 1.3rem; font-weight: 800; padding: 6px; }
   .doppelpunkt { font-size: 1.4rem; font-weight: 800; color: #aaa; }
+  /* Endergebnis steht im Score-Feld selbst – kräftiges Grün signalisiert „final". */
+  .endstand-anzeige .endstand-zahl {
+    min-width: 52px; text-align: center; font-size: 1.4rem; font-weight: 800;
+    padding: 6px 4px; border-radius: 10px; background: var(--gruen); color: #fff;
+    box-shadow: 0 2px 6px rgba(46,125,50,.35);
+  }
+  .endstand-anzeige .doppelpunkt { color: var(--gruen); }
   .ergebnis-echt { text-align: center; font-size: .85rem; color: var(--gruen); font-weight: 700; margin-top: 8px; }
   .punkte-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: .75rem; font-weight: 800; margin-left: 6px; }
   .p4 { background: #ffd54f; color: #5d4000; }
@@ -417,6 +424,8 @@
   body.dark .stat-kachel .val,
   body.dark .h2h-row .wert.fuehrt,
   body.dark .ergebnis-echt { color: var(--gruen-hell); }
+  body.dark .endstand-anzeige .endstand-zahl { background: var(--gruen-hell); color: #0c1f14; }
+  body.dark .endstand-anzeige .doppelpunkt { color: var(--gruen-hell); }
   body.dark .punkte-badge.p0 { background: #33423a; color: #aab8b0; }
 </style>
 </head>
@@ -1043,6 +1052,11 @@ function aktualisiereSpielKarte(spielId) {
   card.classList.toggle("gespielt", spiel.gespielt);
   const kopf = card.querySelector(".kopf-rechts");
   if (kopf) kopf.innerHTML = kopfRechtsHTML(spiel);
+  // Mittleres Score-Feld auf Endergebnis (oder zurück auf Tipp-Eingabe)
+  // umschalten. Gefahrlos, weil der Spielleiter das Ergebnis im separaten
+  // Panel eingibt – nicht in diesem Feld.
+  const score = card.querySelector(".spiel-teams .tipp-eingabe");
+  if (score) score.outerHTML = scoreFeldHTML(spiel);
   const dyn = card.querySelector(".spiel-dynamisch");
   if (dyn) dyn.innerHTML = spielDynamischHTML(spiel);
 }
@@ -1129,11 +1143,34 @@ function kopfRechtsHTML(spiel) {
     <button class="klein gefahr nur-admin" onclick="spielLoeschen('${spiel.id}')" style="margin-left:6px">✕</button>`;
 }
 
+// Das mittlere Score-Feld einer Spielkarte: vor dem Anpfiff zwei Tipp-Eingaben
+// des aktiven Spielers, nach dem Spiel das fixe Endergebnis in kräftigem Grün
+// (damit klar ist: das ist final und keine Eingabe mehr).
+function scoreFeldHTML(spiel) {
+  if (spiel.gespielt) {
+    return `<div class="tipp-eingabe endstand-anzeige">
+      <span class="endstand-zahl">${spiel.e1}</span>
+      <span class="doppelpunkt">:</span>
+      <span class="endstand-zahl">${spiel.e2}</span>
+    </div>`;
+  }
+  const sp = state.aktiverSpielerId;
+  const t = (sp && state.tipps[sp] && state.tipps[sp][spiel.id]) || { e1:null, e2:null };
+  const dis = (!sp || !istTippbar(spiel)) ? "disabled" : "";
+  return `<div class="tipp-eingabe">
+    <input type="number" min="0" inputmode="numeric" ${dis} value="${t.e1??''}"
+      onchange="tippSpeichern('${spiel.id}','e1',this.value)" placeholder="-">
+    <span class="doppelpunkt">:</span>
+    <input type="number" min="0" inputmode="numeric" ${dis} value="${t.e2??''}"
+      onchange="tippSpeichern('${spiel.id}','e2',this.value)" placeholder="-">
+  </div>`;
+}
+
 // Dynamischer Anzeige-Teil (Endstand + Tipp-Übersicht) – getrennt von den
 // Eingabefeldern, damit er gefahrlos einzeln neu gerendert werden kann.
 function spielDynamischHTML(spiel) {
   let html = spiel.gespielt
-    ? `<div class="ergebnis-echt">⚽ Endstand: ${spiel.e1} : ${spiel.e2}${spiel.sieger?` · Sieger: ${flaggeVon(spiel.sieger)} ${esc(spiel.sieger)} (n.E.)`:''}</div>`
+    ? `<div class="ergebnis-echt">🏁 Endergebnis${spiel.sieger?` · Sieger: ${flaggeVon(spiel.sieger)} ${esc(spiel.sieger)} (n.E.)`:''}</div>`
     : "";
   // Tipps aller Mitspieler erst ab Anpfiff zeigen (vorher geheim, damit
   // niemand abschreiben kann). Vor dem Ergebnis ohne Punkte, danach mit.
@@ -1256,14 +1293,22 @@ function renderSpiele() {
     // Spieltag-Filter greift nur bei Spielen mit spieltag-Feld (Gruppenphase)
     const spieltagMatch = spieltagFilter === 0 || !s.spieltag || s.spieltag === spieltagFilter;
     return phasenMatch && spieltagMatch;
+  }).sort((a, b) => {
+    // Immer chronologisch nach echtem Anstoß-Zeitpunkt: Ein 18:00-Spiel kommt
+    // vor einem 03:00- und einem 08:00-Spiel der Nacht danach (gleicher
+    // Spieltag, aber späteres Datum). Ohne parsebares Datum bleibt die
+    // ursprüngliche Listenreihenfolge erhalten.
+    const da = parseSpielDatum(a), db = parseSpielDatum(b);
+    if (da && db) return da - db;
+    if (da) return -1;
+    if (db) return 1;
+    return 0;
   });
 
   c.innerHTML = sichtbar.map(spiel => {
-    const t = (sp && state.tipps[sp] && state.tipps[sp][spiel.id]) || { e1:null, e2:null };
     // Tippen gesperrt, wenn kein Spieler aktiv, das Spiel schon gespielt,
     // vom Spielleiter gesperrt – oder der Anpfiff bereits erfolgt ist.
     const tippGesperrt = !sp || !istTippbar(spiel);
-    const dis = tippGesperrt ? "disabled" : "";
     const istKo = !spiel.phase.startsWith("Gruppe") && spiel.phase !== "Gruppenphase";
 
     // Joker-Knopf (nur solange das Spiel tippbar und der Joker nicht verbraucht ist)
@@ -1293,13 +1338,7 @@ function renderSpiele() {
       </div>
       <div class="spiel-teams">
         <div class="team"><span class="flagge">${flaggeVon(spiel.t1)}</span>${esc(spiel.t1)}</div>
-        <div class="tipp-eingabe">
-          <input type="number" min="0" inputmode="numeric" ${dis} value="${t.e1??''}"
-            onchange="tippSpeichern('${spiel.id}','e1',this.value)" placeholder="-">
-          <span class="doppelpunkt">:</span>
-          <input type="number" min="0" inputmode="numeric" ${dis} value="${t.e2??''}"
-            onchange="tippSpeichern('${spiel.id}','e2',this.value)" placeholder="-">
-        </div>
+        ${scoreFeldHTML(spiel)}
         <div class="team"><span class="flagge">${flaggeVon(spiel.t2)}</span>${esc(spiel.t2)}</div>
       </div>
       ${tippGesperrt && sp && !spiel.gespielt ? `<div class="info-zeile" style="text-align:center">🔒 ${spiel.gesperrt ? 'Vom Spielleiter gesperrt' : '⏱️ Anpfiff erfolgt – Tippabgabe geschlossen'}</div>` : ''}
@@ -1835,23 +1874,24 @@ function renderAwards() {
   // 3. Bauernopfer-Pokal 🐔 (viel getippt, wenig geholt)
   const mitTipps = stand.filter(s => s.getippt > 0);
   if (mitTipps.length > 1) {
-    const mutigster = mitTipps.reduce((a,b) => (b.spielPunkte/b.getippt < a.spielPunkte/a.getippt ? b : a));
-    if (mutigster.getippt >= 2)
-      awards.push({ e:"🐔", t:"Bauernopfer-Pokal", s:`${mutigster.avatar} ${esc(mutigster.name)} – viel getippt, wenig geholt. Mutig! 😅` });
+    const minRatio = Math.min(...mitTipps.map(s => s.spielPunkte/s.getippt));
+    const opfer = mitTipps.filter(s => s.spielPunkte/s.getippt === minRatio && s.getippt >= 2);
+    if (opfer.length)
+      awards.push({ e:"🐔", t:"Bauernopfer-Pokal", s:`${opfer.map(o=>o.avatar+" "+esc(o.name)).join(", ")} – viel getippt, wenig geholt. Mutig! 😅` });
   }
 
   // 4. Bonus-Fuchs 🦊
   const maxBonus = Math.max(...stand.map(s => s.bonus));
   if (maxBonus > 0) {
-    const fuchs = stand.find(s => s.bonus === maxBonus);
-    awards.push({ e:"🦊", t:"Der Bonus-Fuchs", s:`${fuchs.avatar} ${esc(fuchs.name)} kassiert ${maxBonus} Bonus-Punkte. Schlau! 🧠` });
+    const fuchs = stand.filter(s => s.bonus === maxBonus);
+    awards.push({ e:"🦊", t:"Der Bonus-Fuchs", s:`${fuchs.map(f=>f.avatar+" "+esc(f.name)).join(", ")} ${fuchs.length>1?'kassieren':'kassiert'} ${maxBonus} Bonus-Punkte. Schlau! 🧠` });
   }
 
   // 5. Joker-König 🃏 (meiste Joker-Bonuspunkte)
   const maxJoker = Math.max(...stats.map(s => s.jokerBonus));
   if (maxJoker > 0) {
-    const jokerKoenig = stats.find(s => s.jokerBonus === maxJoker);
-    awards.push({ e:"🃏", t:"Joker-König", s:`${jokerKoenig.sp.avatar} ${esc(jokerKoenig.sp.name)} hat den Joker goldrichtig eingesetzt – +${maxJoker} Extra-Punkte! 🤑` });
+    const jokerKoenig = stats.filter(s => s.jokerBonus === maxJoker);
+    awards.push({ e:"🃏", t:"Joker-König", s:`${jokerKoenig.map(j=>j.sp.avatar+" "+esc(j.sp.name)).join(", ")} ${jokerKoenig.length>1?'haben':'hat'} den Joker goldrichtig eingesetzt – +${maxJoker} Extra-Punkte! 🤑` });
   }
 
   // 6. Tor-Prophet 🔮 (meiste 3-Punkte-Tordifferenz-Treffer)
@@ -1864,17 +1904,20 @@ function renderAwards() {
   // 7. Tipp-Maschine 🏟️ (höchste Abdeckung, min 5 abgegebene Tipps)
   const mitAbdeckung = stats.filter(s => s.getippt >= 5 && anzGespielt > 0);
   if (mitAbdeckung.length) {
-    const maschine = mitAbdeckung.reduce((a,b) => b.getippt > a.getippt ? b : a);
-    const prozent = Math.round(maschine.getippt / anzGespielt * 100);
-    awards.push({ e:"🏟️", t:"Die Tipp-Maschine", s:`${maschine.sp.avatar} ${esc(maschine.sp.name)} hat ${prozent}% aller Spiele getippt – ${maschine.getippt} von ${anzGespielt}! Fleißig! 💪` });
+    const maxGetippt = Math.max(...mitAbdeckung.map(s => s.getippt));
+    const maschinen = mitAbdeckung.filter(s => s.getippt === maxGetippt);
+    const prozent = Math.round(maxGetippt / anzGespielt * 100);
+    awards.push({ e:"🏟️", t:"Die Tipp-Maschine", s:`${maschinen.map(m=>m.sp.avatar+" "+esc(m.sp.name)).join(", ")} ${maschinen.length>1?'haben':'hat'} ${prozent}% aller Spiele getippt – ${maxGetippt} von ${anzGespielt}! Fleißig! 💪` });
   }
 
   // 8. Glückspilz 🍀 (meiste 2-Punkte-Tendenzen, aber kaum Volltreffer)
   const glueckStats = stats.filter(s => s.getippt >= 3 && s.p2 > s.p4);
   if (glueckStats.length) {
-    const glueck = glueckStats.reduce((a,b) => b.p2 > a.p2 ? b : a);
-    if (glueck.p2 >= 2)
-      awards.push({ e:"🍀", t:"Der Glückspilz", s:`${glueck.sp.avatar} ${esc(glueck.sp.name)} – ${glueck.p2}× richtige Tendenz, aber das genaue Ergebnis… keine Ahnung! 😂` });
+    const maxP2g = Math.max(...glueckStats.map(s => s.p2));
+    if (maxP2g >= 2) {
+      const glueck = glueckStats.filter(s => s.p2 === maxP2g);
+      awards.push({ e:"🍀", t:"Der Glückspilz", s:`${glueck.map(g=>g.sp.avatar+" "+esc(g.sp.name)).join(", ")} – ${maxP2g}× richtige Tendenz, aber das genaue Ergebnis… keine Ahnung! 😂` });
+    }
   }
 
   // 9. Aufsteiger 😎 (meiste Punkte in der letzten Phase)
@@ -1883,9 +1926,12 @@ function renderAwards() {
       let p = 0;
       letztePhaseSpiele.forEach(spiel => { const x = punkteFuerSpieler(sp.id, spiel); if (x!==null) p+=x; });
       return { sp, p };
-    }).sort((a,b)=>b.p-a.p);
-    if (aufstieg[0].p > 0)
-      awards.push({ e:"😎", t:"Der Aufsteiger", s:`${aufstieg[0].sp.avatar} ${esc(aufstieg[0].sp.name)} ist die heiße Nummer in ${esc(letztePhase)} – ${aufstieg[0].p} Punkte in dieser Runde! 🔥` });
+    });
+    const maxAufstieg = Math.max(...aufstieg.map(a => a.p));
+    if (maxAufstieg > 0) {
+      const top = aufstieg.filter(a => a.p === maxAufstieg);
+      awards.push({ e:"😎", t:"Der Aufsteiger", s:`${top.map(t=>t.sp.avatar+" "+esc(t.sp.name)).join(", ")} ${top.length>1?'sind':'ist'} die heiße Nummer in ${esc(letztePhase)} – ${maxAufstieg} Punkte in dieser Runde! 🔥` });
+    }
   }
 
   // 10. Unentschieden-Prophet 🤝 (meiste korrekt getippte Remis)
@@ -1905,10 +1951,12 @@ function renderAwards() {
   // 12. Effizienz-König 📊 (höchste Punkte/Tipp-Rate, min 4 Tipps)
   const effStats = stats.filter(s => s.getippt >= 4);
   if (effStats.length > 1) {
-    const effKoenig = effStats.reduce((a,b) => b.effizienz > a.effizienz ? b : a);
-    const effProzent = Math.round(effKoenig.effizienz * 100);
-    if (effProzent >= 50)
-      awards.push({ e:"📊", t:"Der Effizienz-König", s:`${effKoenig.sp.avatar} ${esc(effKoenig.sp.name)} holt ${effProzent}% der maximal möglichen Punkte – Qualität vor Quantität! ✨` });
+    const maxEff = Math.max(...effStats.map(s => s.effizienz));
+    const effProzent = Math.round(maxEff * 100);
+    if (effProzent >= 50) {
+      const koenige = effStats.filter(s => s.effizienz === maxEff);
+      awards.push({ e:"📊", t:"Der Effizienz-König", s:`${koenige.map(k=>k.sp.avatar+" "+esc(k.sp.name)).join(", ")} ${koenige.length>1?'holen':'holt'} ${effProzent}% der maximal möglichen Punkte – Qualität vor Quantität! ✨` });
+    }
   }
 
   c.innerHTML = awards.map(a =>
