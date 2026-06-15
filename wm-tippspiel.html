@@ -229,6 +229,25 @@
   .haupttabelle-box td.pkt { font-size: 1.3rem; }
   .haupttabelle-box table th { font-weight: 700; }
 
+  /* Auf-/Absteiger-Pfeile in der Tabelle */
+  .bewegung { font-size: .62rem; font-weight: 800; display: block; margin-top: 1px; line-height: 1; }
+  .bewegung.hoch   { color: var(--gruen); }
+  .bewegung.runter { color: var(--rot); }
+  .bewegung.gleich { color: #c4c4c4; }
+
+  /* Turnier-Fortschrittsbalken */
+  .fortschritt { margin-bottom: 14px; }
+  .fortschritt-text { font-size: .78rem; color: #666; margin-bottom: 5px; }
+  .fortschritt-bar { height: 10px; background: #e9e9e9; border-radius: 6px; overflow: hidden; }
+  .fortschritt-fill { height: 100%; background: linear-gradient(90deg, var(--gruen), var(--gruen-hell)); border-radius: 6px; transition: width .6s ease; }
+
+  /* Spruch des Tages */
+  .spruch-box {
+    background: linear-gradient(135deg, var(--gold), #ffe082);
+    color: #5d4000; border-radius: 12px; padding: 9px 14px; margin-bottom: 14px;
+    font-size: .9rem; font-weight: 600; text-align: center; box-shadow: var(--schatten);
+  }
+
   .strafe-box {
     background: linear-gradient(135deg, #ffd54f, #ffb300);
     border-radius: 16px; padding: 16px; text-align: center; color: #fff;
@@ -419,6 +438,10 @@
   body.dark summary { color: var(--gruen-hell); }
   body.dark .karte.haupttabelle-box h2 { color: #fff; }
   body.dark .haupttabelle-box .haupttabelle-untertitel { color: #9fb0a8; }
+  body.dark .bewegung.hoch { color: var(--gruen-hell); }
+  body.dark .bewegung.gleich { color: #5e6b63; }
+  body.dark .fortschritt-text { color: #9fb0a8; }
+  body.dark .fortschritt-bar { background: #33423a; }
   body.dark .karte h3,
   body.dark .stats-kopf .s-info h3 { color: #cfe8d8; }
   body.dark input, body.dark select,
@@ -480,6 +503,7 @@
 <main>
   <!-- ====================== TABELLE ====================== -->
   <section id="view-tabelle" class="view aktiv">
+    <div id="spruchBox"></div>
     <div id="countdownBox"></div>
     <div id="pokalContainer"></div>
     <div class="karte haupttabelle-box">
@@ -1054,6 +1078,7 @@ function tippSpeichern(spielId, feld, wert) {
 
 function ergebnisSpeichern(spielId, feld, wert) {
   const spiel = state.spiele.find(s => s.id === spielId);
+  const fuehrerVorher = fuehrendeIds();   // Spitze VOR diesem Ergebnis merken
   const v = wert === "" ? null : Math.max(0, parseInt(wert) || 0);
   spiel[feld] = v;
   spiel.gespielt = (spiel.e1 !== null && spiel.e2 !== null);
@@ -1073,7 +1098,31 @@ function ergebnisSpeichern(spielId, feld, wert) {
   renderH2H();
   renderVerlaufChart();
   renderKonsens();
-  if (spiel.gespielt) pruefeExakteTreffer(spiel);
+  if (spiel.gespielt) {
+    pruefeExakteTreffer(spiel);
+    pruefeFuehrungswechsel(fuehrerVorher);
+    pruefeNeueBadges();
+  }
+}
+
+// IDs der aktuell Führenden (nur wenn überhaupt schon Punkte vergeben sind).
+function fuehrendeIds() {
+  const stand = berechneStand();
+  if (!stand.some(s => s.punkte > 0)) return [];
+  return stand.filter(s => s.rang === 1).map(s => s.id);
+}
+
+// Feiert einen echten Führungswechsel: jemand steht jetzt vorne, der vorher
+// nicht ganz oben war. Reiner Jubel-Effekt – ändert keine Punkte.
+function pruefeFuehrungswechsel(vorherIds) {
+  if (!vorherIds.length) return;          // vorher gab es noch keinen Führenden
+  const jetzt = berechneStand().filter(s => s.rang === 1 && s.punkte > 0);
+  if (!jetzt.length) return;
+  const neuVorne = jetzt.some(s => !vorherIds.includes(s.id));
+  if (!neuVorne) return;
+  konfettiRegen(70);
+  const namen = jetzt.map(s => `${s.avatar} ${s.name}`).join(" & ");
+  toast(`👑 Führungswechsel! ${jetzt.length > 1 ? 'Neue Doppelspitze' : 'Neuer Spitzenreiter'}: ${namen}!`);
 }
 
 // Aktualisiert nur die Anzeige-Teile EINER Spielkarte, ohne die Eingabefelder
@@ -1456,7 +1505,7 @@ function bonusLoesungSetzen(bid, idxStr) {
   renderBonus();
   renderTabelle();
   renderAwards();
-  if (b.loesung) { konfettiRegen(50); }
+  if (b.loesung) { konfettiRegen(50); pruefeNeueBadges(); }
 }
 
 function renderBonus() {
@@ -1507,10 +1556,14 @@ function renderBonus() {
 }
 
 // ===================== TABELLE / RANKING =====================
-function berechneStand() {
+function berechneStand(ausschlussSpielIds) {
   return state.spieler.map(s => {
     let punkte = 0, treffer = 0, getippt = 0;
     state.spiele.forEach(spiel => {
+      // Für den „Stand von gestern" (Bewegungs-Pfeile) können die Spiele des
+      // jüngsten Tagesfensters ausgeblendet werden – sie zählen dann wie noch
+      // nicht gespielt.
+      if (ausschlussSpielIds && ausschlussSpielIds.has(spiel.id)) return;
       const t = state.tipps[s.id]?.[spiel.id];
       if (t && t.e1!==null && t.e2!==null) {
         if (spiel.gespielt) {
@@ -1612,7 +1665,8 @@ function berechneTagesform() {
     }
   });
 
-  return { fensterDatum, anzahlSpiele: spieleDesTages.length, tagesStand, aufsteiger, sprung };
+  return { fensterDatum, anzahlSpiele: spieleDesTages.length, tagesStand, aufsteiger, sprung,
+    fensterSpielIds: new Set(spieleDesTages.map(s => s.id)) };
 }
 
 function renderTagesform() {
@@ -1667,11 +1721,46 @@ function renderTagesform() {
     </div>`;
 }
 
+// Wechselt täglich (stabil pro Tag) – mal allgemeiner Motivationsspruch,
+// mal auf die aktuelle Tabellenlage gemünzt. Reiner Spaß, keine Punkte.
+const SPRUECHE = [
+  "Heute ist ein guter Tag für einen Volltreffer! 🎯",
+  "Wer nicht tippt, kann nicht gewinnen! ⚽",
+  "Die Glaskugel ist poliert – auf geht's! 🔮",
+  "Trau dich an die Überraschung – Underdogs zuerst! 🐸",
+  "Ein Unentschieden tippt sich nicht von allein. 🤝",
+  "Kleiner Tipp, große Wirkung. 💥",
+  "Bauchgefühl schlägt Statistik – manchmal. 🍀",
+  "Jeder Punkt zählt. Auch deiner. 💪",
+  "Tor oder kein Tor – das ist hier die Frage. 🥅",
+  "Heute schon getippt? Die Konkurrenz schläft nicht! 😴",
+  "Mut zur Lücke: Tippt das Ergebnis, nicht nur den Sieger! ✍️",
+  "Champions tippen auch die langweiligen Spiele. 😎"
+];
+function spruchDesTages(stand) {
+  const dyn = [];
+  const fuehrende = stand.filter(s => s.rang === 1 && s.punkte > 0);
+  if (fuehrende.length === 1)
+    dyn.push(`Heute kann ${esc(fuehrende[0].name)} von der Spitze gestürzt werden! 👑`);
+  const verfolger = stand.find(s => s.rang !== 1 && s.punkte >= 0);
+  if (fuehrende.length && verfolger) {
+    const abstand = fuehrende[0].punkte - verfolger.punkte;
+    if (abstand > 0 && abstand <= 3)
+      dyn.push(`Nur ${abstand} Punkt${abstand === 1 ? '' : 'e'} trennen die Spitze – jetzt wird's eng! 🔥`);
+  }
+  const pool = SPRUECHE.concat(dyn);
+  const tag = Math.floor(Date.now() / 86400000);   // wechselt täglich
+  return pool[tag % pool.length];
+}
+
 function renderTabelle() {
   const c = document.getElementById("tabelleInhalt");
   const stand = berechneStand();
   const pokalC = document.getElementById("pokalContainer");
   const tagesformC = document.getElementById("tagesformContainer");
+  const spruchC = document.getElementById("spruchBox");
+
+  if (spruchC) spruchC.innerHTML = stand.length ? `<div class="spruch-box">💬 ${spruchDesTages(stand)}</div>` : "";
 
   if (!stand.length) {
     c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler. Geh zu 👨‍👩‍👧 <b>Familie</b> und stell dein Team auf!</p>';
@@ -1679,6 +1768,25 @@ function renderTabelle() {
     tagesformC.innerHTML = "";
     return;
   }
+
+  // Bewegungs-Pfeile: Rang von „vor dem jüngsten Tagesfenster" gegen jetzt.
+  const tf = berechneTagesform();
+  let rangVorher = null;
+  if (tf && tf.fensterSpielIds && tf.fensterSpielIds.size) {
+    const standVorher = berechneStand(tf.fensterSpielIds);
+    if (standVorher.some(s => s.punkte > 0))   // nur wenn es schon ein „gestern" gab
+      rangVorher = new Map(standVorher.map(s => [s.id, s.rang]));
+  }
+
+  // Turnier-Fortschritt
+  const gesamtSpiele = state.spiele.length;
+  const fertigeSpiele = state.spiele.filter(s => s.gespielt).length;
+  const prozent = gesamtSpiele ? Math.round(fertigeSpiele / gesamtSpiele * 100) : 0;
+  const fortschrittHTML = gesamtSpiele ? `
+    <div class="fortschritt">
+      <div class="fortschritt-text">⚽ Turnier-Fortschritt: <b>${fertigeSpiele} von ${gesamtSpiele}</b> Spielen ausgewertet · ${prozent}%</div>
+      <div class="fortschritt-bar"><div class="fortschritt-fill" style="width:${prozent}%"></div></div>
+    </div>` : "";
 
   // Wanderpokal für die Führenden (bei Punktgleichheit teilen sie sich den Pokal)
   const fuehrende = stand.filter(s => s.rang === 1);
@@ -1693,7 +1801,7 @@ function renderTabelle() {
 
   renderTagesform();
 
-  c.innerHTML = `
+  c.innerHTML = fortschrittHTML + `
     <table>
       <thead><tr><th></th><th>Spieler</th><th style="text-align:center">🎯</th><th style="text-align:right">Punkte</th></tr></thead>
       <tbody>
@@ -1701,9 +1809,17 @@ function renderTabelle() {
         const maxRang = stand[stand.length-1].rang;
         const titel = titelFuer(s.rang, maxRang, stand.length, s.id);
         const rangEmoji = `${s.rang}.`;
+        // Bewegungs-Pfeil gegenüber dem Stand vor dem jüngsten Tagesfenster
+        let bewegung = "";
+        if (rangVorher && rangVorher.has(s.id)) {
+          const d = rangVorher.get(s.id) - s.rang;   // positiv = nach oben geklettert
+          if (d > 0)      bewegung = `<span class="bewegung hoch" title="${d} Platz/Plätze hoch">▲${d}</span>`;
+          else if (d < 0) bewegung = `<span class="bewegung runter" title="${-d} Platz/Plätze runter">▼${-d}</span>`;
+          else            bewegung = `<span class="bewegung gleich" title="Platz gehalten">➖</span>`;
+        }
         const klasse = (s.rang===1 && hatPunkte ? "fuehrend" : (s.rang===maxRang && stand.length>1 && hatPunkte ? "letzter" : "")) + " klickbar";
         return `<tr class="${klasse}" onclick="zeigeSpielerstats('${s.id}')" title="Statistiken anzeigen">
-          <td class="rang-emoji">${rangEmoji}</td>
+          <td class="rang-emoji">${rangEmoji}${bewegung}</td>
           <td>
             <span class="spieler-name">${s.avatar} ${esc(s.name)}</span>
             <span class="titel-badge">${titel}${s.bonus?` · 🎲 +${s.bonus}`:''}</span>
@@ -1730,8 +1846,84 @@ const BADGES = [
   { e:"🔥", n:"Heißer Lauf (3+)",     pruef:c => c.maxStreak >= 3 },
   { e:"💯", n:"Perfektionist",        pruef:c => c.getippt >= 5 && c.p0 === 0 },
   { e:"👑", n:"Spitzenreiter",        pruef:c => c.rang === 1 && c.punkte > 0 },
-  { e:"⭐", n:"50 Punkte-Klub",       pruef:c => c.punkte >= 50 }
+  { e:"⭐", n:"50 Punkte-Klub",       pruef:c => c.punkte >= 50 },
+  // Neue Spaß-Abzeichen
+  { e:"🐣", n:"Frühaufsteher",        pruef:c => c.frueh >= 1 },
+  { e:"🌙", n:"Nachtschwärmer",       pruef:c => c.spaetNacht >= 3 },
+  { e:"🎰", n:"Joker-Volltreffer",    pruef:c => c.jokerBonus >= 4 },
+  { e:"🦅", n:"Adler-Auge (10×)",     pruef:c => c.p4 >= 10 },
+  { e:"🚀", n:"Mega-Lauf (5+)",       pruef:c => c.maxStreak >= 5 },
+  { e:"💎", n:"100 Punkte-Klub",      pruef:c => c.punkte >= 100 }
 ];
+
+// Berechnet den Statistik-Kontext eines Spielers für die Badge-Prüfung.
+// Einzige Quelle der Wahrheit – sowohl die Spieler-Stats-Ansicht als auch die
+// Badge-Feier (Konfetti bei neuem Abzeichen) nutzen exakt diese Werte.
+function berechneBadgeKontext(spielerId) {
+  const stand = berechneStand();
+  const data = stand.find(s => s.id === spielerId);
+  if (!data) return null;
+  const gespielte = state.spiele.filter(s => s.gespielt);
+  let p4=0,p3=0,p2=0,p0=0,jokerBonus=0,unentschieden=0,spaetNacht=0,frueh=0,deutschlandRichtig=0;
+  gespielte.forEach(spiel => {
+    const tipp = state.tipps[spielerId]?.[spiel.id];
+    const basis = punkteFuer(tipp, spiel);
+    if (basis === null) return;
+    if (basis===4) p4++; else if (basis===3) p3++; else if (basis===2) p2++; else p0++;
+    const mitJoker = punkteFuerSpieler(spielerId, spiel);
+    if (mitJoker - basis > 0) jokerBonus = mitJoker - basis;
+    if (spiel.e1===spiel.e2 && tipp.e1===tipp.e2) unentschieden++;
+    const stunde = parseInt((spiel.datum||"").match(/(\d{1,2}):\d{2}$/)?.[1] ?? "12");
+    if ((stunde >= 23 || stunde <= 4) && basis >= 2) spaetNacht++;
+    if (stunde >= 6 && stunde <= 9 && basis >= 2) frueh++;
+    if ((spiel.t1==="Deutschland"||spiel.t2==="Deutschland") && basis >= 2) deutschlandRichtig++;
+  });
+  let maxStreak = 0, streak = 0;
+  spieleChronologisch(true).forEach(spiel => {
+    const b = punkteFuer(state.tipps[spielerId]?.[spiel.id], spiel);
+    if (b !== null && b >= 2) { streak++; maxStreak = Math.max(maxStreak, streak); }
+    else streak = 0;
+  });
+  return { p4, p3, p2, p0, getippt: p4+p3+p2+p0, jokerBonus, bonus: data.bonus,
+    punkte: data.punkte, anzGespielt: gespielte.length, unentschieden, spaetNacht, frueh,
+    deutschlandRichtig, maxStreak, rang: data.rang };
+}
+
+// ----- Badge-Feier: Konfetti + Toast, wenn jemand ein neues Abzeichen holt --
+// Der „gesehen"-Stand liegt bewusst nur lokal (pro Gerät), damit ein Cloud-Sync
+// nicht alle längst verdienten Abzeichen erneut bejubelt.
+function ladeGeseheneBadges() {
+  try { return JSON.parse(localStorage.getItem("wm_badges_gesehen") || "{}"); }
+  catch { return {}; }
+}
+function freieBadgeEmojis(spielerId) {
+  const ctx = berechneBadgeKontext(spielerId);
+  if (!ctx) return [];
+  return BADGES.filter(b => b.pruef(ctx)).map(b => b.e);
+}
+// opts.silent = true: nur den Baseline-Stand merken, ohne zu feiern
+// (für Start und Cloud-Sync). Ohne silent werden neue Abzeichen gefeiert.
+function pruefeNeueBadges(opts) {
+  const gesehen = ladeGeseheneBadges();
+  const feiern = [];
+  state.spieler.forEach(sp => {
+    const frei = freieBadgeEmojis(sp.id);
+    const alt = gesehen[sp.id] || [];
+    if (!opts?.silent) {
+      frei.filter(e => !alt.includes(e)).forEach(e => {
+        const b = BADGES.find(x => x.e === e);
+        if (b) feiern.push({ sp, b });
+      });
+    }
+    gesehen[sp.id] = frei;
+  });
+  try { localStorage.setItem("wm_badges_gesehen", JSON.stringify(gesehen)); } catch {}
+  if (feiern.length) {
+    konfettiRegen(60);
+    feiern.slice(0, 3).forEach((f, i) =>
+      setTimeout(() => toast(`🏅 Neues Abzeichen für ${f.sp.avatar} ${f.sp.name}: „${f.b.n}"!`), i * 1700));
+  }
+}
 
 // ===================== SPIELER-STATISTIKEN =====================
 function zeigeSpielerstats(spielerId) {
@@ -1776,10 +1968,8 @@ function zeigeSpielerstats(spielerId) {
   const abdeckung = gespielteSpiele.length > 0 ? Math.round(getippt / gespielteSpiele.length * 100) : 0;
   const rangEmoji = rang===1?"🥇":rang===2?"🥈":rang===3?"🥉":`${rang}.`;
 
-  // Badges berechnen
-  const ctx = { p4, p3, p2, p0, getippt, jokerBonus:jokerpunkte, bonus:data.bonus,
-    punkte:data.punkte, anzGespielt:gespielteSpiele.length, unentschieden, spaetNacht,
-    deutschlandRichtig, maxStreak, rang };
+  // Badges berechnen (gemeinsame Quelle mit der Badge-Feier)
+  const ctx = berechneBadgeKontext(spielerId) || {};
   const badgesHTML = BADGES.map(b => {
     const frei = b.pruef(ctx);
     return `<div class="badge ${frei?'frei':'gesperrt'}" title="${esc(b.n)}">
@@ -1990,6 +2180,34 @@ function renderAwards() {
       const koenige = effStats.filter(s => s.effizienz === maxEff);
       awards.push({ e:"📊", t:"Der Effizienz-König", s:`${koenige.map(k=>k.sp.avatar+" "+esc(k.sp.name)).join(", ")} ${koenige.length>1?'holen':'holt'} ${effProzent}% der maximal möglichen Punkte – Qualität vor Quantität! ✨` });
     }
+  }
+
+  // 13. + 14. Tipp-Zwillinge 👯 & Antipoden 🧲 (rein sozialer Spaß)
+  if (state.spieler.length >= 2 && anzGespielt >= 3) {
+    let bestGleich = null, bestGegen = null;
+    for (let i = 0; i < state.spieler.length; i++) {
+      for (let j = i+1; j < state.spieler.length; j++) {
+        const a = state.spieler[i], b = state.spieler[j];
+        let gemeinsam = 0, gleich = 0, gegensatz = 0;
+        gespielteSpiele.forEach(spiel => {
+          const ta = state.tipps[a.id]?.[spiel.id], tb = state.tipps[b.id]?.[spiel.id];
+          if (!ta || !tb || ta.e1==null || ta.e2==null || tb.e1==null || tb.e2==null) return;
+          gemeinsam++;
+          if (ta.e1===tb.e1 && ta.e2===tb.e2) gleich++;
+          const tendA = Math.sign(ta.e1-ta.e2), tendB = Math.sign(tb.e1-tb.e2);
+          if (tendA !== 0 && tendB !== 0 && tendA !== tendB) gegensatz++;  // klare Gegentendenz
+        });
+        if (gemeinsam < 3) continue;
+        if (gleich >= 2 && (!bestGleich || gleich/gemeinsam > bestGleich.quote))
+          bestGleich = { a, b, gleich, quote: gleich/gemeinsam };
+        if (gegensatz >= 2 && (!bestGegen || gegensatz/gemeinsam > bestGegen.quote))
+          bestGegen = { a, b, gegensatz, quote: gegensatz/gemeinsam };
+      }
+    }
+    if (bestGleich)
+      awards.push({ e:"👯", t:"Tipp-Zwillinge", s:`${bestGleich.a.avatar} ${esc(bestGleich.a.name)} & ${bestGleich.b.avatar} ${esc(bestGleich.b.name)} tippen wie aus einem Kopf – ${bestGleich.gleich}× exakt denselben Tipp! Seelenverwandte! 🧬` });
+    if (bestGegen)
+      awards.push({ e:"🧲", t:"Die Antipoden", s:`${bestGegen.a.avatar} ${esc(bestGegen.a.name)} & ${bestGegen.b.avatar} ${esc(bestGegen.b.name)} sind selten einer Meinung – ${bestGegen.gegensatz}× genau gegensätzlich getippt! 🤺` });
   }
 
   c.innerHTML = awards.map(a =>
@@ -3459,6 +3677,9 @@ function alleRendern() {
   renderH2H();
   renderVerlaufChart();
   renderKonsens();
+  // Badge-Baseline still mitziehen (Start, Import, Cloud-Sync) – ohne Feier,
+  // damit nur frisch erspielte Abzeichen später bejubelt werden.
+  pruefeNeueBadges({ silent: true });
 }
 
 themeLaden();
