@@ -1746,23 +1746,25 @@ function renderTagesform() {
 
   tc.innerHTML = `
     <div class="karte tagesform-box">
-      <h2>🌅 Aufsteiger des Tages</h2>
-      <div class="untertitel">Spieltag ${datumTxt} · ${anzahlSpiele} Spiel${anzahlSpiele===1?'':'e'} ausgewertet (18:00–08:00 Uhr)</div>
-      <table>
-        <thead><tr><th></th><th>Spieler</th><th style="text-align:center">🎯</th><th style="text-align:right">Punkte</th></tr></thead>
-        <tbody>
-        ${tagesStand.filter(s => s.punkte > 0 || s.treffer > 0).map(s => {
-          const rangEmoji = s.rang===1?"🥇":s.rang===2?"🥈":s.rang===3?"🥉":s.rang+".";
-          return `<tr>
-            <td class="rang-emoji">${rangEmoji}</td>
-            <td>${s.avatar} ${esc(s.name)}</td>
-            <td style="text-align:center">${s.treffer}</td>
-            <td class="pkt">${s.punkte}</td>
-          </tr>`;
-        }).join("")}
-        </tbody>
-      </table>
-      ${awardsHtml}
+      <details>
+        <summary><h2 style="display:inline">🌅 Aufsteiger des Tages</h2></summary>
+        <div class="untertitel">Spieltag ${datumTxt} · ${anzahlSpiele} Spiel${anzahlSpiele===1?'':'e'} ausgewertet (18:00–08:00 Uhr)</div>
+        <table>
+          <thead><tr><th></th><th>Spieler</th><th style="text-align:center">🎯</th><th style="text-align:right">Punkte</th></tr></thead>
+          <tbody>
+          ${tagesStand.filter(s => s.punkte > 0 || s.treffer > 0).map(s => {
+            const rangEmoji = s.rang===1?"🥇":s.rang===2?"🥈":s.rang===3?"🥉":s.rang+".";
+            return `<tr>
+              <td class="rang-emoji">${rangEmoji}</td>
+              <td>${s.avatar} ${esc(s.name)}</td>
+              <td style="text-align:center">${s.treffer}</td>
+              <td class="pkt">${s.punkte}</td>
+            </tr>`;
+          }).join("")}
+          </tbody>
+        </table>
+        ${awardsHtml}
+      </details>
     </div>`;
 }
 
