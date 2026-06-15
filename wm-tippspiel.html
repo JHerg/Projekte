@@ -266,8 +266,14 @@
     font-size: 1.05rem; font-weight: 800; line-height: 1.35;
     padding: 10px 14px; font-family: Georgia, "Times New Roman", serif;
   }
+  .schlagzeile-box .zitat {
+    font-size: .85rem; font-style: italic; line-height: 1.35; color: #555;
+    padding: 0 14px 12px; font-family: Georgia, "Times New Roman", serif;
+    border-top: 1px dashed #ccc; margin: 0 14px; padding-top: 8px;
+  }
   body.dark .schlagzeile-box { background: #2a2a2a; color: #fff; border-color: #555; }
   body.dark .schlagzeile-box .label { border-bottom-color: #555; }
+  body.dark .schlagzeile-box .zitat { color: #bbb; border-top-color: #555; }
 
   /* Tipp-Erinnerung: noch offene Spiele bis zur nächsten 8-Uhr-Grenze */
   .erinnerung-box {
@@ -1861,6 +1867,40 @@ const SCHLAGZEILEN = {
     "💔 AUTSCH! {name} liegt heute bei ALLEN Tipps daneben – 0 Punkte! Kommt schon wieder! 💪"
   ]
 };
+// Passende Fußballer-Weisheiten je Kategorie – täglich wechselnd, zur
+// Schlagzeile passend ausgewählt.
+const FUSSBALL_ZITATE = {
+  perfekt: [
+    { z: "Der Ball ist rund, ein Spiel dauert 90 Minuten – alles andere ist Theorie.", w: "Sepp Herberger" },
+    { z: "Mia san mia.", w: "Franz Beckenbauer" },
+    { z: "Erfolg ist kein Zufall, sondern das Ergebnis harter Arbeit.", w: "Pep Guardiola" },
+    { z: "Wir wollten heute gewinnen, und genau das haben wir auch geschafft.", w: "Jürgen Klopp" }
+  ],
+  aufsteiger: [
+    { z: "Es ist noch nicht vorbei, bis es vorbei ist.", w: "Yogi Berra" },
+    { z: "Aufstehen, Krone richten, weitermachen.", w: "Volksmund" },
+    { z: "Man kann verlieren, aber man darf nicht aufgeben.", w: "Otto Rehhagel" },
+    { z: "Der Ball ist rund, und das Leben geht weiter.", w: "frei nach Sepp Herberger" }
+  ],
+  tagessiegKnapp: [
+    { z: "Am Ende zählt nur das Ergebnis.", w: "Otto Rehhagel" },
+    { z: "Ein Tor reicht – Hauptsache vorne.", w: "Volksmund" },
+    { z: "Manchmal entscheidet das Quäntchen Glück.", w: "Joachim Löw" },
+    { z: "Der Sieg gehört der Mannschaft.", w: "Joachim Löw" }
+  ],
+  tagessieg: [
+    { z: "Schau'n mer mal.", w: "Sepp Herberger" },
+    { z: "Fleiß schlägt Talent, wenn Talent nicht fleißig ist.", w: "Tim Notke" },
+    { z: "Erst gewinnen, dann lächeln.", w: "Jürgen Klopp" },
+    { z: "Der Sieg gehört der Mannschaft.", w: "Joachim Löw" }
+  ],
+  niete: [
+    { z: "Nach dem Spiel ist vor dem Spiel.", w: "Sepp Herberger" },
+    { z: "Verlieren ist erlaubt, aufgeben nicht.", w: "Jürgen Klopp" },
+    { z: "Auch aus einer Niederlage kann man lernen – wenn man will.", w: "Joachim Löw" },
+    { z: "Morgen ist auch noch ein Tag.", w: "Volksmund" }
+  ]
+};
 function schlagzeileVorlage(tpl, vals) {
   return tpl.replace(/\{(\w+)\}/g, (_, k) => vals[k] ?? "");
 }
@@ -1888,38 +1928,43 @@ function schlagzeileDesTages() {
 
   const kandidaten = [];
   if (tagessieger.length && tagessieger.length < tagesStand.length && tagessieger[0].punkte === maxPunkte) {
-    kandidaten.push({ prio: 4, text: schlagzeileVorlage(wahl(SCHLAGZEILEN.perfekt),
+    kandidaten.push({ prio: 4, kategorie: "perfekt", text: schlagzeileVorlage(wahl(SCHLAGZEILEN.perfekt),
       { name: namen(tagessieger), punkte: tagessieger[0].punkte, max: maxPunkte }) });
   }
   if (aufsteiger && sprung >= 2) {
-    kandidaten.push({ prio: 3, text: schlagzeileVorlage(wahl(SCHLAGZEILEN.aufsteiger),
+    kandidaten.push({ prio: 3, kategorie: "aufsteiger", text: schlagzeileVorlage(wahl(SCHLAGZEILEN.aufsteiger),
       { name: `${aufsteiger.avatar} ${esc(aufsteiger.name)}`, gr: aufsteiger.gesamtRang, rang: aufsteiger.rang, sprung }) });
   }
   if (tagessieger.length && zweiter && (tagessieger[0].punkte - zweiter.punkte <= 1) && tagesStand.length > 2) {
-    kandidaten.push({ prio: 2, text: schlagzeileVorlage(wahl(SCHLAGZEILEN.tagessiegKnapp),
+    kandidaten.push({ prio: 2, kategorie: "tagessiegKnapp", text: schlagzeileVorlage(wahl(SCHLAGZEILEN.tagessiegKnapp),
       { name: namen(tagessieger), punkte: tagessieger[0].punkte }) });
   }
   if (tagessieger.length) {
-    kandidaten.push({ prio: 1, text: schlagzeileVorlage(wahl(SCHLAGZEILEN.tagessieg),
+    kandidaten.push({ prio: 1, kategorie: "tagessieg", text: schlagzeileVorlage(wahl(SCHLAGZEILEN.tagessieg),
       { name: namen(tagessieger), punkte: tagessieger[0].punkte }) });
   }
   if (niete.length && niete.length < tagesStand.length && anzahlSpiele >= 2) {
-    kandidaten.push({ prio: niete.length === 1 ? 1.5 : 0.5, text: schlagzeileVorlage(wahl(SCHLAGZEILEN.niete),
+    kandidaten.push({ prio: niete.length === 1 ? 1.5 : 0.5, kategorie: "niete", text: schlagzeileVorlage(wahl(SCHLAGZEILEN.niete),
       { name: namen(niete) }) });
   }
 
   if (!kandidaten.length) return null;
   kandidaten.sort((a,b) => b.prio - a.prio);
-  return kandidaten[0].text;
+  const sieger = kandidaten[0];
+  // Anderer Versatz als bei der Schlagzeilen-Variante, damit Spruch & Zitat
+  // nicht immer "synchron" wechseln.
+  const zitate = FUSSBALL_ZITATE[sieger.kategorie];
+  const zitat = zitate[(seed + 3) % zitate.length];
+  return { text: sieger.text, zitat };
 }
-function renderSchlagzeile() {
+function renderSchlagzeile(ergebnis) {
   const c = document.getElementById("schlagzeileBox");
   if (!c) return;
-  const text = schlagzeileDesTages();
-  c.innerHTML = text ? `
+  c.innerHTML = ergebnis ? `
     <div class="schlagzeile-box">
       <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
-      <div class="text">${text}</div>
+      <div class="text">${ergebnis.text}</div>
+      <div class="zitat">💬 „${esc(ergebnis.zitat.z)}“ — ${esc(ergebnis.zitat.w)}</div>
     </div>` : "";
 }
 
@@ -1930,8 +1975,11 @@ function renderTabelle() {
   const tagesformC = document.getElementById("tagesformContainer");
   const spruchC = document.getElementById("spruchBox");
 
-  if (spruchC) spruchC.innerHTML = stand.length ? `<div class="spruch-box">💬 ${spruchDesTages(stand)}</div>` : "";
-  renderSchlagzeile();
+  const schlagzeile = schlagzeileDesTages();
+  // Spruch des Tages nur zeigen, wenn (noch) keine Rundschau-Schlagzeile da ist –
+  // sonst wäre das Zitat darunter zu viel des Guten.
+  if (spruchC) spruchC.innerHTML = (stand.length && !schlagzeile) ? `<div class="spruch-box">💬 ${spruchDesTages(stand)}</div>` : "";
+  renderSchlagzeile(schlagzeile);
 
   if (!stand.length) {
     c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler. Geh zu 👨‍👩‍👧 <b>Familie</b> und stell dein Team auf!</p>';
@@ -2917,8 +2965,14 @@ function tabelleAlsCanvas(stand, schlagzeile) {
   // Schlagzeilen-Banner im Zeitungs-Look (nur falls vorhanden)
   const messCtx = document.createElement("canvas").getContext("2d");
   messCtx.font = "bold 22px Georgia, 'Times New Roman', serif";
-  const schlagzeileZeilen = schlagzeile ? bildZeilenUmbruch(messCtx, schlagzeile, breite - 80) : [];
-  const schlagzeileHoehe = schlagzeile ? 34 + schlagzeileZeilen.length * 30 + 26 : 0;
+  const schlagzeileText = schlagzeile ? schlagzeile.text : "";
+  const schlagzeileZeilen = schlagzeileText ? bildZeilenUmbruch(messCtx, schlagzeileText, breite - 80) : [];
+  let zitatZeilen = [];
+  if (schlagzeile && schlagzeile.zitat) {
+    messCtx.font = "italic 15px Georgia, 'Times New Roman', serif";
+    zitatZeilen = bildZeilenUmbruch(messCtx, `„${schlagzeile.zitat.z}“ — ${schlagzeile.zitat.w}`, breite - 80);
+  }
+  const schlagzeileHoehe = schlagzeileText ? 34 + schlagzeileZeilen.length * 30 + zitatZeilen.length * 22 + 26 : 0;
 
   const hoehe = schlagzeileHoehe + kopfHoehe + stand.length * zeilenHoehe + 60;
   const canvas = document.createElement("canvas");
@@ -2934,8 +2988,8 @@ function tabelleAlsCanvas(stand, schlagzeile) {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, breite, hoehe);
 
-  // Schlagzeilen-Banner: roter Kopf "LADRIÈRE RUNDSCHAU" + fette Headline
-  if (schlagzeile) {
+  // Schlagzeilen-Banner: roter Kopf "LADRIÈRE RUNDSCHAU" + fette Headline + Zitat
+  if (schlagzeileText) {
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, breite, schlagzeileHoehe);
     ctx.fillStyle = "#e53935";
@@ -2949,6 +3003,14 @@ function tabelleAlsCanvas(stand, schlagzeile) {
     schlagzeileZeilen.forEach((zeile, i) => {
       ctx.fillText(zeile, breite / 2, 34 + 30 + i * 30);
     });
+    if (zitatZeilen.length) {
+      const zitatStartY = 34 + schlagzeileZeilen.length * 30 + 18;
+      ctx.fillStyle = "#666";
+      ctx.font = "italic 15px Georgia, 'Times New Roman', serif";
+      zitatZeilen.forEach((zeile, i) => {
+        ctx.fillText(zeile, breite / 2, zitatStartY + i * 22);
+      });
+    }
     ctx.fillStyle = "#1a1a1a";
     ctx.fillRect(0, schlagzeileHoehe - 3, breite, 3);
   }
