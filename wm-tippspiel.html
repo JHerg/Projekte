@@ -262,6 +262,11 @@
     padding: 5px 10px; font-family: Georgia, "Times New Roman", serif;
     border-bottom: 3px solid #1a1a1a;
   }
+  .schlagzeile-box .datum {
+    font-size: .75rem; color: #888; text-align: center;
+    padding: 6px 14px 0; font-family: Georgia, "Times New Roman", serif;
+    text-transform: capitalize;
+  }
   .schlagzeile-box .text {
     font-size: 1.05rem; font-weight: 800; line-height: 1.35;
     padding: 10px 14px; font-family: Georgia, "Times New Roman", serif;
@@ -274,6 +279,7 @@
   .schlagzeile-box .schlagzeile-teilen-btn { display: block; margin: 10px auto 12px; }
   body.dark .schlagzeile-box { background: #2a2a2a; color: #fff; border-color: #555; }
   body.dark .schlagzeile-box .label { border-bottom-color: #555; }
+  body.dark .schlagzeile-box .datum { color: #999; }
   body.dark .schlagzeile-box .zitat { color: #bbb; border-top-color: #555; }
 
   /* Tipp-Erinnerung: noch offene Spiele bis zur nächsten 8-Uhr-Grenze */
@@ -1956,7 +1962,7 @@ function schlagzeileDesTages() {
   // nicht immer "synchron" wechseln.
   const zitate = FUSSBALL_ZITATE[sieger.kategorie];
   const zitat = zitate[(seed + 3) % zitate.length];
-  return { text: sieger.text, zitat };
+  return { text: sieger.text, zitat, datum: fensterDatum };
 }
 function renderSchlagzeile(ergebnis) {
   const c = document.getElementById("schlagzeileBox");
@@ -1964,6 +1970,7 @@ function renderSchlagzeile(ergebnis) {
   c.innerHTML = ergebnis ? `
     <div class="schlagzeile-box">
       <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
+      <div class="datum">${esc(ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
       <div class="text">${ergebnis.text}</div>
       <div class="zitat">💬 „${esc(ergebnis.zitat.z)}“ — ${esc(ergebnis.zitat.w)}</div>
       <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Rundschau teilen</button>
@@ -2974,7 +2981,7 @@ function tabelleAlsCanvas(stand, schlagzeile) {
     messCtx.font = "italic 15px Georgia, 'Times New Roman', serif";
     zitatZeilen = bildZeilenUmbruch(messCtx, `„${schlagzeile.zitat.z}“ — ${schlagzeile.zitat.w}`, breite - 80);
   }
-  const schlagzeileHoehe = schlagzeileText ? 34 + schlagzeileZeilen.length * 30 + zitatZeilen.length * 22 + 26 : 0;
+  const schlagzeileHoehe = schlagzeileText ? 34 + 22 + schlagzeileZeilen.length * 30 + zitatZeilen.length * 22 + 26 : 0;
 
   const hoehe = schlagzeileHoehe + kopfHoehe + stand.length * zeilenHoehe + 60;
   const canvas = document.createElement("canvas");
@@ -3000,13 +3007,17 @@ function tabelleAlsCanvas(stand, schlagzeile) {
     ctx.fillStyle = "#fff";
     ctx.font = "900 16px Georgia, 'Times New Roman', serif";
     ctx.fillText("L A D R I È R E   R U N D S C H A U", breite / 2, 23);
+    ctx.fillStyle = "#999";
+    ctx.font = "13px Georgia, 'Times New Roman', serif";
+    const schlagzeileDatum = schlagzeile.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    ctx.fillText(schlagzeileDatum, breite / 2, 34 + 16);
     ctx.fillStyle = "#1a1a1a";
     ctx.font = "bold 22px Georgia, 'Times New Roman', serif";
     schlagzeileZeilen.forEach((zeile, i) => {
-      ctx.fillText(zeile, breite / 2, 34 + 30 + i * 30);
+      ctx.fillText(zeile, breite / 2, 34 + 22 + 30 + i * 30);
     });
     if (zitatZeilen.length) {
-      const zitatStartY = 34 + schlagzeileZeilen.length * 30 + 18;
+      const zitatStartY = 34 + 22 + schlagzeileZeilen.length * 30 + 18;
       ctx.fillStyle = "#666";
       ctx.font = "italic 15px Georgia, 'Times New Roman', serif";
       zitatZeilen.forEach((zeile, i) => {
@@ -3108,7 +3119,7 @@ function schlagzeileAlsCanvas(ergebnis) {
   const zitatZeilen = bildZeilenUmbruch(messCtx, `„${ergebnis.zitat.z}“ — ${ergebnis.zitat.w}`, breite - 80);
 
   const kopfHoehe = 60;
-  const hoehe = kopfHoehe + 50 + headlineZeilen.length * 38 + 36 + zitatZeilen.length * 26 + 50;
+  const hoehe = kopfHoehe + 26 + 50 + headlineZeilen.length * 38 + 36 + zitatZeilen.length * 26 + 50;
 
   const canvas = document.createElement("canvas");
   canvas.width = breite * 2;
@@ -3133,10 +3144,16 @@ function schlagzeileAlsCanvas(ergebnis) {
   ctx.font = "900 24px Georgia, 'Times New Roman', serif";
   ctx.fillText("L A D R I È R E   R U N D S C H A U", breite / 2, kopfHoehe / 2 + 8);
 
+  // Datum
+  ctx.fillStyle = "#999";
+  ctx.font = "15px Georgia, 'Times New Roman', serif";
+  const datumText = ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  ctx.fillText(datumText, breite / 2, kopfHoehe + 24);
+
   // Schlagzeile
   ctx.fillStyle = "#1a1a1a";
   ctx.font = "bold 28px Georgia, 'Times New Roman', serif";
-  let y = kopfHoehe + 50;
+  let y = kopfHoehe + 26 + 50;
   headlineZeilen.forEach((zeile) => { ctx.fillText(zeile, breite / 2, y); y += 38; });
 
   // Trennlinie
