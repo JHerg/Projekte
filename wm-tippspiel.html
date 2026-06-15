@@ -1778,8 +1778,13 @@ function renderTabelle() {
       rangVorher = new Map(standVorher.map(s => [s.id, s.rang]));
   }
 
-  // Turnier-Fortschritt
-  const gesamtSpiele = state.spiele.length;
+  // Turnier-Fortschritt. Beim echten WM-Plan rechnen wir gegen die volle
+  // Turniergröße von 104 Spielen (72 Gruppenspiele + 32 K.-o.-Spiele) – die
+  // K.-o.-Partien werden erst nach und nach automatisch erzeugt, sollen aber
+  // von Anfang an im Nenner stehen. Bei Demo-/Eigenplänen zählt der echte Umfang.
+  const gruppenSpiele = state.spiele.filter(s => /^Gruppe /.test(s.phase || "")).length;
+  const istWMPlan = gruppenSpiele >= 48;
+  const gesamtSpiele = istWMPlan ? Math.max(104, state.spiele.length) : state.spiele.length;
   const fertigeSpiele = state.spiele.filter(s => s.gespielt).length;
   const prozent = gesamtSpiele ? Math.round(fertigeSpiele / gesamtSpiele * 100) : 0;
   const fortschrittHTML = gesamtSpiele ? `
