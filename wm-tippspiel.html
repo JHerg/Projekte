@@ -271,6 +271,7 @@
     padding: 0 14px 12px; font-family: Georgia, "Times New Roman", serif;
     border-top: 1px dashed #ccc; margin: 0 14px; padding-top: 8px;
   }
+  .schlagzeile-box .schlagzeile-teilen-btn { display: block; margin: 10px auto 12px; }
   body.dark .schlagzeile-box { background: #2a2a2a; color: #fff; border-color: #555; }
   body.dark .schlagzeile-box .label { border-bottom-color: #555; }
   body.dark .schlagzeile-box .zitat { color: #bbb; border-top-color: #555; }
@@ -1965,6 +1966,7 @@ function renderSchlagzeile(ergebnis) {
       <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
       <div class="text">${ergebnis.text}</div>
       <div class="zitat">💬 „${esc(ergebnis.zitat.z)}“ — ${esc(ergebnis.zitat.w)}</div>
+      <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Rundschau teilen</button>
     </div>` : "";
 }
 
@@ -3081,6 +3083,98 @@ async function tabelleTeilen() {
     const text = "🏆 Familien-WM-Tippspiel 2026 – aktueller Stand!";
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: "Gesamtplatzierung", text });
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = dateiname;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast("📥 Bild gespeichert – jetzt per WhatsApp, Nachrichten o.ä. anhängen! 📎");
+    }
+  } catch (err) {
+    if (err.name !== "AbortError") toast("😕 Teilen hat nicht geklappt – versuch's nochmal.");
+  }
+}
+
+// Eigenständiges Zeitungs-Bild nur mit der Schlagzeile + Zitat des Tages,
+// zum schnellen Verschicken (WhatsApp/Nachrichten) ohne die ganze Tabelle.
+function schlagzeileAlsCanvas(ergebnis) {
+  const breite = 640;
+  const messCtx = document.createElement("canvas").getContext("2d");
+  messCtx.font = "bold 28px Georgia, 'Times New Roman', serif";
+  const headlineZeilen = bildZeilenUmbruch(messCtx, ergebnis.text, breite - 80);
+  messCtx.font = "italic 18px Georgia, 'Times New Roman', serif";
+  const zitatZeilen = bildZeilenUmbruch(messCtx, `„${ergebnis.zitat.z}“ — ${ergebnis.zitat.w}`, breite - 80);
+
+  const kopfHoehe = 60;
+  const hoehe = kopfHoehe + 50 + headlineZeilen.length * 38 + 36 + zitatZeilen.length * 26 + 50;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = breite * 2;
+  canvas.height = hoehe * 2;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(2, 2);
+
+  // Weißes Papier mit dickem schwarzem Rahmen
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, breite, hoehe);
+  ctx.strokeStyle = "#1a1a1a";
+  ctx.lineWidth = 6;
+  ctx.strokeRect(3, 3, breite - 6, hoehe - 6);
+
+  // Rote Kopfleiste "LADRIÈRE RUNDSCHAU"
+  ctx.fillStyle = "#e53935";
+  ctx.fillRect(0, 0, breite, kopfHoehe);
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(0, kopfHoehe - 4, breite, 4);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#fff";
+  ctx.font = "900 24px Georgia, 'Times New Roman', serif";
+  ctx.fillText("L A D R I È R E   R U N D S C H A U", breite / 2, kopfHoehe / 2 + 8);
+
+  // Schlagzeile
+  ctx.fillStyle = "#1a1a1a";
+  ctx.font = "bold 28px Georgia, 'Times New Roman', serif";
+  let y = kopfHoehe + 50;
+  headlineZeilen.forEach((zeile) => { ctx.fillText(zeile, breite / 2, y); y += 38; });
+
+  // Trennlinie
+  y += 6;
+  ctx.strokeStyle = "#ccc";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(40, y);
+  ctx.lineTo(breite - 40, y);
+  ctx.stroke();
+  y += 28;
+
+  // Zitat
+  ctx.fillStyle = "#555";
+  ctx.font = "italic 18px Georgia, 'Times New Roman', serif";
+  zitatZeilen.forEach((zeile) => { ctx.fillText(zeile, breite / 2, y); y += 26; });
+
+  // Footer
+  ctx.fillStyle = "#999";
+  ctx.font = "13px -apple-system, Segoe UI, sans-serif";
+  const datum = new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+  ctx.fillText(`Familien-WM-Tippspiel 2026 · ${datum}`, breite / 2, hoehe - 18);
+
+  return canvas;
+}
+
+async function schlagzeileTeilen() {
+  const ergebnis = schlagzeileDesTages();
+  if (!ergebnis) { toast("Heute gibt's noch keine Rundschau zum Teilen. 🤷"); return; }
+  try {
+    const canvas = schlagzeileAlsCanvas(ergebnis);
+    const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+    if (!blob) throw new Error("kein Bild");
+    const dateiname = `wm-rundschau-${new Date().toISOString().slice(0,10)}.png`;
+    const file = new File([blob], dateiname, { type: "image/png" });
+    const text = "📰 Ladrière Rundschau – Familien-WM-Tippspiel 2026";
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Ladrière Rundschau", text });
     } else {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
