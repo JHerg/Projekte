@@ -171,9 +171,9 @@
   nav button {
     background: none; color: #9fc7af; flex: 1;
     display: flex; flex-direction: column; align-items: center; gap: 2px;
-    font-size: .65rem; padding: 4px;
+    font-size: .6rem; padding: 4px 2px;
   }
-  nav button .ico { font-size: 1.4rem; }
+  nav button .ico { font-size: 1.3rem; }
   nav button.aktiv { color: var(--gold); }
 
   .view { display: none; }
@@ -198,6 +198,36 @@
   .tagesform-box table { margin-bottom: 10px; }
   .tagesform-box .award:last-child { margin-bottom: 0; }
   .tagesform-box .award .emoji { font-size: 1.6rem; }
+
+  /* Statistik-Zentrale */
+  .stat-intro-box { border-top: 4px solid var(--gruen-hell); }
+  .stat-wahl { margin-bottom: 12px; }
+  .stat-wahl select { width: 100%; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+  .stat-tile { background: #f4f8f5; border-radius: 12px; padding: 10px 12px; }
+  .stat-tile .wert { font-size: 1.3rem; font-weight: 800; color: var(--gruen); line-height: 1.1; }
+  .stat-tile .lbl { font-size: .72rem; color: #777; margin-top: 3px; }
+  body.dark .stat-tile { background: #2a2a2a; }
+  body.dark .stat-tile .wert { color: var(--gruen-hell); }
+  .stat-verteilung { margin-top: 12px; }
+  .stat-vrow { display: grid; grid-template-columns: 3.4rem 1fr 2.6rem; gap: 8px; align-items: center; margin-bottom: 5px; font-size: .78rem; }
+  .stat-vrow .bo { background: #eee; border-radius: 6px; height: 16px; overflow: hidden; }
+  .stat-vrow .bi { height: 100%; border-radius: 6px; transition: width .3s; }
+  .stat-vrow .anz { text-align: right; font-weight: 700; }
+  body.dark .stat-vrow .bo { background: #333; }
+  .stat-team-tab { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  .stat-team-tab th, .stat-team-tab td { padding: 7px 4px; text-align: left; border-top: 1px solid #eee; vertical-align: middle; }
+  .stat-team-tab th { font-size: .68rem; color: #999; text-transform: uppercase; letter-spacing: .3px; border-top: none; }
+  body.dark .stat-team-tab th, body.dark .stat-team-tab td { border-color: #3a3a3a; }
+  .stat-team-tab .mini { font-size: .68rem; color: #999; display: block; }
+  .stat-highlight { display: flex; gap: 10px; align-items: center; background: #f4f8f5; border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
+  .stat-highlight .em { font-size: 1.9rem; flex-shrink: 0; }
+  .stat-highlight .tx { font-size: .85rem; line-height: 1.35; }
+  .stat-highlight .tx b { color: var(--gruen); }
+  body.dark .stat-highlight { background: #2a2a2a; }
+  body.dark .stat-highlight .tx b { color: var(--gruen-hell); }
+  .stat-section-titel { font-size: .8rem; font-weight: 800; color: #555; margin: 16px 0 6px; text-transform: uppercase; letter-spacing: .4px; }
+  body.dark .stat-section-titel { color: #aaa; }
 
   /* Gesamttabelle: die entscheidende Tabelle kräftig hervorheben */
   .haupttabelle-box {
@@ -575,6 +605,52 @@
     <div id="tagesformContainer"></div>
 
     <div class="karte">
+      <h2>🎁 Aufgaben-Generator</h2>
+      <p class="info-zeile">Der aktuell Letzte sucht sich (oder lost) eine kleine, freundliche Aufgabe aus!</p>
+      <div id="strafeContainer"></div>
+      <button onclick="ziehStrafe()" class="gold" style="width:100%;margin-top:10px">🎰 Aufgabe für die rote Laterne ziehen!</button>
+    </div>
+  </section>
+
+  <!-- ====================== STATISTIK-ZENTRALE ====================== -->
+  <section id="view-statistik" class="view">
+    <div class="karte stat-intro-box">
+      <h2>📊 Statistik-Zentrale</h2>
+      <p class="info-zeile">Alle Zahlen, Rekorde und Kuriositäten der Familie – live aus euren Tipps berechnet.</p>
+    </div>
+
+    <!-- A) Team-Statistiken -->
+    <div class="karte">
+      <h2>🍀 Glücksbringer & Angstgegner</h2>
+      <p class="info-zeile">Bei welchen Mannschaften räumt wer ab – und wer geht regelmäßig leer aus?</p>
+      <div id="statTeams"></div>
+    </div>
+
+    <!-- B) Tipp-DNA -->
+    <div class="karte">
+      <h2>🧬 Tipp-DNA</h2>
+      <p class="info-zeile">Der persönliche Tipp-Fingerabdruck – wähle einen Mitspieler.</p>
+      <div id="statDna"></div>
+    </div>
+
+    <!-- C) Rekorde & Kuriositäten -->
+    <div class="karte">
+      <details open>
+        <summary><h2 style="display:inline">🏅 Rekorde & Kuriositäten</h2></summary>
+        <div id="statRekorde"></div>
+      </details>
+    </div>
+
+    <!-- D) Genauigkeit & Bonus -->
+    <div class="karte">
+      <details>
+        <summary><h2 style="display:inline">🎯 Genauigkeit & Bonus</h2></summary>
+        <div id="statGenau"></div>
+      </details>
+    </div>
+
+    <!-- Verschoben: Punkte-Verlauf -->
+    <div class="karte">
       <details>
         <summary><h2 style="display:inline">📈 Punkte-Verlauf</h2></summary>
         <p class="info-zeile">Kumulierte <b>Spielpunkte</b> (ohne Bonus-Fragen) über die ausgewerteten Spiele – kann daher von der Gesamtpunktzahl in der Tabelle abweichen.</p>
@@ -586,6 +662,7 @@
       </details>
     </div>
 
+    <!-- Verschoben: Direktduell -->
     <div class="karte">
       <details>
         <summary><h2 style="display:inline">⚔️ Direktduell</h2></summary>
@@ -594,6 +671,7 @@
       </details>
     </div>
 
+    <!-- Verschoben: Gruppen-Tabellen -->
     <div class="karte">
       <details>
         <summary><h2 style="display:inline">📊 Gruppen-Tabellen</h2></summary>
@@ -602,16 +680,10 @@
       </details>
     </div>
 
+    <!-- Verschoben: Spaß-Awards -->
     <div class="karte">
       <h2>🎖️ Spaß-Awards</h2>
       <div id="awardsInhalt"></div>
-    </div>
-
-    <div class="karte">
-      <h2>🎁 Aufgaben-Generator</h2>
-      <p class="info-zeile">Der aktuell Letzte sucht sich (oder lost) eine kleine, freundliche Aufgabe aus!</p>
-      <div id="strafeContainer"></div>
-      <button onclick="ziehStrafe()" class="gold" style="width:100%;margin-top:10px">🎰 Aufgabe für die rote Laterne ziehen!</button>
     </div>
   </section>
 
@@ -773,6 +845,7 @@
 
 <nav>
   <button class="nav-btn aktiv" data-view="tabelle" onclick="zeigeView('tabelle')"><span class="ico">🏆</span>Tabelle</button>
+  <button class="nav-btn" data-view="statistik" onclick="zeigeView('statistik')"><span class="ico">📊</span>Statistik</button>
   <button class="nav-btn" data-view="tippen" onclick="zeigeView('tippen')"><span class="ico">⚽</span>Tippen</button>
   <button class="nav-btn" data-view="bonus" onclick="zeigeView('bonus')"><span class="ico">🎲</span>Bonus</button>
   <button class="nav-btn" data-view="familie" onclick="zeigeView('familie')"><span class="ico">👨‍👩‍👧</span>Familie</button>
@@ -1107,6 +1180,7 @@ function spielLoeschen(spid) {
   renderCountdown();
   renderH2H();
   renderVerlaufChart();
+  renderStatistik();
   renderKonsens();
 }
 
@@ -1156,6 +1230,7 @@ function ergebnisSpeichern(spielId, feld, wert) {
   renderCountdown();
   renderH2H();
   renderVerlaufChart();
+  renderStatistik();
   renderKonsens();
   if (spiel.gespielt) {
     pruefeExakteTreffer(spiel);
@@ -1534,6 +1609,7 @@ function bonusFrageLoeschen(bid) {
   renderBonus();
   renderTabelle();
   renderAwards();
+  renderStatistik();
 }
 
 // Bonus-Tipps sind nur bis zum Anpfiff des ALLERERSTEN Turnierspiels änderbar.
@@ -1565,6 +1641,7 @@ function bonusLoesungSetzen(bid, idxStr) {
   renderBonus();
   renderTabelle();
   renderAwards();
+  renderStatistik();
   if (b.loesung) { konfettiRegen(50); pruefeNeueBadges(); }
 }
 
@@ -3812,6 +3889,322 @@ function renderHistorie() {
   c.innerHTML = bloecke || '<p class="leer-hinweis">Noch keine ausgewerteten Spiele – trag die ersten Ergebnisse ein! 🎬</p>';
 }
 
+// ===================== STATISTIK-ZENTRALE =====================
+let statDnaSpieler = null;
+
+// Master-Render für die vier neuen Statistik-Blöcke (die verschobenen Karten –
+// Verlauf, Direktduell, Gruppen, Awards – rendern weiterhin ihre eigenen Funktionen).
+function renderStatistik() {
+  renderStatTeams();
+  renderStatDna();
+  renderStatRekorde();
+  renderStatGenau();
+}
+
+// Sammelt für einen Spieler je Mannschaft: Anzahl gewerteter Spiele, Summe der
+// Basispunkte (ohne Joker) und den Schnitt. Grundlage für Glücksbringer/Angstgegner.
+function teamStatsFuer(spielerId) {
+  const map = {};
+  state.spiele.filter(s => s.gespielt).forEach(spiel => {
+    const basis = punkteFuer(state.tipps[spielerId]?.[spiel.id], spiel);
+    if (basis === null) return;
+    [spiel.t1, spiel.t2].forEach(team => {
+      if (!team) return;
+      if (!map[team]) map[team] = { team, spiele: 0, summe: 0 };
+      map[team].spiele++;
+      map[team].summe += basis;
+    });
+  });
+  return Object.values(map).map(t => ({ ...t, schnitt: t.summe / t.spiele }));
+}
+
+// --- A) Glücksbringer & Angstgegner ---
+function renderStatTeams() {
+  const c = document.getElementById("statTeams");
+  if (!c) return;
+  if (!state.spieler.length) { c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler.</p>'; return; }
+  if (!state.spiele.some(s => s.gespielt)) {
+    c.innerHTML = '<p class="leer-hinweis">Sobald die ersten Ergebnisse feststehen, zeigt sich hier, bei welchen Teams wer abräumt! 🍀</p>';
+    return;
+  }
+
+  const zelle = (t) => `${flaggeVon(t.team)} ${esc(t.team)}<span class="mini">Ø ${t.schnitt.toFixed(1)} aus ${t.spiele} Spiel${t.spiele===1?'':'en'}</span>`;
+  const zeilen = state.spieler.map(sp => {
+    const ts = teamStatsFuer(sp.id);
+    if (!ts.length) return `<tr><td>${sp.avatar} ${esc(sp.name)}</td><td colspan="2" class="mini">noch keine gewerteten Tipps</td></tr>`;
+    const gluck = ts.slice().sort((a,b) => b.schnitt - a.schnitt || b.spiele - a.spiele)[0];
+    const angst = ts.slice().sort((a,b) => a.schnitt - b.schnitt || b.spiele - a.spiele)[0];
+    return `<tr>
+      <td>${sp.avatar} ${esc(sp.name)}</td>
+      <td>${zelle(gluck)}</td>
+      <td>${zelle(angst)}</td>
+    </tr>`;
+  }).join("");
+
+  // Familienweit: Schreck (alle schwach) & Berechenbar (alle stark)
+  const famMap = {};
+  state.spieler.forEach(sp => teamStatsFuer(sp.id).forEach(t => {
+    if (!famMap[t.team]) famMap[t.team] = { team: t.team, summe: 0, spiele: 0 };
+    famMap[t.team].summe += t.summe;
+    famMap[t.team].spiele += t.spiele;
+  }));
+  const fam = Object.values(famMap).filter(t => t.spiele >= Math.max(2, state.spieler.length))
+    .map(t => ({ ...t, schnitt: t.summe / t.spiele }));
+  let famHtml = "";
+  if (fam.length) {
+    const schreck = fam.slice().sort((a,b) => a.schnitt - b.schnitt)[0];
+    const klar = fam.slice().sort((a,b) => b.schnitt - a.schnitt)[0];
+    famHtml = `<div class="stat-highlight"><div class="em">🔮</div><div class="tx">
+      <b>Familien-Schreck:</b> ${flaggeVon(schreck.team)} ${esc(schreck.team)} – bei diesem Team liegt die Familie am häufigsten daneben (nur Ø ${schreck.schnitt.toFixed(1)} Punkte).</div></div>`;
+    if (klar.team !== schreck.team) famHtml += `<div class="stat-highlight"><div class="em">🧩</div><div class="tx">
+      <b>Berechenbar:</b> ${flaggeVon(klar.team)} ${esc(klar.team)} – hier tippt die Familie am sichersten (Ø ${klar.schnitt.toFixed(1)} Punkte).</div></div>`;
+  }
+
+  c.innerHTML = `
+    <table class="stat-team-tab">
+      <thead><tr><th>Spieler</th><th>🍀 Glücksbringer</th><th>👻 Angstgegner</th></tr></thead>
+      <tbody>${zeilen}</tbody>
+    </table>${famHtml}`;
+}
+
+// --- B) Tipp-DNA (pro Spieler) ---
+function renderStatDna() {
+  const c = document.getElementById("statDna");
+  if (!c) return;
+  if (!state.spieler.length) { c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler.</p>'; return; }
+  if (!statDnaSpieler || !state.spieler.some(s => s.id === statDnaSpieler)) {
+    statDnaSpieler = (state.aktiverSpielerId && state.spieler.some(s => s.id === state.aktiverSpielerId))
+      ? state.aktiverSpielerId : berechneStand()[0].id;
+  }
+  const sp = state.spieler.find(s => s.id === statDnaSpieler);
+  const opt = state.spieler.map(s => `<option value="${s.id}" ${s.id===statDnaSpieler?'selected':''}>${s.avatar} ${esc(s.name)}</option>`).join("");
+  const wahl = `<div class="stat-wahl"><select onchange="statDnaWahl(this.value)">${opt}</select></div>`;
+
+  const ctx = berechneBadgeKontext(sp.id);
+  if (!ctx || ctx.getippt === 0) {
+    c.innerHTML = wahl + '<p class="leer-hinweis">Für diesen Mitspieler gibt es noch keine gewerteten Tipps. ✍️</p>';
+    return;
+  }
+  const effizienz = Math.round((ctx.p4*4 + ctx.p3*3 + ctx.p2*2) / (ctx.getippt*4) * 100);
+
+  // Über-/Untertipper: Ø getippte Tore vs. reale Tore
+  let getTore = 0, realTore = 0, n = 0;
+  state.spiele.filter(s => s.gespielt).forEach(spiel => {
+    const t = state.tipps[sp.id]?.[spiel.id];
+    if (!t || t.e1===null || t.e2===null) return;
+    getTore += t.e1 + t.e2; realTore += spiel.e1 + spiel.e2; n++;
+  });
+  const diff = n ? (getTore - realTore) / n : 0;
+  let torTyp;
+  if (Math.abs(diff) < 0.3) torTyp = "🎯 Realist – tippt im Schnitt fast genau so viele Tore, wie wirklich fallen";
+  else if (diff > 0) torTyp = `🔥 Offensiv-Tipper – tippt im Schnitt ${diff.toFixed(1)} Tore mehr, als real fallen`;
+  else torTyp = `🛡️ Defensiv-Tipper – tippt im Schnitt ${Math.abs(diff).toFixed(1)} Tore weniger, als real fallen`;
+
+  // Joker-Bilanz
+  let jokerHtml;
+  const jokerSpielId = state.joker?.[sp.id];
+  if (!jokerSpielId) jokerHtml = "Joker noch frei – klug einsetzen! 🃏";
+  else {
+    const js = state.spiele.find(s => s.id === jokerSpielId);
+    if (js && js.gespielt) {
+      const basis = punkteFuer(state.tipps[sp.id]?.[js.id], js);
+      jokerHtml = basis !== null
+        ? `Joker auf ${flaggeVon(js.t1)} ${esc(js.t1)}–${esc(js.t2)} ${flaggeVon(js.t2)}: <b>+${basis} Bonuspunkte</b> kassiert`
+        : `Joker auf ${flaggeVon(js.t1)} ${esc(js.t1)}–${esc(js.t2)} ${flaggeVon(js.t2)} – nicht getippt`;
+    } else if (js) {
+      jokerHtml = `Joker gesetzt auf ${flaggeVon(js.t1)} ${esc(js.t1)} – ${esc(js.t2)} ${flaggeVon(js.t2)} (noch offen)`;
+    } else jokerHtml = "Joker gesetzt";
+  }
+
+  const vert = [
+    { lbl: "🎯 4 P", anz: ctx.p4, farbe: "#43a047" },
+    { lbl: "↔️ 3 P", anz: ctx.p3, farbe: "#7cb342" },
+    { lbl: "✅ 2 P", anz: ctx.p2, farbe: "#fbc02d" },
+    { lbl: "❌ 0 P", anz: ctx.p0, farbe: "#e53935" },
+  ];
+  const maxAnz = Math.max(1, ...vert.map(v => v.anz));
+  const vertHtml = vert.map(v => `
+    <div class="stat-vrow">
+      <span>${v.lbl}</span>
+      <div class="bo"><div class="bi" style="width:${v.anz/maxAnz*100}%;background:${v.farbe}"></div></div>
+      <span class="anz">${v.anz}×</span>
+    </div>`).join("");
+
+  c.innerHTML = wahl + `
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="wert">${effizienz}%</div><div class="lbl">Tipp-Effizienz (Ø vom Maximum)</div></div>
+      <div class="stat-tile"><div class="wert">${ctx.maxStreak}</div><div class="lbl">Längste Punkte-Serie 🔥</div></div>
+      <div class="stat-tile"><div class="wert">${ctx.p4}×</div><div class="lbl">Volltreffer (4 Punkte) 🎯</div></div>
+      <div class="stat-tile"><div class="wert">${ctx.getippt}</div><div class="lbl">gewertete Tipps gesamt</div></div>
+    </div>
+    <div class="stat-verteilung">
+      <div class="stat-section-titel">Trefferverteilung</div>
+      ${vertHtml}
+    </div>
+    <div class="stat-highlight"><div class="em">⚖️</div><div class="tx">${torTyp}.</div></div>
+    <div class="stat-highlight"><div class="em">🃏</div><div class="tx">${jokerHtml}</div></div>`;
+}
+function statDnaWahl(id) { statDnaSpieler = id; renderStatDna(); }
+
+// Lokaler Tages-Schlüssel (kein UTC-Versatz wie bei toISOString).
+function fensterKeyLokal(fd) {
+  return fd.getFullYear() + "-" + String(fd.getMonth()+1).padStart(2,"0") + "-" + String(fd.getDate()).padStart(2,"0");
+}
+
+// Kumulative Tabellenführung je Tagesfenster (nach Spielpunkten, ohne Bonus) –
+// Basis für „Tage an der Spitze" und „Führungswechsel".
+function fuehrungsVerlauf() {
+  const reihenfolge = [], map = {};
+  spieleChronologisch(true).forEach(s => {
+    const d = parseSpielDatum(s);
+    const fd = d ? tagesfensterDatum(d) : null;
+    const key = fd ? fensterKeyLokal(fd) : ("x" + s.id);
+    if (!map[key]) { map[key] = []; reihenfolge.push(key); }
+    map[key].push(s);
+  });
+  const cum = {}; state.spieler.forEach(p => cum[p.id] = 0);
+  const verlauf = [];
+  reihenfolge.forEach(key => {
+    map[key].forEach(s => state.spieler.forEach(p => {
+      const x = punkteFuerSpieler(p.id, s); if (x !== null) cum[p.id] += x;
+    }));
+    const max = Math.max(0, ...state.spieler.map(p => cum[p.id]));
+    const fuehrer = max > 0 ? state.spieler.filter(p => cum[p.id] === max).map(p => p.id) : [];
+    verlauf.push({ key, fuehrer });
+  });
+  return verlauf;
+}
+
+// --- C) Rekorde & Kuriositäten (familienweit) ---
+function renderStatRekorde() {
+  const c = document.getElementById("statRekorde");
+  if (!c) return;
+  const gespielt = state.spiele.filter(s => s.gespielt);
+  if (!state.spieler.length || !gespielt.length) {
+    c.innerHTML = '<p class="leer-hinweis">Rekorde erscheinen, sobald die ersten Spiele gewertet sind! 🏅</p>';
+    return;
+  }
+  const cards = [];
+  const spielTxt = (s) => `${flaggeVon(s.t1)} ${esc(s.t1)} ${s.e1}:${s.e2} ${esc(s.t2)} ${flaggeVon(s.t2)}`;
+
+  // Größte Überraschung & Glasklar
+  const spielSchnitt = gespielt.map(spiel => {
+    let summe = 0, anz = 0, nullen = 0, voll = 0;
+    state.spieler.forEach(p => {
+      const b = punkteFuer(state.tipps[p.id]?.[spiel.id], spiel);
+      if (b === null) return;
+      summe += b; anz++; if (b === 0) nullen++; if (b === 4) voll++;
+    });
+    return { spiel, schnitt: anz ? summe/anz : null, anz, nullen, voll };
+  }).filter(x => x.anz >= 2);
+  if (spielSchnitt.length) {
+    const ueberr = spielSchnitt.slice().sort((a,b) => a.schnitt - b.schnitt)[0];
+    const klar = spielSchnitt.slice().sort((a,b) => b.schnitt - a.schnitt)[0];
+    cards.push(`<div class="stat-highlight"><div class="em">💥</div><div class="tx">
+      <b>Größte Überraschung:</b> ${spielTxt(ueberr.spiel)} – ${ueberr.nullen} von ${ueberr.anz} lagen komplett daneben!</div></div>`);
+    cards.push(`<div class="stat-highlight"><div class="em">🔍</div><div class="tx">
+      <b>Glasklar:</b> ${spielTxt(klar.spiel)} – ${klar.voll} von ${klar.anz} hatten das Ergebnis exakt!</div></div>`);
+  }
+
+  // Tagesrekord
+  const tagesMap = {}, tagesDatum = {};
+  gespielt.forEach(spiel => {
+    const d = parseSpielDatum(spiel);
+    const fd = d ? tagesfensterDatum(d) : null;
+    const key = fd ? fensterKeyLokal(fd) : ("x" + spiel.id);
+    if (fd) tagesDatum[key] = fd;
+    state.spieler.forEach(p => {
+      const x = punkteFuerSpieler(p.id, spiel);
+      if (x === null) return;
+      tagesMap[key] = tagesMap[key] || {};
+      tagesMap[key][p.id] = (tagesMap[key][p.id] || 0) + x;
+    });
+  });
+  let bestTag = null;
+  Object.entries(tagesMap).forEach(([key, perP]) => {
+    Object.entries(perP).forEach(([pid, pts]) => {
+      if (!bestTag || pts > bestTag.pts) bestTag = { key, pid, pts };
+    });
+  });
+  if (bestTag && bestTag.pts > 0) {
+    const p = state.spieler.find(s => s.id === bestTag.pid);
+    const fd = tagesDatum[bestTag.key];
+    const datTxt = fd ? " am " + fd.toLocaleDateString("de-DE", { weekday:"long", day:"numeric", month:"long" }) : "";
+    cards.push(`<div class="stat-highlight"><div class="em">🚀</div><div class="tx">
+      <b>Tagesrekord:</b> ${p.avatar} ${esc(p.name)} mit ${bestTag.pts} Punkten${datTxt}.</div></div>`);
+  }
+
+  // Tage an der Spitze & Führungswechsel
+  const verlauf = fuehrungsVerlauf();
+  if (verlauf.length) {
+    const tageAnSpitze = {};
+    state.spieler.forEach(p => tageAnSpitze[p.id] = 0);
+    let wechsel = 0, vorher = null;
+    verlauf.forEach(v => {
+      v.fuehrer.forEach(id => tageAnSpitze[id]++);
+      const key = v.fuehrer.slice().sort().join(",");
+      if (vorher !== null && key && key !== vorher) wechsel++;
+      if (key) vorher = key;
+    });
+    const top = state.spieler.map(p => ({ p, tage: tageAnSpitze[p.id] }))
+      .filter(x => x.tage > 0).sort((a,b) => b.tage - a.tage)[0];
+    if (top) cards.push(`<div class="stat-highlight"><div class="em">👑</div><div class="tx">
+      <b>Dauerläufer an der Spitze:</b> ${top.p.avatar} ${esc(top.p.name)} – an ${top.tage} Spieltag${top.tage===1?'':'en'} ganz vorn.</div></div>`);
+    cards.push(`<div class="stat-highlight"><div class="em">🔄</div><div class="tx">
+      <b>Führungswechsel:</b> bisher ${wechsel}× hat die Tabellenspitze gewechselt.</div></div>`);
+  }
+
+  c.innerHTML = cards.join("") || '<p class="leer-hinweis">Noch nicht genug Daten für Rekorde.</p>';
+}
+
+// --- D) Genauigkeit & Bonus ---
+function renderStatGenau() {
+  const c = document.getElementById("statGenau");
+  if (!c) return;
+  if (!state.spieler.length) { c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler.</p>'; return; }
+  const gespielt = state.spiele.filter(s => s.gespielt);
+
+  // Tor-Genauigkeit: Ø absolute Abweichung pro Spiel (kleiner = besser)
+  const genau = state.spieler.map(sp => {
+    let fehler = 0, n = 0;
+    gespielt.forEach(spiel => {
+      const t = state.tipps[sp.id]?.[spiel.id];
+      if (!t || t.e1===null || t.e2===null) return;
+      fehler += Math.abs(t.e1 - spiel.e1) + Math.abs(t.e2 - spiel.e2); n++;
+    });
+    return { sp, schnitt: n ? fehler/n : null };
+  }).filter(x => x.schnitt !== null).sort((a,b) => a.schnitt - b.schnitt);
+  let genauHtml = "";
+  if (genau.length) {
+    genauHtml = `<div class="stat-section-titel">🎯 Tor-Genauigkeit (Ø Abweichung pro Spiel – kleiner ist besser)</div>` +
+      genau.map((g,i) => `<div class="stat-vrow" style="grid-template-columns:1.8rem 1fr 3rem">
+        <span>${i===0?'🥇':(i+1)+'.'}</span>
+        <span>${g.sp.avatar} ${esc(g.sp.name)}</span>
+        <span class="anz">${g.schnitt.toFixed(2)}</span></div>`).join("");
+  }
+
+  // Bonus-Trefferquote (nur aufgelöste Fragen)
+  const geloest = state.bonusFragen.filter(b => b.loesung);
+  let bonusHtml = "";
+  if (geloest.length) {
+    const reihen = state.spieler.map(sp => {
+      let richtig = 0, beantw = 0;
+      geloest.forEach(b => {
+        const a = state.bonusTipps[sp.id]?.[b.id];
+        if (a != null) { beantw++; if (a === b.loesung) richtig++; }
+      });
+      return { sp, richtig, beantw };
+    }).sort((a,b) => b.richtig - a.richtig || b.beantw - a.beantw);
+    bonusHtml = `<div class="stat-section-titel">🎲 Bonus-Trefferquote (${geloest.length} aufgelöste Frage${geloest.length===1?'':'n'})</div>` +
+      reihen.map(r => `<div class="stat-vrow" style="grid-template-columns:1fr 4rem">
+        <span>${r.sp.avatar} ${esc(r.sp.name)}</span>
+        <span class="anz">${r.richtig}/${r.beantw}</span></div>`).join("");
+  }
+
+  c.innerHTML = (genauHtml + bonusHtml) ||
+    '<p class="leer-hinweis">Genauigkeits-Statistiken erscheinen, sobald Ergebnisse oder Bonus-Auflösungen vorliegen. 🎯</p>';
+}
+
 // ===================== TEILEN: LINK & QR =====================
 function spielstandLink() {
   const komp = LZString.compressToEncodedURIComponent(JSON.stringify(state));
@@ -4220,6 +4613,7 @@ function alleRendern() {
   renderCountdown();
   renderH2H();
   renderVerlaufChart();
+  renderStatistik();
   renderKonsens();
   // Badge-Baseline still mitziehen (Start, Import, Cloud-Sync) – ohne Feier,
   // damit nur frisch erspielte Abzeichen später bejubelt werden.
