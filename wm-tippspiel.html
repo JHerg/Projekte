@@ -322,33 +322,69 @@
     padding: 6px 14px 0; font-family: Georgia, "Times New Roman", serif;
     text-transform: capitalize;
   }
-  .schlagzeile-box .text {
-    font-size: 1.05rem; font-weight: 800; line-height: 1.35;
-    padding: 10px 14px; font-family: Georgia, "Times New Roman", serif;
+  /* Kopfbereich: SVG-Bild rechts, Schlagzeile linksbündig daneben */
+  .schlagzeile-box .rundschau-kopf {
+    display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px 6px;
   }
-  .schlagzeile-box .bericht {
-    font-size: .9rem; font-weight: 400; line-height: 1.5; color: #333;
-    text-align: left; padding: 0 14px 12px;
-    font-family: Georgia, "Times New Roman", serif;
+  .schlagzeile-box .rundschau-kopf .text {
+    flex: 1; text-align: left; font-size: 1.1rem; font-weight: 800;
+    line-height: 1.35; font-family: Georgia, "Times New Roman", serif;
   }
-  .schlagzeile-box .bericht.mit-bild::after { content: ""; display: block; clear: both; }
-  body.dark .schlagzeile-box .bericht { color: #ddd; }
   .schlagzeile-box .rundschau-bild {
-    float: left; width: 60px; height: 60px; margin: 2px 12px 4px 0;
+    flex-shrink: 0; width: 64px; height: 64px;
     background: #f4efe2; border: 2px solid #1a1a1a; border-radius: 6px;
-    padding: 5px; box-sizing: border-box;
-    box-shadow: 2px 2px 0 rgba(0,0,0,.18);
+    padding: 5px; box-sizing: border-box; box-shadow: 2px 2px 0 rgba(0,0,0,.18);
   }
   .schlagzeile-box .rundschau-bild svg { width: 100%; height: 100%; display: block; }
+  /* Abschnitts-Trennlinie (SPIELBERICHT / ALLE TIPPER / HIGHLIGHT) */
+  .rundschau-section {
+    font-size: .65rem; font-weight: 900; letter-spacing: 2.5px;
+    text-transform: uppercase; color: #999;
+    border-top: 1.5px solid #e0e0e0; margin: 4px 14px 5px;
+    padding-top: 6px; text-align: left;
+    font-family: -apple-system, Segoe UI, sans-serif;
+  }
+  /* Spielbericht-Text: Fließtext zum Sieger */
+  .rundschau-spielbericht {
+    font-size: .88rem; line-height: 1.5; color: #333;
+    text-align: left; padding: 0 14px 4px;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+  /* Tipper-Tabelle */
+  .rundschau-tabelle {
+    width: calc(100% - 28px); margin: 0 14px 2px;
+    border-collapse: collapse; font-size: .85rem;
+    font-family: -apple-system, Segoe UI, sans-serif;
+  }
+  .rundschau-tabelle tr:nth-child(even) { background: rgba(0,0,0,.04); }
+  .rundschau-tabelle td { padding: 5px 5px; vertical-align: middle; }
+  .rundschau-tabelle .col-rang { width: 28px; font-size: .8rem; }
+  .rundschau-tabelle .col-name { font-weight: 600; }
+  .rundschau-tabelle .col-pts { font-weight: 700; text-align: right; width: 38px; }
+  .rundschau-tabelle .col-trend { text-align: center; width: 44px; font-size: .8rem; font-weight: 700; }
+  .rundschau-tabelle .col-badge { text-align: right; font-size: .78rem; }
+  .trend-pos { color: #2e7d32; } .trend-neg { color: #e53935; } .trend-null { color: #bbb; }
+  /* Highlight-Kästchen: beste Einzel-Vorhersage des Tages */
+  .rundschau-highlight {
+    margin: 4px 14px 6px; padding: 6px 10px;
+    background: #fff8e1; border-left: 3px solid #ffd54f;
+    border-radius: 0 6px 6px 0; font-size: .85rem; text-align: left;
+    font-family: Georgia, "Times New Roman", serif; line-height: 1.4; color: #333;
+  }
   .schlagzeile-box .zitat {
     font-size: .85rem; font-style: italic; line-height: 1.35; color: #555;
     padding: 0 14px 12px; font-family: Georgia, "Times New Roman", serif;
-    border-top: 1px dashed #ccc; margin: 0 14px; padding-top: 8px;
+    border-top: 1px dashed #ccc; margin: 6px 14px 0; padding-top: 8px;
   }
   .schlagzeile-box .schlagzeile-teilen-btn { display: block; margin: 10px auto 12px; }
   body.dark .schlagzeile-box { background: #2a2a2a; color: #fff; border-color: #555; }
   body.dark .schlagzeile-box .label { border-bottom-color: #555; }
   body.dark .schlagzeile-box .datum { color: #999; }
+  body.dark .schlagzeile-box .rundschau-bild { background: #3a3528; border-color: #888; }
+  body.dark .rundschau-section { color: #666; border-top-color: #444; }
+  body.dark .rundschau-spielbericht { color: #ddd; }
+  body.dark .rundschau-tabelle tr:nth-child(even) { background: rgba(255,255,255,.05); }
+  body.dark .rundschau-highlight { background: #2a2000; color: #e0d090; border-left-color: #ffd54f; }
   body.dark .schlagzeile-box .zitat { color: #bbb; border-top-color: #555; }
 
   /* Tipp-Erinnerung: noch offene Spiele bis zur nächsten 8-Uhr-Grenze */
@@ -2235,30 +2271,61 @@ function fuehrungsSerie() {
 // und wie haben die anderen abgeschnitten? Liefert reinen (escapten) HTML-Text
 // in normaler Schrift – ergänzt die reißerische Schlagzeile darüber.
 function spieltagBericht(tf) {
-  const { tagesStand, fensterSpielIds, anzahlSpiele } = tf;
+  const { tagesStand, fensterSpielIds, anzahlSpiele, fensterDatum } = tf;
   const spielTxt = (s) => `${flaggeVon(s.t1)} ${esc(s.t1)} ${s.e1}:${s.e2} ${esc(s.t2)} ${flaggeVon(s.t2)}`;
   const join = (arr) => arr.length <= 1 ? (arr[0] || "")
     : arr.slice(0, -1).join(", ") + " und " + arr[arr.length - 1];
 
-  const sieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
-  if (!sieger.length) return "";   // Ruhetag o. Ä. wird separat behandelt
-  const verfolger = tagesStand.filter(s => !sieger.some(w => w.id === s.id));
-
-  // Vergleich mit den übrigen Mitspielern (kompakt, mit Namen & Tagespunkten).
-  let vergleich = "";
-  if (verfolger.length) {
-    const liste = verfolger.map(s => `${esc(s.name)} (${s.punkte} P)`);
-    vergleich = ` Dahinter ${verfolger.length === 1 ? "folgte" : "folgten"} ${join(liste)}.`;
-  }
-
-  // Mehrere punktgleiche Tagessieger: knappe Variante ohne Spiel-Aufschlüsselung.
-  if (sieger.length > 1) {
-    return `${join(sieger.map(s => esc(s.name)))} teilten sich den Tagessieg mit je ${sieger[0].punkte} Punkten.${vergleich}`;
-  }
-
-  // Einzelsieger: aufschlüsseln, aus welchen Spielen die Punkte kamen.
-  const haupt = sieger[0];
   const fensterSpiele = spieleChronologisch(true).filter(s => fensterSpielIds.has(s.id));
+
+  // Trend: Punkte des heutigen Fensters vs. vorheriges Fenster
+  const matrix = tagesPunkteMatrix();
+  const currentKey = fensterKeyLokal(fensterDatum);
+  const currentIdx = matrix.findIndex(m => m.key === currentKey);
+  const vortag = currentIdx > 0 ? matrix[currentIdx - 1].punkte : null;
+
+  const spielerDetails = tagesStand.map(s => {
+    const heutePts = s.punkte;
+    let trend = null;
+    if (vortag) {
+      const gestPts = vortag[s.id];   // null = kein Tipp gestern
+      if (gestPts !== null && gestPts !== undefined) {
+        const diff = heutePts - gestPts;
+        trend = { diff, str: diff > 0 ? `+${diff}` : diff < 0 ? String(diff) : "=" };
+      }
+    }
+    let volltreff = 0, jokerGenutzt = false;
+    fensterSpiele.forEach(spiel => {
+      const basis = punkteFuer(state.tipps[s.id]?.[spiel.id], spiel);
+      if (basis === 4) volltreff++;
+      if (istJoker(s.id, spiel.id)) jokerGenutzt = true;
+    });
+    return { ...s, trend, volltreff, jokerGenutzt };
+  });
+
+  // Highlight: bester Einzeltipp des Spieltags (nur bei ≥ 4 Punkten relevant)
+  let highlight = null;
+  let maxHlPts = 3;   // Schwelle: mindestens 4 Punkte (Volltreffer oder Joker)
+  fensterSpiele.forEach(spiel => {
+    tagesStand.forEach(s => {
+      const pts = punkteFuerSpieler(s.id, spiel);
+      if (pts && pts > maxHlPts) {
+        maxHlPts = pts;
+        highlight = { spieler: s, spiel, pts, joker: istJoker(s.id, spiel.id) };
+      }
+    });
+  });
+
+  // Tagessieger-Text (Spielbericht)
+  const sieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
+  if (!sieger.length) return { text: "", spielerDetails, highlight };
+
+  if (sieger.length > 1) {
+    const join2 = (arr) => arr.length <= 1 ? (arr[0] || "") : arr.slice(0, -1).join(", ") + " und " + arr[arr.length - 1];
+    return { text: `${join2(sieger.map(s => esc(s.name)))} teilten sich den Tagessieg mit je ${sieger[0].punkte} Punkten.`, spielerDetails, highlight };
+  }
+
+  const haupt = sieger[0];
   const beitraege = [];
   fensterSpiele.forEach(spiel => {
     const pts = punkteFuerSpieler(haupt.id, spiel);
@@ -2267,18 +2334,17 @@ function spieltagBericht(tf) {
   });
   beitraege.sort((a, b) => b.pts - a.pts);
 
-  let herkunft = "";
+  let text = "";
   if (beitraege.length) {
     const top = beitraege.slice(0, 3);
     const rest = beitraege.slice(3);
     const teile = top.map(b => `${b.pts} P ${b.joker ? "per Joker " : (b.basis === 4 ? "per Volltreffer " : "")}bei ${spielTxt(b.spiel)}`);
     if (rest.length) teile.push(`${rest.reduce((s, b) => s + b.pts, 0)} P aus weiteren Spielen`);
-    herkunft = `So holte sich ${esc(haupt.name)} die ${haupt.punkte} Punkte: ${join(teile)}.`;
+    text = `So holte sich ${esc(haupt.name)} die ${haupt.punkte} Punkte: ${join(teile)}.`;
   } else {
-    herkunft = `${esc(haupt.name)} kam am Spieltag auf ${haupt.punkte} Punkte.`;
+    text = `${esc(haupt.name)} kam am Spieltag auf ${haupt.punkte} Punkte.`;
   }
-
-  return herkunft + vergleich;
+  return { text, spielerDetails, highlight };
 }
 
 function schlagzeileDesTages() {
@@ -2295,7 +2361,8 @@ function schlagzeileDesTages() {
   if (!tagesStand.some(s => s.punkte > 0 || s.treffer > 0)) {
     const zitateRuhe = FUSSBALL_ZITATE.ruhetag;
     const ruheBericht = `Bei ${anzahlSpiele} Spiel${anzahlSpiele === 1 ? "" : "en"} wollte heute keinem ein Treffer gelingen – die ganze Familie ging leer aus.`;
-    return { text: wahl(SCHLAGZEILEN.ruhetag), zitat: zitateRuhe[(seed + 3) % zitateRuhe.length], datum: fensterDatum, kategorie: "ruhetag", bericht: ruheBericht };
+    const ruheDetails = { text: ruheBericht, spielerDetails: tagesStand.map(s => ({ ...s, trend: null, volltreff: 0, jokerGenutzt: false })), highlight: null };
+    return { text: wahl(SCHLAGZEILEN.ruhetag), zitat: zitateRuhe[(seed + 3) % zitateRuhe.length], datum: fensterDatum, kategorie: "ruhetag", bericht: ruheDetails };
   }
 
   const tagessieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
@@ -2384,24 +2451,69 @@ function schlagzeileDesTages() {
   return { text: sieger.text, zitat, datum: fensterDatum, kategorie: sieger.kategorie, bericht: spieltagBericht(tf) };
 }
 function renderSchlagzeile(ergebnis) {
-  const c = document.getElementById("schlagzeileBox");
+  const c = document.getElementById(“schlagzeileBox”);
   if (!c) { return; }
-  if (!ergebnis) { c.innerHTML = ""; return; }
+  if (!ergebnis) { c.innerHTML = “”; return; }
+
   const bild = SCHLAGZEILE_BILDER[ergebnis.kategorie]
-    ? `<span class="rundschau-bild">${SCHLAGZEILE_BILDER[ergebnis.kategorie]}</span>` : "";
-  // Das "Pressefoto" sitzt im Fließtext darunter (Zeitungs-Look, Text umfließt es);
-  // gibt es keinen Bericht, wandert es ausnahmsweise neben die Schlagzeile.
-  const berichtHtml = ergebnis.bericht
-    ? `<div class="bericht${bild ? ' mit-bild' : ''}">${bild}${ergebnis.bericht}</div>`
-    : (bild ? `<div class="bericht mit-bild">${bild}</div>` : "");
+    ? `<div class=”rundschau-bild”>${SCHLAGZEILE_BILDER[ergebnis.kategorie]}</div>` : “”;
+  const details = ergebnis.bericht;  // {text, spielerDetails, highlight}
+
+  // Abschnitt 1: Spielbericht (Sieger-Text)
+  const spielberichtHtml = details && details.text
+    ? `<div class=”rundschau-section”>Spielbericht</div>
+       <div class=”rundschau-spielbericht”>${details.text}</div>`
+    : “”;
+
+  // Abschnitt 2: Tipper-Tabelle
+  let tabelleHtml = “”;
+  if (details && details.spielerDetails && details.spielerDetails.length) {
+    const rangEmoji = (r) => r === 1 ? “🥇” : r === 2 ? “🥈” : r === 3 ? “🥉” : `${r}.`;
+    const rows = details.spielerDetails.map(s => {
+      let trendHtml;
+      if (s.trend) {
+        const cls = s.trend.diff > 0 ? “trend-pos” : s.trend.diff < 0 ? “trend-neg” : “trend-null”;
+        const pfeil = s.trend.diff > 0 ? “↑” : s.trend.diff < 0 ? “↓” : “—“;
+        trendHtml = `<span class=”${cls}”>${pfeil}${s.trend.str !== “=” ? s.trend.str : “”}</span>`;
+      } else {
+        trendHtml = `<span class=”trend-null”>—</span>`;
+      }
+      const badges = [];
+      if (s.volltreff >= 2) badges.push(`🎯×${s.volltreff}`);
+      else if (s.volltreff === 1) badges.push(“🎯”);
+      if (s.jokerGenutzt) badges.push(“🃏”);
+      return `<tr>
+        <td class=”col-rang”>${rangEmoji(s.rang)}</td>
+        <td class=”col-name”>${esc(s.avatar)} ${esc(s.name)}</td>
+        <td class=”col-pts”>${s.punkte}&thinsp;P</td>
+        <td class=”col-trend”>${trendHtml}</td>
+        <td class=”col-badge”>${badges.join(“ “)}</td>
+      </tr>`;
+    }).join(“”);
+    tabelleHtml = `<div class=”rundschau-section”>Alle Tipper</div>
+      <table class=”rundschau-tabelle”>${rows}</table>`;
+  }
+
+  // Abschnitt 3: Highlight des Tages (bester Einzeltipp ≥ 4 Punkte)
+  let highlightHtml = “”;
+  if (details && details.highlight) {
+    const h = details.highlight;
+    const spielTxt = `${flaggeVon(h.spiel.t1)} ${esc(h.spiel.t1)} ${h.spiel.e1}:${h.spiel.e2} ${esc(h.spiel.t2)} ${flaggeVon(h.spiel.t2)}`;
+    const typ = h.joker ? “ per Joker” : (h.pts === 4 ? “ Volltreffer” : “”);
+    highlightHtml = `<div class=”rundschau-section”>Highlight des Tages</div>
+      <div class=”rundschau-highlight”>⚡ <b>${esc(h.spieler.avatar)} ${esc(h.spieler.name)}</b> – ${h.pts}&thinsp;P${typ} bei ${spielTxt}</div>`;
+  }
+
   c.innerHTML = `
-    <div class="schlagzeile-box">
-      <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
-      <div class="datum">Spieltag vom ${esc(ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
-      <div class="text">${ergebnis.text}</div>
-      ${berichtHtml}
-      <div class="zitat">💬 „${esc(ergebnis.zitat.z)}“ — ${esc(ergebnis.zitat.w)}</div>
-      <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Rundschau teilen</button>
+    <div class=”schlagzeile-box”>
+      <div class=”label”>📰 LADRIÈRE RUNDSCHAU</div>
+      <div class=”datum”>Spieltag vom ${esc(ergebnis.datum.toLocaleDateString(“de-DE”, { weekday: “long”, day: “numeric”, month: “long”, year: “numeric” }))}</div>
+      <div class=”rundschau-kopf”>${bild}<div class=”text”>${ergebnis.text}</div></div>
+      ${spielberichtHtml}
+      ${tabelleHtml}
+      ${highlightHtml}
+      <div class=”zitat”>💬 „${esc(ergebnis.zitat.z)}” — ${esc(ergebnis.zitat.w)}</div>
+      <button class=”klein sekundaer schlagzeile-teilen-btn” onclick=”schlagzeileTeilen()”>📤 Rundschau teilen</button>
     </div>`;
 }
 
