@@ -2037,6 +2037,30 @@ const SCHLAGZEILEN = {
     "⚡ DYNASTIE-ALARM! {name} dominiert den {serie}. Tag hintereinander – regiert hier bald ein Alleinherrscher?! 👀",
     "🏰 DIE {name}-FESTUNG STEHT! {serie} Spieltage am Stück erobert – die Konkurrenz beißt sich die Zähne aus! 💪"
   ],
+  // Tagessieger erobert NEU die Tabellenspitze (war vorher schlechter platziert).
+  machtUebernahme: [
+    "👑 MACHTÜBERNAHME! {name} gewinnt den Spieltag UND erklimmt die TABELLENSPITZE – von Platz {vonRang} ganz nach oben! 🚀",
+    "🚨 PUTSCH AN DER SPITZE! {name} reißt mit dem Tagessieg die Tabellenführung an sich – ein neuer Thron ist besetzt! 👑",
+    "🎢 WACHWECHSEL! {name} schnappt sich Tagessieg und Platz 1 in einem Aufwasch – die alte Spitze ist entthront! ⚡"
+  ],
+  // Tagessieger ist UND bleibt Tabellenführer (verteidigt Platz 1).
+  thronVerteidigt: [
+    "🛡️ THRON VERTEIDIGT! {name} holt den Tagessieg und bleibt souverän Tabellenführer – wer soll das stoppen? 💪",
+    "👑 ALLES BEIM ALTEN AN DER SPITZE: {name} gewinnt den Spieltag und thront weiter ganz oben! 🏆",
+    "🔒 SPITZE EINBETONIERT! {name} mauert den Vorsprung mit einem Tagessieg zu – die Verfolger verzweifeln! 😤"
+  ],
+  // Tagessieger führt die Tabelle seit mehreren Spieltagen ununterbrochen an.
+  thronSerie: [
+    "👑 DAUER-HERRSCHER {name}! Tagessieg kassiert UND seit {tage} Spieltagen ununterbrochen Platz 1 – eine echte Dynastie! 🏰",
+    "🏆 UNANGEFOCHTEN! {name} gewinnt erneut den Spieltag und führt die Tabelle seit {tage} Spieltagen am Stück an! 🔥",
+    "⏳ DIE {name}-ÄRA HÄLT AN: Tagessieg und {tage} Spieltage in Serie an der Spitze – wann endet diese Herrschaft? 👀"
+  ],
+  // Tagessieger klettert in der Gesamttabelle, ohne (schon) Platz 1 zu sein.
+  kletterer: [
+    "📈 DURCHMARSCH! {name} gewinnt den Spieltag und klettert {klettern} auf Rang {rang} – die Aufholjagd läuft! 🏃",
+    "🪜 SPRUNG NACH OBEN! Mit dem Tagessieg schiebt sich {name} um {klettern} auf Rang {rang} – es geht steil bergauf! 🔝",
+    "🚀 RAKETENSTART! {name} sammelt den Tagessieg ein und schießt {klettern} hoch auf Platz {rang}! 💥"
+  ],
   aufsteiger: [
     "🚀 ERDBEBEN IN DER TABELLE! {name} katapultiert sich von Platz {gr} auf Platz {rang} – wer hätte DAS gedacht?! 😲",
     "📈 SENSATIONS-COMEBACK! {name} springt {sprung} Plätze nach vorne – die Konkurrenz zittert! 😨",
@@ -2076,6 +2100,30 @@ const FUSSBALL_ZITATE = {
     { z: "Never change a winning team.", w: "Fußball-Weisheit" },
     { z: "Ein Lauf endet erst, wenn er endet.", w: "frei nach Yogi Berra" },
     { z: "Wer einmal oben steht, der will da auch bleiben.", w: "Volksmund" }
+  ],
+  machtUebernahme: [
+    { z: "Wer oben angreift, muss auch oben ankommen.", w: "Volksmund" },
+    { z: "Die Tabelle lügt nie.", w: "Otto Rehhagel" },
+    { z: "Erst gewinnen, dann lächeln.", w: "Jürgen Klopp" },
+    { z: "Angriff ist die beste Verteidigung.", w: "Fußball-Weisheit" }
+  ],
+  thronVerteidigt: [
+    { z: "Einen Vorsprung muss man verteidigen wie einen Schatz.", w: "Volksmund" },
+    { z: "Mia san mia.", w: "Franz Beckenbauer" },
+    { z: "Wer vorne liegt, darf nie nachlassen.", w: "Joachim Löw" },
+    { z: "Souveränität ist auch eine Form von Stärke.", w: "Pep Guardiola" }
+  ],
+  thronSerie: [
+    { z: "Konstanz ist die schwierigste Disziplin im Fußball.", w: "Volksmund" },
+    { z: "Eine Dynastie baut man nicht an einem Tag.", w: "frei nach Pep Guardiola" },
+    { z: "Wer dauerhaft oben steht, hat es sich verdient.", w: "Otto Rehhagel" },
+    { z: "Klasse setzt sich auf Dauer durch.", w: "Fußball-Weisheit" }
+  ],
+  kletterer: [
+    { z: "Der Weg nach oben beginnt mit einem Schritt.", w: "Volksmund" },
+    { z: "Aufstehen, Krone richten, weitermachen.", w: "Volksmund" },
+    { z: "Wer kämpft, kann verlieren – wer nicht kämpft, hat schon verloren.", w: "Bertolt Brecht" },
+    { z: "Nach oben gibt's keine Abkürzung, nur harte Arbeit.", w: "frei nach Pep Guardiola" }
   ],
   aufsteiger: [
     { z: "Es ist noch nicht vorbei, bis es vorbei ist.", w: "Yogi Berra" },
@@ -2137,6 +2185,21 @@ function tagessiegerSerie() {
   }
   return serie >= 2 ? { spielerId: letzter, serie } : null;
 }
+// Wie viele Spieltage in Folge führt die aktuelle Tabellenspitze (alleiniger
+// Spitzenreiter nach Spielpunkten) ununterbrochen? Liefert { spielerId, serie }.
+function fuehrungsSerie() {
+  const v = fuehrungsVerlauf();
+  if (!v.length) return null;
+  const letzte = v[v.length - 1].fuehrer;
+  if (letzte.length !== 1) return null;   // geteilte Führung zählt nicht als Serie
+  const id = letzte[0];
+  let serie = 0;
+  for (let i = v.length - 1; i >= 0; i--) {
+    if (v[i].fuehrer.length === 1 && v[i].fuehrer[0] === id) serie++;
+    else break;
+  }
+  return { spielerId: id, serie };
+}
 function schlagzeileDesTages() {
   const tf = berechneTagesform();
   if (!tf) return null;
@@ -2179,6 +2242,39 @@ function schlagzeileDesTages() {
         { name: namen(tagessieger), serie: serie.serie }) });
     }
   }
+
+  // Spieltag-Sieger vs. Tabelle: Was macht der heutige Tagessieg mit der
+  // Gesamtplatzierung? (Übernahme der Spitze, Verteidigung, Aufstieg um X Plätze)
+  if (tagessieger.length === 1) {
+    const winId = tagessieger[0].id;
+    const standVorher = berechneStand(fensterSpielIds);
+    // Nur wenn es schon ein aussagekräftiges "vorher" gab (nicht am allerersten Spieltag).
+    if (standVorher.some(s => s.punkte > 0)) {
+      const rangJetzt = berechneStand().find(s => s.id === winId)?.rang;
+      const rangVorher = standVorher.find(s => s.id === winId)?.rang;
+      const name = namen(tagessieger);
+      if (rangJetzt === 1 && rangVorher > 1) {
+        kandidaten.push({ prio: 3.8, kategorie: "machtUebernahme",
+          text: schlagzeileVorlage(wahl(SCHLAGZEILEN.machtUebernahme), { name, vonRang: rangVorher }) });
+      } else if (rangJetzt === 1) {
+        // Bleibt an der Spitze – mit Führungs-Serie noch reißerischer.
+        const fs = fuehrungsSerie();
+        if (fs && fs.spielerId === winId && fs.serie >= 2) {
+          kandidaten.push({ prio: 3.6, kategorie: "thronSerie",
+            text: schlagzeileVorlage(wahl(SCHLAGZEILEN.thronSerie), { name, tage: fs.serie }) });
+        } else {
+          kandidaten.push({ prio: 3.3, kategorie: "thronVerteidigt",
+            text: schlagzeileVorlage(wahl(SCHLAGZEILEN.thronVerteidigt), { name }) });
+        }
+      } else if (rangVorher && rangJetzt && rangVorher > rangJetzt) {
+        const anz = rangVorher - rangJetzt;
+        kandidaten.push({ prio: 3.1, kategorie: "kletterer",
+          text: schlagzeileVorlage(wahl(SCHLAGZEILEN.kletterer),
+            { name, klettern: anz === 1 ? "1 Platz" : anz + " Plätze", rang: rangJetzt }) });
+      }
+    }
+  }
+
   if (aufsteiger && sprung >= 2) {
     kandidaten.push({ prio: 3, kategorie: "aufsteiger", text: schlagzeileVorlage(wahl(SCHLAGZEILEN.aufsteiger),
       { name: `${aufsteiger.avatar} ${esc(aufsteiger.name)}`, gr: aufsteiger.gesamtRang, rang: aufsteiger.rang, sprung }) });
