@@ -326,6 +326,15 @@
     font-size: 1.05rem; font-weight: 800; line-height: 1.35;
     padding: 10px 14px; font-family: Georgia, "Times New Roman", serif;
   }
+  .schlagzeile-box .text.mit-bild { text-align: left; }
+  .schlagzeile-box .text.mit-bild::after { content: ""; display: block; clear: both; }
+  .schlagzeile-box .rundschau-bild {
+    float: left; width: 60px; height: 60px; margin: 2px 12px 4px 0;
+    background: #f4efe2; border: 2px solid #1a1a1a; border-radius: 6px;
+    padding: 5px; box-sizing: border-box;
+    box-shadow: 2px 2px 0 rgba(0,0,0,.18);
+  }
+  .schlagzeile-box .rundschau-bild svg { width: 100%; height: 100%; display: block; }
   .schlagzeile-box .zitat {
     font-size: .85rem; font-style: italic; line-height: 1.35; color: #555;
     padding: 0 14px 12px; font-family: Georgia, "Times New Roman", serif;
@@ -2086,6 +2095,22 @@ const SCHLAGZEILEN = {
     "🌫️ STILLER SPIELTAG: Heute gab's für niemanden Punkte – Zeit, sich fürs nächste Spiel warmzulaufen! 🔥"
   ]
 };
+// Kleine, handgezeichnete SVG-Illustrationen je Kategorie – wie ein Pressefoto
+// neben der Schlagzeile. Bewusst schlicht & comichaft, funktionieren offline und
+// sitzen auf einem hellen "Zeitungspapier"-Rahmen (auch im Dark-Mode lesbar).
+const SCHLAGZEILE_BILDER = {
+  perfekt: `<svg viewBox="0 0 48 48"><circle cx="26" cy="22" r="17" fill="#fff" stroke="#1a1a1a" stroke-width="2"/><circle cx="26" cy="22" r="11" fill="#ffd54f" stroke="#1a1a1a" stroke-width="1.5"/><circle cx="26" cy="22" r="5" fill="#e53935"/><path d="M3 45 L26 22" stroke="#43a047" stroke-width="3" stroke-linecap="round"/><path d="M2 46 l1.5 -7 l5.5 5.5 z" fill="#2e7d32"/></svg>`,
+  serie: `<svg viewBox="0 0 48 48"><path d="M24 4 C30 14 38 18 36 30 C35 40 28 44 24 44 C20 44 12 40 12 30 C12 24 16 22 18 18 C20 24 22 22 22 16 C26 18 22 10 24 4 Z" fill="#ff7043" stroke="#1a1a1a" stroke-width="1.5" stroke-linejoin="round"/><path d="M24 24 C28 28 28 34 24 40 C21 36 20 32 22 28 Z" fill="#ffd54f"/></svg>`,
+  machtUebernahme: `<svg viewBox="0 0 48 48"><path d="M6 38 L10 16 L20 28 L24 12 L28 28 L38 16 L42 38 Z" fill="#ffd54f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><rect x="6" y="38" width="36" height="6" fill="#ffb300" stroke="#1a1a1a" stroke-width="2"/><circle cx="24" cy="10" r="3" fill="#e53935" stroke="#1a1a1a" stroke-width="1.5"/></svg>`,
+  thronVerteidigt: `<svg viewBox="0 0 48 48"><path d="M24 4 L40 10 V24 C40 34 33 41 24 44 C15 41 8 34 8 24 V10 Z" fill="#4caf50" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M16 24 l6 6 l10 -12" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  thronSerie: `<svg viewBox="0 0 48 48"><rect x="8" y="20" width="32" height="22" fill="#b0bec5" stroke="#1a1a1a" stroke-width="2"/><path d="M8 20 v-6 h4 v3 h4 v-3 h4 v3 h4 v-3 h4 v3 h4 v-3 h4 v6 Z" fill="#90a4ae" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><rect x="20" y="30" width="8" height="12" fill="#5d4037" stroke="#1a1a1a" stroke-width="1.5"/><path d="M24 6 v6" stroke="#1a1a1a" stroke-width="2"/><path d="M24 6 l8 2 l-8 2 z" fill="#e53935"/></svg>`,
+  aufsteiger: `<svg viewBox="0 0 48 48"><path d="M6 38 L18 26 L26 32 L40 14" fill="none" stroke="#43a047" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 14 H40 V24" fill="none" stroke="#43a047" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  tagessiegKnapp: `<svg viewBox="0 0 48 48"><rect x="20" y="2" width="8" height="5" rx="1" fill="#1a1a1a"/><circle cx="24" cy="28" r="17" fill="#fff" stroke="#1a1a1a" stroke-width="2.5"/><path d="M24 28 V17" stroke="#e53935" stroke-width="2.5" stroke-linecap="round"/><path d="M24 28 L31 31" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"/><path d="M24 7 v3 M39 13 l2 -2" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+  tagessieg: `<svg viewBox="0 0 48 48"><path d="M16 4 L22 22 M32 4 L26 22" stroke="#1976d2" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="30" r="13" fill="#ffd54f" stroke="#1a1a1a" stroke-width="2"/><path d="M24 23 l2 4.5 l4.5 .5 l-3.2 3.2 l1 4.5 l-4.3 -2.3 l-4.3 2.3 l1 -4.5 l-3.2 -3.2 l4.5 -.5 z" fill="#ffb300" stroke="#1a1a1a" stroke-width="1" stroke-linejoin="round"/></svg>`,
+  niete: `<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="#90a4ae" stroke="#1a1a1a" stroke-width="2"/><circle cx="17" cy="20" r="2.5" fill="#1a1a1a"/><circle cx="31" cy="20" r="2.5" fill="#1a1a1a"/><path d="M15 34 q9 -8 18 0" fill="none" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"/><path d="M32 24 q2 5 4 0" fill="none" stroke="#42a5f5" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+  ruhetag: `<svg viewBox="0 0 48 48"><path d="M30 6 a18 18 0 1 0 12 30 A14 14 0 0 1 30 6 Z" fill="#ffd54f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M30 12 h6 l-6 7 h6" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M38 5 h4 l-4 5 h4" fill="none" stroke="#1a1a1a" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`,
+  kletterer: `<svg viewBox="0 0 48 48"><path d="M4 42 L18 16 L26 30 L32 22 L44 42 Z" fill="#8d6e63" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M18 16 L13 26 L23 26 Z" fill="#fff"/><path d="M32 22 L28 30 L36 30 Z" fill="#fff"/><path d="M18 16 V6" stroke="#1a1a1a" stroke-width="2"/><path d="M18 6 l8 2 l-8 3 z" fill="#e53935"/></svg>`
+};
 // Passende Fußballer-Weisheiten je Kategorie – täglich wechselnd, zur
 // Schlagzeile passend ausgewählt.
 const FUSSBALL_ZITATE = {
@@ -2213,7 +2238,7 @@ function schlagzeileDesTages() {
   // komplett auszublenden, gibt's eine eigene "Nullnummer"-Schlagzeile.
   if (!tagesStand.some(s => s.punkte > 0 || s.treffer > 0)) {
     const zitateRuhe = FUSSBALL_ZITATE.ruhetag;
-    return { text: wahl(SCHLAGZEILEN.ruhetag), zitat: zitateRuhe[(seed + 3) % zitateRuhe.length], datum: fensterDatum };
+    return { text: wahl(SCHLAGZEILEN.ruhetag), zitat: zitateRuhe[(seed + 3) % zitateRuhe.length], datum: fensterDatum, kategorie: "ruhetag" };
   }
 
   const tagessieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
@@ -2299,16 +2324,18 @@ function schlagzeileDesTages() {
   // nicht immer "synchron" wechseln.
   const zitate = FUSSBALL_ZITATE[sieger.kategorie];
   const zitat = zitate[(seed + 3) % zitate.length];
-  return { text: sieger.text, zitat, datum: fensterDatum };
+  return { text: sieger.text, zitat, datum: fensterDatum, kategorie: sieger.kategorie };
 }
 function renderSchlagzeile(ergebnis) {
   const c = document.getElementById("schlagzeileBox");
   if (!c) return;
+  const bild = ergebnis && SCHLAGZEILE_BILDER[ergebnis.kategorie]
+    ? `<span class="rundschau-bild">${SCHLAGZEILE_BILDER[ergebnis.kategorie]}</span>` : "";
   c.innerHTML = ergebnis ? `
     <div class="schlagzeile-box">
       <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
       <div class="datum">Spieltag vom ${esc(ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
-      <div class="text">${ergebnis.text}</div>
+      <div class="text${bild ? ' mit-bild' : ''}">${bild}${ergebnis.text}</div>
       <div class="zitat">💬 „${esc(ergebnis.zitat.z)}“ — ${esc(ergebnis.zitat.w)}</div>
       <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Rundschau teilen</button>
     </div>` : "";
