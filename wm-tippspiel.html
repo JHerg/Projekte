@@ -2030,6 +2030,13 @@ const SCHLAGZEILEN = {
     "🚨 EILMELDUNG: {name} tippt einen MAKELLOSEN Spieltag – {punkte}/{max} Punkte! Wie geht das?! 😱",
     "💯 VOLLTREFFER-ORGIE! {name} holt das Maximum – {punkte} von {max} Punkten am Stück! 🎯"
   ],
+  serie: [
+    "🔥 NICHT ZU STOPPEN! {name} gewinnt den {serie}. Spieltag IN FOLGE – wer beendet endlich diesen Lauf?! 😤",
+    "👑 SERIENTÄTER {name}! Schon {serie} Tagessiege am Stück – die Familie schaut nur noch fassungslos zu! 🙀",
+    "🚂 DER {name}-EXPRESS ROLLT WEITER! {serie} Spieltage in Serie gewonnen – kein Halten mehr! 🚆",
+    "⚡ DYNASTIE-ALARM! {name} dominiert den {serie}. Tag hintereinander – regiert hier bald ein Alleinherrscher?! 👀",
+    "🏰 DIE {name}-FESTUNG STEHT! {serie} Spieltage am Stück erobert – die Konkurrenz beißt sich die Zähne aus! 💪"
+  ],
   aufsteiger: [
     "🚀 ERDBEBEN IN DER TABELLE! {name} katapultiert sich von Platz {gr} auf Platz {rang} – wer hätte DAS gedacht?! 😲",
     "📈 SENSATIONS-COMEBACK! {name} springt {sprung} Plätze nach vorne – die Konkurrenz zittert! 😨",
@@ -2063,6 +2070,12 @@ const FUSSBALL_ZITATE = {
     { z: "Mia san mia.", w: "Franz Beckenbauer" },
     { z: "Erfolg ist kein Zufall, sondern das Ergebnis harter Arbeit.", w: "Pep Guardiola" },
     { z: "Wir wollten heute gewinnen, und genau das haben wir auch geschafft.", w: "Jürgen Klopp" }
+  ],
+  serie: [
+    { z: "Form ist temporär, Klasse ist permanent.", w: "Volksmund" },
+    { z: "Never change a winning team.", w: "Fußball-Weisheit" },
+    { z: "Ein Lauf endet erst, wenn er endet.", w: "frei nach Yogi Berra" },
+    { z: "Wer einmal oben steht, der will da auch bleiben.", w: "Volksmund" }
   ],
   aufsteiger: [
     { z: "Es ist noch nicht vorbei, bis es vorbei ist.", w: "Yogi Berra" },
@@ -2098,6 +2111,32 @@ const FUSSBALL_ZITATE = {
 function schlagzeileVorlage(tpl, vals) {
   return tpl.replace(/\{(\w+)\}/g, (_, k) => vals[k] ?? "");
 }
+// Ermittelt, ob der/die heutige Tagessieger:in auch an den unmittelbar
+// vorangegangenen Spieltagen (jeweils als alleiniger Sieger) gewonnen hat.
+// Liefert { spielerId, serie } mit der Länge des Laufs (>= 2), sonst null.
+function tagessiegerSerie() {
+  const matrix = tagesPunkteMatrix();   // chronologisch, ältester Spieltag zuerst
+  if (matrix.length < 2) return null;
+  // Pro Spieltag den eindeutigen Sieger (mehr Punkte als alle anderen, > 0) bestimmen.
+  const gewinnerJe = matrix.map(tag => {
+    let max = 0, sieger = [];
+    state.spieler.forEach(p => {
+      const pts = tag.punkte[p.id];
+      if (pts === null || pts <= 0) return;
+      if (pts > max) { max = pts; sieger = [p.id]; }
+      else if (pts === max) sieger.push(p.id);
+    });
+    return sieger.length === 1 ? sieger[0] : null;
+  });
+  const letzter = gewinnerJe[gewinnerJe.length - 1];
+  if (!letzter) return null;
+  let serie = 0;
+  for (let i = gewinnerJe.length - 1; i >= 0; i--) {
+    if (gewinnerJe[i] === letzter) serie++;
+    else break;
+  }
+  return serie >= 2 ? { spielerId: letzter, serie } : null;
+}
 function schlagzeileDesTages() {
   const tf = berechneTagesform();
   if (!tf) return null;
@@ -2130,6 +2169,15 @@ function schlagzeileDesTages() {
   if (tagessieger.length && tagessieger.length < tagesStand.length && tagessieger[0].punkte === maxPunkte) {
     kandidaten.push({ prio: 4, kategorie: "perfekt", text: schlagzeileVorlage(wahl(SCHLAGZEILEN.perfekt),
       { name: namen(tagessieger), punkte: tagessieger[0].punkte, max: maxPunkte }) });
+  }
+  // Serien-Sieger: gleicher Tagessieger wie an den Vortagen – die reißerischste
+  // Story, daher direkt hinter dem perfekten Tag einsortiert.
+  if (tagessieger.length === 1) {
+    const serie = tagessiegerSerie();
+    if (serie && serie.spielerId === tagessieger[0].id) {
+      kandidaten.push({ prio: 3.5, kategorie: "serie", text: schlagzeileVorlage(wahl(SCHLAGZEILEN.serie),
+        { name: namen(tagessieger), serie: serie.serie }) });
+    }
   }
   if (aufsteiger && sprung >= 2) {
     kandidaten.push({ prio: 3, kategorie: "aufsteiger", text: schlagzeileVorlage(wahl(SCHLAGZEILEN.aufsteiger),
