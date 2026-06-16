@@ -326,8 +326,13 @@
     font-size: 1.05rem; font-weight: 800; line-height: 1.35;
     padding: 10px 14px; font-family: Georgia, "Times New Roman", serif;
   }
-  .schlagzeile-box .text.mit-bild { text-align: left; }
-  .schlagzeile-box .text.mit-bild::after { content: ""; display: block; clear: both; }
+  .schlagzeile-box .bericht {
+    font-size: .9rem; font-weight: 400; line-height: 1.5; color: #333;
+    text-align: left; padding: 0 14px 12px;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+  .schlagzeile-box .bericht.mit-bild::after { content: ""; display: block; clear: both; }
+  body.dark .schlagzeile-box .bericht { color: #ddd; }
   .schlagzeile-box .rundschau-bild {
     float: left; width: 60px; height: 60px; margin: 2px 12px 4px 0;
     background: #f4efe2; border: 2px solid #1a1a1a; border-radius: 6px;
@@ -2225,6 +2230,57 @@ function fuehrungsSerie() {
   }
   return { spielerId: id, serie };
 }
+
+// Kurzer "Zeitungsartikel" zum Spieltag: Woher hat der Tagessieger seine Punkte,
+// und wie haben die anderen abgeschnitten? Liefert reinen (escapten) HTML-Text
+// in normaler Schrift – ergänzt die reißerische Schlagzeile darüber.
+function spieltagBericht(tf) {
+  const { tagesStand, fensterSpielIds, anzahlSpiele } = tf;
+  const spielTxt = (s) => `${flaggeVon(s.t1)} ${esc(s.t1)} ${s.e1}:${s.e2} ${esc(s.t2)} ${flaggeVon(s.t2)}`;
+  const join = (arr) => arr.length <= 1 ? (arr[0] || "")
+    : arr.slice(0, -1).join(", ") + " und " + arr[arr.length - 1];
+
+  const sieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
+  if (!sieger.length) return "";   // Ruhetag o. Ä. wird separat behandelt
+  const verfolger = tagesStand.filter(s => !sieger.some(w => w.id === s.id));
+
+  // Vergleich mit den übrigen Mitspielern (kompakt, mit Namen & Tagespunkten).
+  let vergleich = "";
+  if (verfolger.length) {
+    const liste = verfolger.map(s => `${esc(s.name)} (${s.punkte} P)`);
+    vergleich = ` Dahinter ${verfolger.length === 1 ? "folgte" : "folgten"} ${join(liste)}.`;
+  }
+
+  // Mehrere punktgleiche Tagessieger: knappe Variante ohne Spiel-Aufschlüsselung.
+  if (sieger.length > 1) {
+    return `${join(sieger.map(s => esc(s.name)))} teilten sich den Tagessieg mit je ${sieger[0].punkte} Punkten.${vergleich}`;
+  }
+
+  // Einzelsieger: aufschlüsseln, aus welchen Spielen die Punkte kamen.
+  const haupt = sieger[0];
+  const fensterSpiele = spieleChronologisch(true).filter(s => fensterSpielIds.has(s.id));
+  const beitraege = [];
+  fensterSpiele.forEach(spiel => {
+    const pts = punkteFuerSpieler(haupt.id, spiel);
+    if (pts === null || pts <= 0) return;
+    beitraege.push({ spiel, pts, basis: punkteFuer(state.tipps[haupt.id]?.[spiel.id], spiel), joker: istJoker(haupt.id, spiel.id) });
+  });
+  beitraege.sort((a, b) => b.pts - a.pts);
+
+  let herkunft = "";
+  if (beitraege.length) {
+    const top = beitraege.slice(0, 3);
+    const rest = beitraege.slice(3);
+    const teile = top.map(b => `${b.pts} P ${b.joker ? "per Joker " : (b.basis === 4 ? "per Volltreffer " : "")}bei ${spielTxt(b.spiel)}`);
+    if (rest.length) teile.push(`${rest.reduce((s, b) => s + b.pts, 0)} P aus weiteren Spielen`);
+    herkunft = `So holte sich ${esc(haupt.name)} die ${haupt.punkte} Punkte: ${join(teile)}.`;
+  } else {
+    herkunft = `${esc(haupt.name)} kam am Spieltag auf ${haupt.punkte} Punkte.`;
+  }
+
+  return herkunft + vergleich;
+}
+
 function schlagzeileDesTages() {
   const tf = berechneTagesform();
   if (!tf) return null;
@@ -2238,7 +2294,8 @@ function schlagzeileDesTages() {
   // komplett auszublenden, gibt's eine eigene "Nullnummer"-Schlagzeile.
   if (!tagesStand.some(s => s.punkte > 0 || s.treffer > 0)) {
     const zitateRuhe = FUSSBALL_ZITATE.ruhetag;
-    return { text: wahl(SCHLAGZEILEN.ruhetag), zitat: zitateRuhe[(seed + 3) % zitateRuhe.length], datum: fensterDatum, kategorie: "ruhetag" };
+    const ruheBericht = `Bei ${anzahlSpiele} Spiel${anzahlSpiele === 1 ? "" : "en"} wollte heute keinem ein Treffer gelingen – die ganze Familie ging leer aus.`;
+    return { text: wahl(SCHLAGZEILEN.ruhetag), zitat: zitateRuhe[(seed + 3) % zitateRuhe.length], datum: fensterDatum, kategorie: "ruhetag", bericht: ruheBericht };
   }
 
   const tagessieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
@@ -2324,21 +2381,28 @@ function schlagzeileDesTages() {
   // nicht immer "synchron" wechseln.
   const zitate = FUSSBALL_ZITATE[sieger.kategorie];
   const zitat = zitate[(seed + 3) % zitate.length];
-  return { text: sieger.text, zitat, datum: fensterDatum, kategorie: sieger.kategorie };
+  return { text: sieger.text, zitat, datum: fensterDatum, kategorie: sieger.kategorie, bericht: spieltagBericht(tf) };
 }
 function renderSchlagzeile(ergebnis) {
   const c = document.getElementById("schlagzeileBox");
-  if (!c) return;
-  const bild = ergebnis && SCHLAGZEILE_BILDER[ergebnis.kategorie]
+  if (!c) { return; }
+  if (!ergebnis) { c.innerHTML = ""; return; }
+  const bild = SCHLAGZEILE_BILDER[ergebnis.kategorie]
     ? `<span class="rundschau-bild">${SCHLAGZEILE_BILDER[ergebnis.kategorie]}</span>` : "";
-  c.innerHTML = ergebnis ? `
+  // Das "Pressefoto" sitzt im Fließtext darunter (Zeitungs-Look, Text umfließt es);
+  // gibt es keinen Bericht, wandert es ausnahmsweise neben die Schlagzeile.
+  const berichtHtml = ergebnis.bericht
+    ? `<div class="bericht${bild ? ' mit-bild' : ''}">${bild}${ergebnis.bericht}</div>`
+    : (bild ? `<div class="bericht mit-bild">${bild}</div>` : "");
+  c.innerHTML = `
     <div class="schlagzeile-box">
       <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
       <div class="datum">Spieltag vom ${esc(ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
-      <div class="text${bild ? ' mit-bild' : ''}">${bild}${ergebnis.text}</div>
+      <div class="text">${ergebnis.text}</div>
+      ${berichtHtml}
       <div class="zitat">💬 „${esc(ergebnis.zitat.z)}“ — ${esc(ergebnis.zitat.w)}</div>
       <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Rundschau teilen</button>
-    </div>` : "";
+    </div>`;
 }
 
 function renderTabelle() {
