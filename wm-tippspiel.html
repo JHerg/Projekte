@@ -2448,7 +2448,9 @@ function schlagzeileDesTages() {
   // nicht immer "synchron" wechseln.
   const zitate = FUSSBALL_ZITATE[sieger.kategorie];
   const zitat = zitate[(seed + 3) % zitate.length];
-  return { text: sieger.text, zitat, datum: fensterDatum, kategorie: sieger.kategorie, bericht: spieltagBericht(tf) };
+  let bericht = null;
+  try { bericht = spieltagBericht(tf); } catch(e) { console.error("spieltagBericht:", e); }
+  return { text: sieger.text, zitat, datum: fensterDatum, kategorie: sieger.kategorie, bericht };
 }
 function renderSchlagzeile(ergebnis) {
   const c = document.getElementById(“schlagzeileBox”);
@@ -2524,11 +2526,12 @@ function renderTabelle() {
   const tagesformC = document.getElementById("tagesformContainer");
   const spruchC = document.getElementById("spruchBox");
 
-  const schlagzeile = schlagzeileDesTages();
+  let schlagzeile = null;
+  try { schlagzeile = schlagzeileDesTages(); } catch(e) { console.error("Rundschau:", e); }
   // Spruch des Tages nur zeigen, wenn (noch) keine Rundschau-Schlagzeile da ist –
   // sonst wäre das Zitat darunter zu viel des Guten.
   if (spruchC) spruchC.innerHTML = (stand.length && !schlagzeile) ? `<div class="spruch-box">💬 ${spruchDesTages(stand)}</div>` : "";
-  renderSchlagzeile(schlagzeile);
+  try { renderSchlagzeile(schlagzeile); } catch(e) { console.error("renderRundschau:", e); }
 
   if (!stand.length) {
     c.innerHTML = '<p class="leer-hinweis">Noch keine Mitspieler. Geh zu 👨‍👩‍👧 <b>Familie</b> und stell dein Team auf!</p>';
