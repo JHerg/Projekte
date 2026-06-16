@@ -2453,69 +2453,69 @@ function schlagzeileDesTages() {
   return { text: sieger.text, zitat, datum: fensterDatum, kategorie: sieger.kategorie, bericht };
 }
 function renderSchlagzeile(ergebnis) {
-  const c = document.getElementById(“schlagzeileBox”);
+  const c = document.getElementById("schlagzeileBox");
   if (!c) { return; }
-  if (!ergebnis) { c.innerHTML = “”; return; }
+  if (!ergebnis) { c.innerHTML = ""; return; }
 
   const bild = SCHLAGZEILE_BILDER[ergebnis.kategorie]
-    ? `<div class=”rundschau-bild”>${SCHLAGZEILE_BILDER[ergebnis.kategorie]}</div>` : “”;
+    ? `<div class="rundschau-bild">${SCHLAGZEILE_BILDER[ergebnis.kategorie]}</div>` : "";
   const details = ergebnis.bericht;  // {text, spielerDetails, highlight}
 
   // Abschnitt 1: Spielbericht (Sieger-Text)
   const spielberichtHtml = details && details.text
-    ? `<div class=”rundschau-section”>Spielbericht</div>
-       <div class=”rundschau-spielbericht”>${details.text}</div>`
-    : “”;
+    ? `<div class="rundschau-section">Spielbericht</div>
+       <div class="rundschau-spielbericht">${details.text}</div>`
+    : "";
 
   // Abschnitt 2: Tipper-Tabelle
-  let tabelleHtml = “”;
+  let tabelleHtml = "";
   if (details && details.spielerDetails && details.spielerDetails.length) {
-    const rangEmoji = (r) => r === 1 ? “🥇” : r === 2 ? “🥈” : r === 3 ? “🥉” : `${r}.`;
+    const rangEmoji = (r) => r === 1 ? "🥇" : r === 2 ? "🥈" : r === 3 ? "🥉" : `${r}.`;
     const rows = details.spielerDetails.map(s => {
       let trendHtml;
       if (s.trend) {
-        const cls = s.trend.diff > 0 ? “trend-pos” : s.trend.diff < 0 ? “trend-neg” : “trend-null”;
-        const pfeil = s.trend.diff > 0 ? “↑” : s.trend.diff < 0 ? “↓” : “—“;
-        trendHtml = `<span class=”${cls}”>${pfeil}${s.trend.str !== “=” ? s.trend.str : “”}</span>`;
+        const cls = s.trend.diff > 0 ? "trend-pos" : s.trend.diff < 0 ? "trend-neg" : "trend-null";
+        const pfeil = s.trend.diff > 0 ? "↑" : s.trend.diff < 0 ? "↓" : "—";
+        trendHtml = `<span class="${cls}">${pfeil}${s.trend.str !== "=" ? s.trend.str : ""}</span>`;
       } else {
-        trendHtml = `<span class=”trend-null”>—</span>`;
+        trendHtml = `<span class="trend-null">—</span>`;
       }
       const badges = [];
       if (s.volltreff >= 2) badges.push(`🎯×${s.volltreff}`);
-      else if (s.volltreff === 1) badges.push(“🎯”);
-      if (s.jokerGenutzt) badges.push(“🃏”);
+      else if (s.volltreff === 1) badges.push("🎯");
+      if (s.jokerGenutzt) badges.push("🃏");
       return `<tr>
-        <td class=”col-rang”>${rangEmoji(s.rang)}</td>
-        <td class=”col-name”>${esc(s.avatar)} ${esc(s.name)}</td>
-        <td class=”col-pts”>${s.punkte}&thinsp;P</td>
-        <td class=”col-trend”>${trendHtml}</td>
-        <td class=”col-badge”>${badges.join(“ “)}</td>
+        <td class="col-rang">${rangEmoji(s.rang)}</td>
+        <td class="col-name">${esc(s.avatar)} ${esc(s.name)}</td>
+        <td class="col-pts">${s.punkte}&thinsp;P</td>
+        <td class="col-trend">${trendHtml}</td>
+        <td class="col-badge">${badges.join(" ")}</td>
       </tr>`;
-    }).join(“”);
-    tabelleHtml = `<div class=”rundschau-section”>Alle Tipper</div>
-      <table class=”rundschau-tabelle”>${rows}</table>`;
+    }).join("");
+    tabelleHtml = `<div class="rundschau-section">Alle Tipper</div>
+      <table class="rundschau-tabelle">${rows}</table>`;
   }
 
   // Abschnitt 3: Highlight des Tages (bester Einzeltipp ≥ 4 Punkte)
-  let highlightHtml = “”;
+  let highlightHtml = "";
   if (details && details.highlight) {
     const h = details.highlight;
     const spielTxt = `${flaggeVon(h.spiel.t1)} ${esc(h.spiel.t1)} ${h.spiel.e1}:${h.spiel.e2} ${esc(h.spiel.t2)} ${flaggeVon(h.spiel.t2)}`;
-    const typ = h.joker ? “ per Joker” : (h.pts === 4 ? “ Volltreffer” : “”);
-    highlightHtml = `<div class=”rundschau-section”>Highlight des Tages</div>
-      <div class=”rundschau-highlight”>⚡ <b>${esc(h.spieler.avatar)} ${esc(h.spieler.name)}</b> – ${h.pts}&thinsp;P${typ} bei ${spielTxt}</div>`;
+    const typ = h.joker ? " per Joker" : (h.pts === 4 ? " Volltreffer" : "");
+    highlightHtml = `<div class="rundschau-section">Highlight des Tages</div>
+      <div class="rundschau-highlight">⚡ <b>${esc(h.spieler.avatar)} ${esc(h.spieler.name)}</b> – ${h.pts}&thinsp;P${typ} bei ${spielTxt}</div>`;
   }
 
   c.innerHTML = `
-    <div class=”schlagzeile-box”>
-      <div class=”label”>📰 LADRIÈRE RUNDSCHAU</div>
-      <div class=”datum”>Spieltag vom ${esc(ergebnis.datum.toLocaleDateString(“de-DE”, { weekday: “long”, day: “numeric”, month: “long”, year: “numeric” }))}</div>
-      <div class=”rundschau-kopf”>${bild}<div class=”text”>${ergebnis.text}</div></div>
+    <div class="schlagzeile-box">
+      <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
+      <div class="datum">Spieltag vom ${esc(ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
+      <div class="rundschau-kopf">${bild}<div class="text">${ergebnis.text}</div></div>
       ${spielberichtHtml}
       ${tabelleHtml}
       ${highlightHtml}
-      <div class=”zitat”>💬 „${esc(ergebnis.zitat.z)}” — ${esc(ergebnis.zitat.w)}</div>
-      <button class=”klein sekundaer schlagzeile-teilen-btn” onclick=”schlagzeileTeilen()”>📤 Rundschau teilen</button>
+      <div class="zitat">💬 „${esc(ergebnis.zitat.z)}" — ${esc(ergebnis.zitat.w)}</div>
+      <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Rundschau teilen</button>
     </div>`;
 }
 
