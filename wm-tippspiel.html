@@ -400,6 +400,20 @@
     border-radius: 0 6px 6px 0; font-size: .85rem; text-align: left;
     font-family: Georgia, "Times New Roman", serif; line-height: 1.4; color: #333;
   }
+  /* Im Rampenlicht / Pechvogel / Ausblick: kurze Fließtext-Absätze im
+     gleichen Stil wie der Spielbericht. */
+  .rundschau-rampenlicht, .rundschau-pechvogel, .rundschau-ausblick {
+    font-size: .88rem; line-height: 1.5; color: #333;
+    text-align: left; padding: 0 14px 4px;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+  .rundschau-ausblick .ausblick-btn { display: inline-block; margin-top: 6px; }
+  /* Tages-Awards: kompakte Liste, bis zu zwei Auszeichnungen pro Tag */
+  .rundschau-awards { margin: 0 14px 4px; display: flex; flex-direction: column; gap: 6px; }
+  .rundschau-award { display: flex; align-items: flex-start; gap: 8px; font-size: .82rem; text-align: left; }
+  .rundschau-award .ra-emoji { font-size: 1.25rem; line-height: 1.3; }
+  .rundschau-award .ra-txt { flex: 1; line-height: 1.4; font-family: -apple-system, Segoe UI, sans-serif; }
+  .rundschau-award .ra-txt b { font-family: Georgia, "Times New Roman", serif; }
   .schlagzeile-box .zitat {
     font-size: .85rem; font-style: italic; line-height: 1.35; color: #555;
     padding: 0 14px 12px; font-family: Georgia, "Times New Roman", serif;
@@ -414,6 +428,7 @@
   body.dark .rundschau-spielbericht { color: #ddd; }
   body.dark .rundschau-tabelle tr:nth-child(even) { background: rgba(255,255,255,.05); }
   body.dark .rundschau-highlight { background: #2a2000; color: #e0d090; border-left-color: #ffd54f; }
+  body.dark .rundschau-rampenlicht, body.dark .rundschau-pechvogel, body.dark .rundschau-ausblick { color: #ddd; }
   body.dark .schlagzeile-box .zitat { color: #bbb; border-top-color: #555; }
 
   /* Tipp-Erinnerung: noch offene Spiele bis zur nächsten 8-Uhr-Grenze */
@@ -2347,13 +2362,16 @@ function spieltagBericht(tf) {
         trend = { diff, str: diff > 0 ? `+${diff}` : diff < 0 ? String(diff) : "=" };
       }
     }
-    let volltreff = 0, jokerGenutzt = false;
+    let p4 = 0, p3 = 0, p2 = 0, p0 = 0, getippt = 0, jokerGenutzt = false, jokerBonus = 0;
     fensterSpiele.forEach(spiel => {
-      const basis = punkteFuer(state.tipps[s.id]?.[spiel.id], spiel);
-      if (basis === 4) volltreff++;
-      if (istJoker(s.id, spiel.id)) jokerGenutzt = true;
+      const tipp = state.tipps[s.id]?.[spiel.id];
+      const basis = punkteFuer(tipp, spiel);
+      if (basis === null) return;
+      getippt++;
+      if (basis === 4) p4++; else if (basis === 3) p3++; else if (basis === 2) p2++; else p0++;
+      if (istJoker(s.id, spiel.id)) { jokerGenutzt = true; jokerBonus = punkteFuerSpieler(s.id, spiel) - basis; }
     });
-    return { ...s, trend, volltreff, jokerGenutzt };
+    return { ...s, trend, volltreff: p4, p3, p2, p0, getippt, jokerGenutzt, jokerBonus };
   });
 
   // Highlight: bester Einzeltipp des Spieltags (nur bei ≥ 4 Punkten relevant)
@@ -2369,13 +2387,29 @@ function spieltagBericht(tf) {
     });
   });
 
+  // Pechvogel des Tages: niedrigster Punktestand unter allen, die mind. ein
+  // Spiel des Fensters getippt haben – nur bei erkennbarem Abstand zur Spitze
+  // (sonst wirkt's bei Gleichstand wie reine Effekthascherei).
+  let pechvogel = null;
+  const teilnehmer = spielerDetails.filter(s => s.getippt > 0);
+  if (teilnehmer.length > 1) {
+    const minPkt = Math.min(...teilnehmer.map(s => s.punkte));
+    const maxPkt = Math.max(...teilnehmer.map(s => s.punkte));
+    if (minPkt < maxPkt) {
+      pechvogel = { spieler: teilnehmer.filter(s => s.punkte === minPkt), punkte: minPkt };
+    }
+  }
+
+  const tagesAwards = berechneTagesAwards(spielerDetails, anzahlSpiele);
+
   // Tagessieger-Text (Spielbericht)
   const sieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
-  if (!sieger.length) return { text: "", spielerDetails, highlight };
+  if (!sieger.length) return { text: "", spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards };
 
   if (sieger.length > 1) {
     const join2 = (arr) => arr.length <= 1 ? (arr[0] || "") : arr.slice(0, -1).join(", ") + " und " + arr[arr.length - 1];
-    return { text: `${join2(sieger.map(s => esc(s.name)))} teilten sich den Tagessieg mit je ${sieger[0].punkte} Punkten.`, spielerDetails, highlight };
+    return { text: `${join2(sieger.map(s => esc(s.name)))} teilten sich den Tagessieg mit je ${sieger[0].punkte} Punkten.`,
+      spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards };
   }
 
   const haupt = sieger[0];
@@ -2397,7 +2431,78 @@ function spieltagBericht(tf) {
   } else {
     text = `${esc(haupt.name)} kam am Spieltag auf ${haupt.punkte} Punkte.`;
   }
-  return { text, spielerDetails, highlight };
+
+  // Im Rampenlicht: Kurzprofil des Tagessiegers – Tipp-Stil dieses Spieltags
+  // plus eine laufende Tagessieger-Serie, falls vorhanden.
+  let stil = null;
+  if (beitraege.length) {
+    const volltreffer = beitraege.filter(b => b.basis === 4 && !b.joker).length;
+    const perJoker = beitraege.filter(b => b.joker).length;
+    if (perJoker && beitraege.length === perJoker) stil = "verließ sich heute ganz auf den ⭐ Joker";
+    else if (volltreffer >= 2) stil = "tippte wie ein Scharfschütze – mehrfach exakt ins Schwarze";
+    else if (volltreffer === 1) stil = "hatte einen Volltreffer als Sahnehäubchen dabei";
+    else stil = "punktete solide über die richtige Tendenz";
+  }
+  const hauptDetails = spielerDetails.find(s => s.id === haupt.id);
+  const serieInfo = tagessiegerSerie();
+  const rampenlicht = {
+    spieler: haupt, stil,
+    jokerGenutzt: hauptDetails ? hauptDetails.jokerGenutzt : false,
+    serie: (serieInfo && serieInfo.spielerId === haupt.id) ? serieInfo.serie : null
+  };
+
+  return { text, spielerDetails, highlight, pechvogel, rampenlicht, tagesAwards };
+}
+
+// Tages-Awards: bis zu zwei der auffälligsten Tagesleistungen – kleine,
+// tagesbezogene Geschwister der Turnier-Abzeichen (BADGES).
+function namenListe(arr) { return arr.map(s => `${s.avatar} ${esc(s.name)}`).join(" & "); }
+function berechneTagesAwards(spielerDetails, anzahlSpiele) {
+  if (!spielerDetails.length) return [];
+  const kandidaten = [];
+
+  const maxP4 = Math.max(0, ...spielerDetails.map(s => s.volltreff));
+  if (maxP4 >= 1) {
+    const top = spielerDetails.filter(s => s.volltreff === maxP4);
+    kandidaten.push({ prio: maxP4 >= 2 ? 4 : 2, e: "🎯", titel: "Scharfschütze des Tages",
+      text: `${namenListe(top)} ${top.length > 1 ? "landeten" : "landete"} ${maxP4}× den exakten Volltreffer!` });
+  }
+
+  const maxJoker = Math.max(0, ...spielerDetails.map(s => s.jokerBonus));
+  if (maxJoker > 0) {
+    const top = spielerDetails.filter(s => s.jokerBonus === maxJoker);
+    kandidaten.push({ prio: 3.5, e: "🃏", titel: "Joker-Coup des Tages",
+      text: `${namenListe(top)} setzte den ⭐ Joker goldrichtig ein – +${maxJoker} Extra-Punkte!` });
+  }
+
+  const effKandidaten = spielerDetails.filter(s => s.getippt >= 2 && s.getippt === anzahlSpiele && s.p0 === 0);
+  if (effKandidaten.length) {
+    kandidaten.push({ prio: 3, e: "📊", titel: "Effizienz-König des Tages",
+      text: `${namenListe(effKandidaten)} traf bei allen ${anzahlSpiele} Spielen mindestens die Tendenz – keine Niete dabei!` });
+  }
+
+  const maxP2 = Math.max(0, ...spielerDetails.map(s => s.p2));
+  if (maxP2 >= 2) {
+    const top = spielerDetails.filter(s => s.p2 === maxP2);
+    kandidaten.push({ prio: 1.5, e: "🍀", titel: "Glückspilz des Tages",
+      text: `${namenListe(top)} lag ${maxP2}× nur mit der Tendenz richtig – Hauptsache getroffen!` });
+  }
+
+  kandidaten.sort((a, b) => b.prio - a.prio);
+  return kandidaten.slice(0, 2);
+}
+
+// Ausblick: das nächste noch tippbare Spiel + wer aus der Familie es noch
+// nicht getippt hat – verzahnt die Rundschau mit der Tipp-Erinnerung.
+function naechsterAusblick() {
+  if (!state.spieler.length) return null;
+  const naechstes = spieleChronologisch().find(s => istTippbar(s));
+  if (!naechstes) return null;
+  const fehlend = state.spieler.filter(sp => {
+    const t = state.tipps[sp.id]?.[naechstes.id];
+    return !(t && t.e1 !== null && t.e2 !== null);
+  });
+  return { spiel: naechstes, fehlend };
 }
 
 function schlagzeileDesTages() {
@@ -2414,7 +2519,9 @@ function schlagzeileDesTages() {
   if (!tagesStand.some(s => s.punkte > 0 || s.treffer > 0)) {
     const zitateRuhe = FUSSBALL_ZITATE.ruhetag;
     const ruheBericht = `Bei ${anzahlSpiele} Spiel${anzahlSpiele === 1 ? "" : "en"} wollte heute keinem ein Treffer gelingen – die ganze Familie ging leer aus.`;
-    const ruheDetails = { text: ruheBericht, spielerDetails: tagesStand.map(s => ({ ...s, trend: null, volltreff: 0, jokerGenutzt: false })), highlight: null };
+    const ruheDetails = { text: ruheBericht,
+      spielerDetails: tagesStand.map(s => ({ ...s, trend: null, volltreff: 0, jokerGenutzt: false })),
+      highlight: null, pechvogel: null, rampenlicht: null, tagesAwards: [] };
     return { text: wahl(SCHLAGZEILEN.ruhetag), zitat: zitateRuhe[(seed + 3) % zitateRuhe.length], datum: fensterDatum, kategorie: "ruhetag", bericht: ruheDetails };
   }
 
@@ -2512,7 +2619,19 @@ function renderSchlagzeile(ergebnis) {
 
   const bild = SCHLAGZEILE_BILDER[ergebnis.kategorie]
     ? `<div class="rundschau-bild">${SCHLAGZEILE_BILDER[ergebnis.kategorie]}</div>` : "";
-  const details = ergebnis.bericht;  // {text, spielerDetails, highlight}
+  const details = ergebnis.bericht;  // {text, spielerDetails, highlight, pechvogel, rampenlicht, tagesAwards}
+
+  // Abschnitt: Im Rampenlicht (Kurzprofil des Tagessiegers)
+  let rampenlichtHtml = "";
+  if (details && details.rampenlicht) {
+    const r = details.rampenlicht;
+    const teile = [];
+    if (r.stil) teile.push(r.stil);
+    if (r.jokerGenutzt) teile.push("setzte dabei den ⭐ Joker ein");
+    if (r.serie && r.serie >= 2) teile.push(`bereits der ${r.serie}. Tagessieg in Folge`);
+    rampenlichtHtml = `<div class="rundschau-section">Im Rampenlicht</div>
+      <div class="rundschau-rampenlicht">🔍 <b>${esc(r.spieler.avatar)} ${esc(r.spieler.name)}</b>${teile.length ? " – " + teile.join(", ") + "." : "."}</div>`;
+  }
 
   // Abschnitt 1: Spielbericht (Sieger-Text)
   const spielberichtHtml = details && details.text
@@ -2549,6 +2668,27 @@ function renderSchlagzeile(ergebnis) {
       <table class="rundschau-tabelle">${rows}</table>`;
   }
 
+  // Abschnitt: Tages-Awards (bis zu zwei tagesbezogene Auszeichnungen)
+  let awardsHtml = "";
+  if (details && details.tagesAwards && details.tagesAwards.length) {
+    const items = details.tagesAwards.map(a => `<div class="rundschau-award">
+        <span class="ra-emoji">${a.e}</span>
+        <div class="ra-txt"><b>${esc(a.titel)}</b><br>${a.text}</div>
+      </div>`).join("");
+    awardsHtml = `<div class="rundschau-section">Tages-Awards</div>
+      <div class="rundschau-awards">${items}</div>`;
+  }
+
+  // Abschnitt: Pechvogel des Tages
+  let pechvogelHtml = "";
+  if (details && details.pechvogel) {
+    const pv = details.pechvogel;
+    const namenTxt = namenListe(pv.spieler);
+    const verbForm = pv.spieler.length > 1 ? "gingen" : "ging";
+    pechvogelHtml = `<div class="rundschau-section">Pechvogel des Tages</div>
+      <div class="rundschau-pechvogel">🙃 ${namenTxt} ${verbForm} heute mit nur ${pv.punkte}&thinsp;P ${pv.punkte === 0 ? "leer aus" : "unter die Räder"} – nächste Chance kommt bestimmt! 🤗</div>`;
+  }
+
   // Abschnitt 3: Highlight des Tages (bester Einzeltipp ≥ 4 Punkte)
   let highlightHtml = "";
   if (details && details.highlight) {
@@ -2559,14 +2699,33 @@ function renderSchlagzeile(ergebnis) {
       <div class="rundschau-highlight">⚡ <b>${esc(h.spieler.avatar)} ${esc(h.spieler.name)}</b> – ${h.pts}&thinsp;P${typ} bei ${spielTxt}</div>`;
   }
 
+  // Abschnitt: Ausblick (nächstes tippbares Spiel + wer noch nicht getippt hat)
+  let ausblickHtml = "";
+  const ausblick = naechsterAusblick();
+  if (ausblick) {
+    const a = ausblick;
+    const spielTxt = `${flaggeVon(a.spiel.t1)} ${esc(a.spiel.t1)} – ${esc(a.spiel.t2)} ${flaggeVon(a.spiel.t2)}`;
+    const datumTxt = a.spiel.datum ? ` (${esc(a.spiel.datum)})` : "";
+    const fehlendTxt = a.fehlend.length
+      ? `Noch nicht getippt: ${namenListe(a.fehlend)}.`
+      : "Alle haben schon getippt – nichts wie hin zum nächsten! 👀";
+    ausblickHtml = `<div class="rundschau-section">Ausblick</div>
+      <div class="rundschau-ausblick">📅 Als Nächstes: ${spielTxt}${datumTxt}<br>${fehlendTxt}
+      ${a.fehlend.length ? `<button class="klein sekundaer ausblick-btn" onclick="zeigeView('tippen')">⚽ Zum Tippen</button>` : ""}</div>`;
+  }
+
   c.innerHTML = `
     <div class="schlagzeile-box">
       <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
       <div class="datum">Spieltag vom ${esc(ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
       <div class="rundschau-kopf">${bild}<div class="text">${ergebnis.text}</div></div>
+      ${rampenlichtHtml}
       ${spielberichtHtml}
       ${tabelleHtml}
+      ${awardsHtml}
+      ${pechvogelHtml}
       ${highlightHtml}
+      ${ausblickHtml}
       <div class="zitat">💬 „${esc(ergebnis.zitat.z)}" — ${esc(ergebnis.zitat.w)}</div>
       <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Rundschau teilen</button>
     </div>`;
