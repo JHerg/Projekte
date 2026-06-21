@@ -442,20 +442,22 @@
     margin-top: 5px; font-size: .8rem;
     font-family: Georgia, "Times New Roman", serif; color: #8d6e63;
   }
-  /* Wettbüro Ladrière: Spaß-Quoten auf den morgigen Tagessieg (fiktiv, ohne Einsatz) */
-  .rundschau-quoten { margin: 0 14px 4px; font-family: -apple-system, Segoe UI, sans-serif; }
-  .rundschau-quoten .rq-intro {
-    font-size: .82rem; color: #777; margin-bottom: 6px; text-align: left;
+  /* Pressekonferenz: Fake-O-Ton des Tagessiegers mit kleinem Cartoon-Reporter-Icon */
+  .rundschau-presse {
+    display: flex; gap: 10px; align-items: flex-start;
+    margin: 4px 14px 6px; padding: 8px 10px;
+    background: #eef3fb; border-left: 3px solid #1976d2; border-radius: 0 6px 6px 0;
   }
-  .rq-zeile {
-    display: flex; align-items: center; gap: 8px; padding: 4px 0;
-    border-bottom: 1px dotted #ddd; font-size: .85rem;
+  .rundschau-presse .rp-icon { width: 34px; height: 34px; flex-shrink: 0; }
+  .rundschau-presse .rp-icon svg { width: 100%; height: 100%; display: block; }
+  .rundschau-presse .rp-kopf {
+    font-family: -apple-system, Segoe UI, sans-serif; font-weight: 800;
+    font-size: .72rem; letter-spacing: .5px; text-transform: uppercase;
+    color: #1976d2; margin-bottom: 3px; text-align: left;
   }
-  .rq-zeile:last-child { border-bottom: none; }
-  .rq-zeile .rq-name { flex: 1; font-weight: 600; text-align: left; }
-  .rq-zeile .rq-quote {
-    font-weight: 900; font-family: Georgia, "Times New Roman", serif;
-    background: #fff3cd; color: #7a5c00; border-radius: 5px; padding: 2px 8px; font-size: .82rem;
+  .rundschau-presse .rp-text {
+    font-family: Georgia, "Times New Roman", serif; font-style: italic;
+    font-size: .9rem; line-height: 1.5; color: #1a3a5c; text-align: left;
   }
   /* Kleinanzeigen-Rubrik: spaßige, aus dem Tagesgeschehen generierte Anzeigen */
   .rundschau-kleinanzeigen { margin: 0 14px 4px; display: flex; flex-direction: column; gap: 6px; }
@@ -504,9 +506,9 @@
   body.dark .rundschau-kolumne { background: #2c2622; border-left-color: #a1887f; }
   body.dark .rundschau-kolumne .rk-kopf, body.dark .rundschau-kolumne .rk-sig { color: #bcaaa4; }
   body.dark .rundschau-kolumne .rk-text { color: #e6d9cf; }
-  body.dark .rundschau-quoten .rq-intro { color: #999; }
-  body.dark .rq-zeile { border-bottom-color: #444; }
-  body.dark .rq-zeile .rq-quote { background: #4a3c00; color: #ffd54f; }
+  body.dark .rundschau-presse { background: #18222e; border-left-color: #64b5f6; }
+  body.dark .rundschau-presse .rp-kopf { color: #90caf9; }
+  body.dark .rundschau-presse .rp-text { color: #cfe3f7; }
   body.dark .ka-anzeige { border-color: #555; color: #ddd; }
   body.dark .ka-anzeige .ka-kopf { color: #999; }
   body.dark .rundschau-wochenrueckblick { background: #1f2e20; border-color: #4caf50; }
@@ -2740,30 +2742,36 @@ function kolumneFuer(kategorie, name, seed) {
   return liste[seed % liste.length].replace(/\{name\}/g, name || "der heutige Sieger");
 }
 
-// Wettbüro Ladrière: rein fiktive Spaß-Quoten auf den morgigen Tagessieg – kein
-// echter Einsatz, nur eine spielerische Hochrechnung aus Gesamtpunkten und
-// laufender Tagessieger-Serie. Niedrige Quote = Favorit.
-function buchmacherQuoten(seed) {
-  const overall = berechneStand();
-  if (overall.length < 2) return null;
-  const serieInfo = tagessiegerSerie();
-  const maxPts = Math.max(1, ...overall.map(s => s.punkte));
-  const hashJitter = (id) => {
-    let h = 0; const str = id + "-" + seed;
-    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 1000;
-    return (h / 1000 - 0.5) * 0.3;
-  };
-  const quoten = overall.map(s => {
-    let score = (s.punkte / maxPts) * 10;
-    if (serieInfo && serieInfo.spielerId === s.id) score += serieInfo.serie * 0.8;
-    return { spieler: s, score };
-  });
-  const maxScore = Math.max(1, ...quoten.map(s => s.score));
-  return quoten.map(s => {
-    const rel = s.score / maxScore;
-    const quote = Math.max(1.2, 1.5 + (1 - rel) * 5 + hashJitter(s.spieler.id));
-    return { spieler: s.spieler, quote: Math.round(quote * 100) / 100 };
-  }).sort((a, b) => a.quote - b.quote);
+// Pressekonferenz: ein erfundener O-Ton des Tagessiegers, passend zum Tipp-Stil
+// aus dem "Im Rampenlicht"-Profil (Joker-Coup, laufende Serie, Scharfschütze
+// oder solide Tendenz) – erscheint daher nur an Tagen mit klarem Einzelsieger.
+const PRESSE_ICON = `<svg viewBox="0 0 48 48"><rect x="19" y="3" width="10" height="20" rx="5" fill="#37474f" stroke="#1a1a1a" stroke-width="2"/><path d="M12 21 a12 12 0 0 0 24 0" fill="none" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><path d="M24 33 v7" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><path d="M16 44 h16" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/></svg>`;
+const PRESSE_ZITATE = {
+  joker: [
+    "Der Joker war reine Mathematik – ich hab nur gewartet, bis er sich lohnt.",
+    "Ehrlich? Ich hab einfach aufs richtige Pferd gesetzt – heute war's mein Joker."
+  ],
+  serie: [
+    "Eine Serie ist wie ein guter Espresso – man will sie nicht stoppen.",
+    "Ich genieße jeden Tag an der Spitze, als wäre es der letzte."
+  ],
+  scharf: [
+    "Ich seh das Ergebnis manchmal einfach vorher. Kein Hexenwerk, nur Übung.",
+    "Wer exakt tippt, hat auch exakt verdient zu gewinnen."
+  ],
+  default: [
+    "War heute einfach mein Tag. Morgen ist wieder alles offen.",
+    "Kein Geheimnis – ich bin einfach meinem Bauchgefühl gefolgt."
+  ]
+};
+function pressekonferenzZitat(rampenlicht, seed) {
+  if (!rampenlicht || !rampenlicht.spieler) return null;
+  let kategorie = "default";
+  if (rampenlicht.serie && rampenlicht.serie >= 2) kategorie = "serie";
+  else if (rampenlicht.jokerGenutzt) kategorie = "joker";
+  else if (rampenlicht.stil && rampenlicht.stil.includes("Scharfschütze")) kategorie = "scharf";
+  const liste = PRESSE_ZITATE[kategorie];
+  return { spieler: rampenlicht.spieler, text: liste[seed % liste.length] };
 }
 
 // Kleinanzeigen-Rubrik: spaßige, aus dem Tagesgeschehen generierte "Anzeigen" –
@@ -2928,19 +2936,17 @@ function renderSchlagzeile(ergebnis) {
       </div>`;
   }
 
-  // Abschnitt: Wettbüro Ladrière (Spaß-Quoten auf den morgigen Tagessieg)
-  let quotenHtml = "";
-  const quoten = buchmacherQuoten(tagSeed);
-  if (quoten && quoten.length) {
-    const top = quoten.slice(0, 3);
-    const zeilen = top.map(q => `<div class="rq-zeile">
-        <span class="rq-name">${esc(q.spieler.avatar)} ${esc(q.spieler.name)}</span>
-        <span class="rq-quote">${q.quote.toFixed(2).replace(".", ",")}</span>
-      </div>`).join("");
-    quotenHtml = `<div class="rundschau-section">Wettbüro Ladrière</div>
-      <div class="rundschau-quoten">
-        <div class="rq-intro">🎲 Rein fiktive Spaß-Quoten auf den morgigen Tagessieg – ohne Einsatz, nur zum Spaß.</div>
-        ${zeilen}
+  // Abschnitt: Pressekonferenz (Fake-O-Ton des Tagessiegers)
+  let presseHtml = "";
+  const presse = details ? pressekonferenzZitat(details.rampenlicht, tagSeed) : null;
+  if (presse) {
+    presseHtml = `<div class="rundschau-section">Pressekonferenz</div>
+      <div class="rundschau-presse">
+        <div class="rp-icon">${PRESSE_ICON}</div>
+        <div class="rp-body">
+          <div class="rp-kopf">🎤 O-Ton von ${esc(presse.spieler.avatar)} ${esc(presse.spieler.name)}</div>
+          <div class="rp-text">„${esc(presse.text)}"</div>
+        </div>
       </div>`;
   }
 
@@ -2980,7 +2986,7 @@ function renderSchlagzeile(ergebnis) {
       ${awardsHtml}
       ${pechvogelHtml}
       ${highlightHtml}
-      ${quotenHtml}
+      ${presseHtml}
       ${kleinanzeigenHtml}
       ${kolumneHtml}
       ${wocheHtml}
