@@ -390,9 +390,19 @@
   .rundschau-tabelle .col-rang { width: 28px; font-size: .8rem; }
   .rundschau-tabelle .col-name { font-weight: 600; }
   .rundschau-tabelle .col-pts { font-weight: 700; text-align: right; width: 38px; }
-  .rundschau-tabelle .col-trend { text-align: center; width: 44px; font-size: .8rem; font-weight: 700; }
+  .rundschau-tabelle .col-trend { text-align: right; width: 64px; font-size: .8rem; font-weight: 700; }
   .rundschau-tabelle .col-badge { text-align: right; font-size: .78rem; }
   .trend-pos { color: #2e7d32; } .trend-neg { color: #e53935; } .trend-null { color: #bbb; }
+  /* Mini-Trendlinie: kleine Sparkline mit den letzten Spieltagen je Spieler */
+  .trend-cell { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+  .trend-cell .sparkline { width: 26px; height: 13px; display: block; flex-shrink: 0; }
+  /* Kopf-an-Kopf-Box: knappes Duell zwischen zwei Tippern */
+  .rundschau-duell {
+    margin: 4px 14px 6px; padding: 6px 10px;
+    background: #ede7f6; border-left: 3px solid #7e57c2;
+    border-radius: 0 6px 6px 0; font-size: .85rem; text-align: left;
+    font-family: Georgia, "Times New Roman", serif; line-height: 1.4; color: #333;
+  }
   /* Highlight-Kästchen: beste Einzel-Vorhersage des Tages */
   .rundschau-highlight {
     margin: 4px 14px 6px; padding: 6px 10px;
@@ -428,6 +438,7 @@
   body.dark .rundschau-spielbericht { color: #ddd; }
   body.dark .rundschau-tabelle tr:nth-child(even) { background: rgba(255,255,255,.05); }
   body.dark .rundschau-highlight { background: #2a2000; color: #e0d090; border-left-color: #ffd54f; }
+  body.dark .rundschau-duell { background: #2a2240; color: #d8cdf0; border-left-color: #9575cd; }
   body.dark .rundschau-rampenlicht, body.dark .rundschau-pechvogel, body.dark .rundschau-ausblick { color: #ddd; }
   body.dark .schlagzeile-box .zitat { color: #bbb; border-top-color: #555; }
 
@@ -2351,6 +2362,9 @@ function spieltagBericht(tf) {
   const currentKey = fensterKeyLokal(fensterDatum);
   const currentIdx = matrix.findIndex(m => m.key === currentKey);
   const vortag = currentIdx > 0 ? matrix[currentIdx - 1].punkte : null;
+  // Mini-Trendlinie: Punkte der letzten bis zu 6 Spieltage (chronologisch,
+  // ältester zuerst), für die kleine Sparkline neben dem Trend-Pfeil.
+  const verlaufFenster = matrix.slice(Math.max(0, currentIdx - 5), currentIdx + 1);
 
   const spielerDetails = tagesStand.map(s => {
     const heutePts = s.punkte;
@@ -2362,6 +2376,7 @@ function spieltagBericht(tf) {
         trend = { diff, str: diff > 0 ? `+${diff}` : diff < 0 ? String(diff) : "=" };
       }
     }
+    const verlauf = verlaufFenster.map(m => m.punkte[s.id] ?? 0);
     let p4 = 0, p3 = 0, p2 = 0, p0 = 0, getippt = 0, jokerGenutzt = false, jokerBonus = 0;
     fensterSpiele.forEach(spiel => {
       const tipp = state.tipps[s.id]?.[spiel.id];
@@ -2371,7 +2386,7 @@ function spieltagBericht(tf) {
       if (basis === 4) p4++; else if (basis === 3) p3++; else if (basis === 2) p2++; else p0++;
       if (istJoker(s.id, spiel.id)) { jokerGenutzt = true; jokerBonus = punkteFuerSpieler(s.id, spiel) - basis; }
     });
-    return { ...s, trend, volltreff: p4, p3, p2, p0, getippt, jokerGenutzt, jokerBonus };
+    return { ...s, trend, verlauf, volltreff: p4, p3, p2, p0, getippt, jokerGenutzt, jokerBonus };
   });
 
   // Highlight: bester Einzeltipp des Spieltags (nur bei ≥ 4 Punkten relevant)
@@ -2402,14 +2417,24 @@ function spieltagBericht(tf) {
 
   const tagesAwards = berechneTagesAwards(spielerDetails, anzahlSpiele);
 
+  // Kopf-an-Kopf des Tages: knappster Abstand (genau 1 Punkt) zwischen zwei
+  // direkt aufeinanderfolgenden Plätzen im Tagesstand – egal wo in der
+  // Rangliste, Hauptsache wirklich eng.
+  let kopfAnKopf = null;
+  const sortiert = spielerDetails.filter(s => s.punkte > 0).sort((a, b) => b.punkte - a.punkte);
+  for (let i = 0; i < sortiert.length - 1; i++) {
+    const diff = sortiert[i].punkte - sortiert[i + 1].punkte;
+    if (diff === 1) { kopfAnKopf = { a: sortiert[i], b: sortiert[i + 1], diff }; break; }
+  }
+
   // Tagessieger-Text (Spielbericht)
   const sieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
-  if (!sieger.length) return { text: "", spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards };
+  if (!sieger.length) return { text: "", spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards, kopfAnKopf };
 
   if (sieger.length > 1) {
     const join2 = (arr) => arr.length <= 1 ? (arr[0] || "") : arr.slice(0, -1).join(", ") + " und " + arr[arr.length - 1];
     return { text: `${join2(sieger.map(s => esc(s.name)))} teilten sich den Tagessieg mit je ${sieger[0].punkte} Punkten.`,
-      spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards };
+      spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards, kopfAnKopf };
   }
 
   const haupt = sieger[0];
@@ -2451,12 +2476,29 @@ function spieltagBericht(tf) {
     serie: (serieInfo && serieInfo.spielerId === haupt.id) ? serieInfo.serie : null
   };
 
-  return { text, spielerDetails, highlight, pechvogel, rampenlicht, tagesAwards };
+  return { text, spielerDetails, highlight, pechvogel, rampenlicht, tagesAwards, kopfAnKopf };
 }
 
 // Tages-Awards: bis zu zwei der auffälligsten Tagesleistungen – kleine,
 // tagesbezogene Geschwister der Turnier-Abzeichen (BADGES).
 function namenListe(arr) { return arr.map(s => `${s.avatar} ${esc(s.name)}`).join(" & "); }
+
+// Mini-Trendlinie: kleine Sparkline-SVG aus einer Punktereihe (älteste zuerst).
+// Bei nur einem Datenpunkt oder lauter Nullen lohnt sich keine Linie.
+function sparklineSvg(werte, farbe) {
+  if (!werte || werte.length < 2 || !werte.some(v => v > 0)) return "";
+  const w = 26, h = 13, pad = 1.5;
+  const max = Math.max(1, ...werte);
+  const stepX = (w - pad * 2) / (werte.length - 1);
+  const punkte = werte.map((v, i) => {
+    const x = (pad + i * stepX).toFixed(1);
+    const y = (h - pad - (v / max) * (h - pad * 2)).toFixed(1);
+    return `${x},${y}`;
+  }).join(" ");
+  return `<svg class="sparkline" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <polyline points="${punkte}" fill="none" stroke="${farbe}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
 function berechneTagesAwards(spielerDetails, anzahlSpiele) {
   if (!spielerDetails.length) return [];
   const kandidaten = [];
@@ -2520,8 +2562,8 @@ function schlagzeileDesTages() {
     const zitateRuhe = FUSSBALL_ZITATE.ruhetag;
     const ruheBericht = `Bei ${anzahlSpiele} Spiel${anzahlSpiele === 1 ? "" : "en"} wollte heute keinem ein Treffer gelingen – die ganze Familie ging leer aus.`;
     const ruheDetails = { text: ruheBericht,
-      spielerDetails: tagesStand.map(s => ({ ...s, trend: null, volltreff: 0, jokerGenutzt: false })),
-      highlight: null, pechvogel: null, rampenlicht: null, tagesAwards: [] };
+      spielerDetails: tagesStand.map(s => ({ ...s, trend: null, verlauf: [], volltreff: 0, jokerGenutzt: false })),
+      highlight: null, pechvogel: null, rampenlicht: null, tagesAwards: [], kopfAnKopf: null };
     return { text: wahl(SCHLAGZEILEN.ruhetag), zitat: zitateRuhe[(seed + 3) % zitateRuhe.length], datum: fensterDatum, kategorie: "ruhetag", bericht: ruheDetails };
   }
 
@@ -2644,14 +2686,16 @@ function renderSchlagzeile(ergebnis) {
   if (details && details.spielerDetails && details.spielerDetails.length) {
     const rangEmoji = (r) => r === 1 ? "🥇" : r === 2 ? "🥈" : r === 3 ? "🥉" : `${r}.`;
     const rows = details.spielerDetails.map(s => {
-      let trendHtml;
+      let cls, pfeil, diffTxt;
       if (s.trend) {
-        const cls = s.trend.diff > 0 ? "trend-pos" : s.trend.diff < 0 ? "trend-neg" : "trend-null";
-        const pfeil = s.trend.diff > 0 ? "↑" : s.trend.diff < 0 ? "↓" : "—";
-        trendHtml = `<span class="${cls}">${pfeil}${s.trend.str !== "=" ? s.trend.str : ""}</span>`;
+        cls = s.trend.diff > 0 ? "trend-pos" : s.trend.diff < 0 ? "trend-neg" : "trend-null";
+        pfeil = s.trend.diff > 0 ? "↑" : s.trend.diff < 0 ? "↓" : "—";
+        diffTxt = s.trend.str !== "=" ? s.trend.str : "";
       } else {
-        trendHtml = `<span class="trend-null">—</span>`;
+        cls = "trend-null"; pfeil = "—"; diffTxt = "";
       }
+      const sparkFarbe = cls === "trend-pos" ? "#2e7d32" : cls === "trend-neg" ? "#e53935" : "#bbb";
+      const trendHtml = `<div class="trend-cell">${sparklineSvg(s.verlauf, sparkFarbe)}<span class="${cls}">${pfeil}${diffTxt}</span></div>`;
       const badges = [];
       if (s.volltreff >= 2) badges.push(`🎯×${s.volltreff}`);
       else if (s.volltreff === 1) badges.push("🎯");
@@ -2666,6 +2710,15 @@ function renderSchlagzeile(ergebnis) {
     }).join("");
     tabelleHtml = `<div class="rundschau-section">Alle Tipper</div>
       <table class="rundschau-tabelle">${rows}</table>`;
+  }
+
+  // Abschnitt: Kopf-an-Kopf des Tages (genau 1 Punkt Abstand zwischen zwei Plätzen)
+  let duellHtml = "";
+  if (details && details.kopfAnKopf) {
+    const d = details.kopfAnKopf;
+    duellHtml = `<div class="rundschau-section">Kopf-an-Kopf des Tages</div>
+      <div class="rundschau-duell">🤺 <b>${esc(d.a.avatar)} ${esc(d.a.name)}</b> (${d.a.punkte}&thinsp;P) lag nur ${d.diff}&thinsp;P vor
+      <b>${esc(d.b.avatar)} ${esc(d.b.name)}</b> (${d.b.punkte}&thinsp;P) – ganz schön knapp! 😅</div>`;
   }
 
   // Abschnitt: Tages-Awards (bis zu zwei tagesbezogene Auszeichnungen)
@@ -2722,6 +2775,7 @@ function renderSchlagzeile(ergebnis) {
       ${rampenlichtHtml}
       ${spielberichtHtml}
       ${tabelleHtml}
+      ${duellHtml}
       ${awardsHtml}
       ${pechvogelHtml}
       ${highlightHtml}
