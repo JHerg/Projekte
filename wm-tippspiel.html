@@ -424,6 +424,39 @@
   .rundschau-award .ra-emoji { font-size: 1.25rem; line-height: 1.3; }
   .rundschau-award .ra-txt { flex: 1; line-height: 1.4; font-family: -apple-system, Segoe UI, sans-serif; }
   .rundschau-award .ra-txt b { font-family: Georgia, "Times New Roman", serif; }
+  /* Tendenz-Radar: wie oft die Familie auf Heim/Remis/Auswärts tippte – und wie oft sie richtig lag */
+  .rundschau-radar {
+    margin: 0 14px 6px; font-size: .82rem; text-align: left;
+    font-family: -apple-system, Segoe UI, sans-serif; color: #333;
+  }
+  .rundschau-radar .radar-intro {
+    font-family: Georgia, "Times New Roman", serif; font-size: .88rem;
+    line-height: 1.45; margin-bottom: 7px;
+  }
+  .radar-zeile { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .radar-zeile .rz-label { width: 96px; flex-shrink: 0; }
+  .radar-zeile .rz-bar { flex: 1; height: 9px; background: #eee; border-radius: 5px; overflow: hidden; }
+  .radar-zeile .rz-fill { height: 100%; background: linear-gradient(90deg, #66bb6a, #2e7d32); border-radius: 5px; }
+  .radar-zeile .rz-wert { width: 80px; flex-shrink: 0; text-align: right; font-size: .76rem; color: #666; font-variant-numeric: tabular-nums; }
+  /* Kolumne: wiederkehrende fiktive Stimme mit Running-Gag-Signatur */
+  .rundschau-kolumne {
+    margin: 6px 14px 4px; padding: 8px 12px;
+    background: #fbf6ef; border-left: 3px solid #8d6e63;
+    border-radius: 0 6px 6px 0; text-align: left;
+  }
+  .rundschau-kolumne .rk-kopf {
+    font-family: -apple-system, Segoe UI, sans-serif;
+    font-size: .7rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
+    color: #8d6e63; margin-bottom: 4px;
+  }
+  .rundschau-kolumne .rk-text {
+    font-family: Georgia, "Times New Roman", serif; font-style: italic;
+    font-size: .9rem; line-height: 1.5; color: #4e3b32;
+  }
+  .rundschau-kolumne .rk-sig {
+    margin-top: 5px; font-size: .8rem;
+    font-family: Georgia, "Times New Roman", serif; color: #8d6e63;
+  }
   .schlagzeile-box .zitat {
     font-size: .85rem; font-style: italic; line-height: 1.35; color: #555;
     padding: 0 14px 12px; font-family: Georgia, "Times New Roman", serif;
@@ -440,6 +473,12 @@
   body.dark .rundschau-highlight { background: #2a2000; color: #e0d090; border-left-color: #ffd54f; }
   body.dark .rundschau-duell { background: #2a2240; color: #d8cdf0; border-left-color: #9575cd; }
   body.dark .rundschau-rampenlicht, body.dark .rundschau-pechvogel, body.dark .rundschau-ausblick { color: #ddd; }
+  body.dark .rundschau-radar { color: #ddd; }
+  body.dark .radar-zeile .rz-bar { background: #444; }
+  body.dark .radar-zeile .rz-wert { color: #999; }
+  body.dark .rundschau-kolumne { background: #2c2622; border-left-color: #a1887f; }
+  body.dark .rundschau-kolumne .rk-kopf, body.dark .rundschau-kolumne .rk-sig { color: #bcaaa4; }
+  body.dark .rundschau-kolumne .rk-text { color: #e6d9cf; }
   body.dark .schlagzeile-box .zitat { color: #bbb; border-top-color: #555; }
 
   /* Tipp-Erinnerung: noch offene Spiele bis zur nächsten 8-Uhr-Grenze */
@@ -2427,14 +2466,17 @@ function spieltagBericht(tf) {
     if (diff === 1) { kopfAnKopf = { a: sortiert[i], b: sortiert[i + 1], diff }; break; }
   }
 
+  // Tendenz-Radar: Heim/Remis/Auswärts-Vorlieben der ganzen Familie an diesem Tag.
+  const tendenzRadar = berechneTendenzRadar(fensterSpiele);
+
   // Tagessieger-Text (Spielbericht)
   const sieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
-  if (!sieger.length) return { text: "", spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards, kopfAnKopf };
+  if (!sieger.length) return { text: "", spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards, kopfAnKopf, tendenzRadar };
 
   if (sieger.length > 1) {
     const join2 = (arr) => arr.length <= 1 ? (arr[0] || "") : arr.slice(0, -1).join(", ") + " und " + arr[arr.length - 1];
     return { text: `${join2(sieger.map(s => esc(s.name)))} teilten sich den Tagessieg mit je ${sieger[0].punkte} Punkten.`,
-      spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards, kopfAnKopf };
+      spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards, kopfAnKopf, tendenzRadar };
   }
 
   const haupt = sieger[0];
@@ -2476,7 +2518,7 @@ function spieltagBericht(tf) {
     serie: (serieInfo && serieInfo.spielerId === haupt.id) ? serieInfo.serie : null
   };
 
-  return { text, spielerDetails, highlight, pechvogel, rampenlicht, tagesAwards, kopfAnKopf };
+  return { text, spielerDetails, highlight, pechvogel, rampenlicht, tagesAwards, kopfAnKopf, tendenzRadar };
 }
 
 // Tages-Awards: bis zu zwei der auffälligsten Tagesleistungen – kleine,
@@ -2499,6 +2541,34 @@ function sparklineSvg(werte, farbe) {
     <polyline points="${punkte}" fill="none" stroke="${farbe}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`;
 }
+
+// Tendenz-Radar des Tages: Wie oft tippte die ganze Familie über alle Spiele des
+// Fensters auf Heimsieg / Unentschieden / Auswärtssieg – und wie oft lag sie damit
+// richtig (Tendenz getroffen)? Liefert je Tendenz {tipps, treffer} plus die am
+// häufigsten gewählte (dominant). Erst ab 3 abgegebenen Tipps aussagekräftig.
+function berechneTendenzRadar(fensterSpiele) {
+  const tend = (a, b) => a > b ? "heim" : a < b ? "ausw" : "unent";
+  const radar = {
+    heim: { tipps: 0, treffer: 0 }, unent: { tipps: 0, treffer: 0 },
+    ausw: { tipps: 0, treffer: 0 }, gesamt: 0
+  };
+  fensterSpiele.forEach(spiel => {
+    const ist = tend(spiel.e1, spiel.e2);
+    state.spieler.forEach(sp => {
+      const t = state.tipps[sp.id]?.[spiel.id];
+      if (!t || t.e1 === null || t.e1 === undefined || t.e2 === null || t.e2 === undefined) return;
+      const tt = tend(t.e1, t.e2);
+      radar[tt].tipps++;
+      radar.gesamt++;
+      if (tt === ist) radar[tt].treffer++;
+    });
+  });
+  if (radar.gesamt < 3) return null;
+  let dominant = "heim";
+  ["unent", "ausw"].forEach(k => { if (radar[k].tipps > radar[dominant].tipps) dominant = k; });
+  return { ...radar, dominant };
+}
+
 function berechneTagesAwards(spielerDetails, anzahlSpiele) {
   if (!spielerDetails.length) return [];
   const kandidaten = [];
@@ -2563,7 +2633,7 @@ function schlagzeileDesTages() {
     const ruheBericht = `Bei ${anzahlSpiele} Spiel${anzahlSpiele === 1 ? "" : "en"} wollte heute keinem ein Treffer gelingen – die ganze Familie ging leer aus.`;
     const ruheDetails = { text: ruheBericht,
       spielerDetails: tagesStand.map(s => ({ ...s, trend: null, verlauf: [], volltreff: 0, jokerGenutzt: false })),
-      highlight: null, pechvogel: null, rampenlicht: null, tagesAwards: [], kopfAnKopf: null };
+      highlight: null, pechvogel: null, rampenlicht: null, tagesAwards: [], kopfAnKopf: null, tendenzRadar: null };
     return { text: wahl(SCHLAGZEILEN.ruhetag), zitat: zitateRuhe[(seed + 3) % zitateRuhe.length], datum: fensterDatum, kategorie: "ruhetag", bericht: ruheDetails };
   }
 
@@ -2654,6 +2724,33 @@ function schlagzeileDesTages() {
   try { bericht = spieltagBericht(tf); } catch(e) { console.error("spieltagBericht:", e); }
   return { text: sieger.text, zitat, datum: fensterDatum, kategorie: sieger.kategorie, bericht };
 }
+// Die Kolumne: eine feste, wiederkehrende Stimme ("Ferdis Senf") mit eigener
+// Meinung und einem Running-Gag-Sign-off, die jeden Tag denselben Charakter
+// behält – im Gegensatz zu den wechselnden echten Fußball-Zitaten darunter.
+const KOLUMNIST = {
+  name: "Ferdinand",
+  avatar: "🧓",
+  rubrik: "Ferdis Senf",
+  signatur: "Aber was weiß ich schon – ich tippe ja nur vom Sofa aus."
+};
+const KOLUMNE_TEXTE = {
+  perfekt: ["Ein perfekter Tag von {name}? Zu meiner Zeit nannte man so jemanden schlicht: verdächtig gut."],
+  serie: ["{name} kriegt ja keiner mehr eingefangen. Da oben wird's langsam langweilig – im allerbesten Sinne."],
+  machtUebernahme: ["Neuer Chef im Haus: {name}. Mein Rat – genießt die Aussicht von der Spitze, solange sie hält."],
+  thronSerie: ["{name} thront unbeirrt weiter. Ein Hoch auf die Beständigkeit, das gibt's bei mir nicht oft!"],
+  thronVerteidigt: ["{name} verteidigt die Spitze. Solide Hausmannskost – mehr Lob ist heute nicht drin."],
+  kletterer: ["{name} klettert die Tabelle hoch wie ich früher die Kirschleiter. Weiter so, bloß nicht runterfallen!"],
+  aufsteiger: ["Achtung, {name} kommt von hinten angerauscht. Hab ich natürlich längst kommen sehen."],
+  tagessiegKnapp: ["Hauchdünner Tagessieg für {name}. Solche Krimis sind fast zu viel für mein altes Herz."],
+  tagessieg: ["Tagessieg für {name}. Verdient? Sagen wir's so: heute schon."],
+  niete: ["Null Punkte sind auch eine Ansage. Kopf hoch – viel schlechter wird's kaum noch."],
+  ruhetag: ["Ein ganzer Tag ohne Treffer. Da bleibt selbst mir die Spucke weg – und das will was heißen."]
+};
+function kolumneFuer(kategorie, name, seed) {
+  const liste = KOLUMNE_TEXTE[kategorie] || KOLUMNE_TEXTE.tagessieg;
+  return liste[seed % liste.length].replace(/\{name\}/g, name || "der heutige Sieger");
+}
+
 function renderSchlagzeile(ergebnis) {
   const c = document.getElementById("schlagzeileBox");
   if (!c) { return; }
@@ -2752,6 +2849,30 @@ function renderSchlagzeile(ergebnis) {
       <div class="rundschau-highlight">⚡ <b>${esc(h.spieler.avatar)} ${esc(h.spieler.name)}</b> – ${h.pts}&thinsp;P${typ} bei ${spielTxt}</div>`;
   }
 
+  // Abschnitt: Tendenz-Radar des Tages (Heim/Remis/Auswärts-Vorlieben der Familie)
+  let radarHtml = "";
+  if (details && details.tendenzRadar) {
+    const r = details.tendenzRadar;
+    const LABELS = { heim: "Heimsiege", unent: "Unentschieden", ausw: "Auswärtssiege" };
+    const dom = r[r.dominant];
+    const trefferTxt = dom.treffer === 0 ? "ging keiner auf"
+      : dom.treffer === dom.tipps ? "gingen alle auf"
+      : `gingen ${dom.treffer} auf`;
+    const intro = `📡 Die Familie setzte heute am häufigsten auf <b>${LABELS[r.dominant]}</b> (${dom.tipps}×) – davon ${trefferTxt}.`;
+    const maxT = Math.max(1, r.heim.tipps, r.unent.tipps, r.ausw.tipps);
+    const zeilen = ["heim", "unent", "ausw"].map(k => {
+      const x = r[k];
+      const pct = Math.round(x.tipps / maxT * 100);
+      return `<div class="radar-zeile">
+        <span class="rz-label">${LABELS[k]}</span>
+        <span class="rz-bar"><span class="rz-fill" style="width:${pct}%"></span></span>
+        <span class="rz-wert">${x.tipps}× · ${x.treffer}&thinsp;✓</span>
+      </div>`;
+    }).join("");
+    radarHtml = `<div class="rundschau-section">Tendenz-Radar des Tages</div>
+      <div class="rundschau-radar"><div class="radar-intro">${intro}</div>${zeilen}</div>`;
+  }
+
   // Abschnitt: Ausblick (nächstes tippbares Spiel + wer noch nicht getippt hat)
   let ausblickHtml = "";
   const ausblick = naechsterAusblick();
@@ -2767,6 +2888,24 @@ function renderSchlagzeile(ergebnis) {
       ${a.fehlend.length ? `<button class="klein sekundaer ausblick-btn" onclick="zeigeView('tippen')">⚽ Zum Tippen</button>` : ""}</div>`;
   }
 
+  // Abschnitt: Die Kolumne (wiederkehrende fiktive Stimme mit Tageskommentar)
+  let kolumneHtml = "";
+  const tagSeed = Math.floor(ergebnis.datum.getTime() / 86400000);
+  let gewinnerName = "";
+  if (details && details.spielerDetails) {
+    const top = details.spielerDetails.find(s => s.rang === 1 && s.punkte > 0);
+    if (top) gewinnerName = `${esc(top.avatar)} ${esc(top.name)}`;
+  }
+  const kolText = kolumneFuer(ergebnis.kategorie, gewinnerName, tagSeed);
+  if (kolText) {
+    kolumneHtml = `<div class="rundschau-section">Die Kolumne</div>
+      <div class="rundschau-kolumne">
+        <div class="rk-kopf">${KOLUMNIST.avatar} ${esc(KOLUMNIST.rubrik)} — von ${esc(KOLUMNIST.name)}</div>
+        <div class="rk-text">${kolText}</div>
+        <div class="rk-sig">— ${esc(KOLUMNIST.signatur)}</div>
+      </div>`;
+  }
+
   c.innerHTML = `
     <div class="schlagzeile-box">
       <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
@@ -2779,7 +2918,9 @@ function renderSchlagzeile(ergebnis) {
       ${awardsHtml}
       ${pechvogelHtml}
       ${highlightHtml}
+      ${radarHtml}
       ${ausblickHtml}
+      ${kolumneHtml}
       <div class="zitat">💬 „${esc(ergebnis.zitat.z)}" — ${esc(ergebnis.zitat.w)}</div>
       <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Rundschau teilen</button>
     </div>`;
