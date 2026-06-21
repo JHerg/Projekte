@@ -397,9 +397,9 @@
     border-radius: 0 6px 6px 0; font-size: .85rem; text-align: left;
     font-family: Georgia, "Times New Roman", serif; line-height: 1.4; color: #333;
   }
-  /* Im Rampenlicht / Pechvogel: kurze Fließtext-Absätze im
+  /* Im Rampenlicht / Pechvogel / Tabellenführung: kurze Fließtext-Absätze im
      gleichen Stil wie der Spielbericht. */
-  .rundschau-rampenlicht, .rundschau-pechvogel {
+  .rundschau-rampenlicht, .rundschau-pechvogel, .rundschau-fuehrung {
     font-size: .88rem; line-height: 1.5; color: #333;
     text-align: left; padding: 0 14px 4px;
     font-family: Georgia, "Times New Roman", serif;
@@ -487,7 +487,7 @@
   body.dark .rundschau-section { color: #666; border-top-color: #444; }
   body.dark .rundschau-tabelle tr:nth-child(even) { background: rgba(255,255,255,.05); }
   body.dark .rundschau-duell { background: #2a2240; color: #d8cdf0; border-left-color: #9575cd; }
-  body.dark .rundschau-rampenlicht, body.dark .rundschau-pechvogel { color: #ddd; }
+  body.dark .rundschau-rampenlicht, body.dark .rundschau-pechvogel, body.dark .rundschau-fuehrung { color: #ddd; }
   body.dark .rundschau-kolumne { background: #2c2622; border-left-color: #a1887f; }
   body.dark .rundschau-kolumne .rk-kopf, body.dark .rundschau-kolumne .rk-sig { color: #bcaaa4; }
   body.dark .rundschau-kolumne .rk-text { color: #e6d9cf; }
@@ -2414,6 +2414,33 @@ function fuehrungsSerie() {
   return { spielerId: id, serie };
 }
 
+// Gesamtführung: wer steht aktuell ganz oben in der kompletten Tabelle (nicht
+// nur am heutigen Tag), mit Vorsprung auf Platz 2 und ob die Führung gerade
+// frisch übernommen wurde.
+function gesamtfuehrung() {
+  const stand = berechneStand();
+  if (!stand.some(s => s.punkte > 0)) return null;
+  const fuehrende = stand.filter(s => s.rang === 1);
+  const zweiter = stand.find(s => s.rang === 2);
+  const vorsprung = (fuehrende.length === 1 && zweiter) ? fuehrende[0].punkte - zweiter.punkte : null;
+
+  const verlauf = fuehrungsVerlauf();
+  let neuAnDerSpitze = false, vorherName = null;
+  if (fuehrende.length === 1 && verlauf.length >= 2) {
+    const vorherIds = verlauf[verlauf.length - 2].fuehrer;
+    if (vorherIds.length && !vorherIds.includes(fuehrende[0].id)) {
+      neuAnDerSpitze = true;
+      const v = state.spieler.find(p => p.id === vorherIds[0]);
+      if (v) vorherName = `${v.avatar} ${esc(v.name)}`;
+    }
+  }
+
+  const fs = fuehrende.length === 1 ? fuehrungsSerie() : null;
+  const serieTage = (fs && fs.spielerId === fuehrende[0].id) ? fs.serie : 0;
+
+  return { fuehrende, vorsprung, neuAnDerSpitze, vorherName, serieTage };
+}
+
 // Kurzer "Zeitungsartikel" zum Spieltag: Woher hat der Tagessieger seine Punkte,
 // und wie haben die anderen abgeschnitten? Liefert reinen (escapten) HTML-Text
 // in normaler Schrift – ergänzt die reißerische Schlagzeile darüber.
@@ -2829,6 +2856,26 @@ function renderSchlagzeile(ergebnis) {
       <div class="rundschau-rampenlicht">${details.text}</div>`;
   }
 
+  // Abschnitt: Tabellenführung – Überleitung von der Tagesbilanz zum
+  // Gesamtstand (wer führt insgesamt, nicht nur am heutigen Tag).
+  let fuehrungHtml = "";
+  const gf = gesamtfuehrung();
+  if (gf) {
+    const namen = namenListe(gf.fuehrende);
+    let satz;
+    if (gf.fuehrende.length > 1) {
+      satz = `👑 ${namen} teilen sich aktuell die Tabellenführung mit je ${gf.fuehrende[0].punkte}&thinsp;Punkten.`;
+    } else if (gf.neuAnDerSpitze) {
+      satz = `👑 Neuer Spitzenreiter! ${namen} hat sich an die Tabellenspitze gesetzt${gf.vorherName ? ` – zuvor führte ${gf.vorherName}` : ""}.`;
+    } else {
+      const vorsprungTxt = gf.vorsprung !== null ? ` – ${gf.vorsprung}&thinsp;Punkte Vorsprung auf Platz 2` : "";
+      const serieTxt = gf.serieTage >= 2 ? `, bereits seit ${gf.serieTage} Spieltagen an der Spitze` : "";
+      satz = `👑 ${namen} führt die Gesamtwertung mit ${gf.fuehrende[0].punkte}&thinsp;Punkten${vorsprungTxt}${serieTxt}.`;
+    }
+    fuehrungHtml = `<div class="rundschau-section">Tabellenführung</div>
+      <div class="rundschau-fuehrung">Und so sieht's im Gesamtstand aus: ${satz}</div>`;
+  }
+
   // Abschnitt: Tipper-Tabelle
   let tabelleHtml = "";
   if (details && details.spielerDetails && details.spielerDetails.length) {
@@ -2952,6 +2999,7 @@ function renderSchlagzeile(ergebnis) {
       <div class="datum">Spieltag vom ${esc(ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
       <div class="rundschau-kopf">${bild}<div class="text">${ergebnis.text}</div></div>
       ${rampenlichtHtml}
+      ${fuehrungHtml}
       ${tabelleHtml}
       ${duellHtml}
       ${awardsHtml}
