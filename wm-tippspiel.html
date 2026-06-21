@@ -410,34 +410,19 @@
     border-radius: 0 6px 6px 0; font-size: .85rem; text-align: left;
     font-family: Georgia, "Times New Roman", serif; line-height: 1.4; color: #333;
   }
-  /* Im Rampenlicht / Pechvogel / Ausblick: kurze Fließtext-Absätze im
+  /* Im Rampenlicht / Pechvogel: kurze Fließtext-Absätze im
      gleichen Stil wie der Spielbericht. */
-  .rundschau-rampenlicht, .rundschau-pechvogel, .rundschau-ausblick {
+  .rundschau-rampenlicht, .rundschau-pechvogel {
     font-size: .88rem; line-height: 1.5; color: #333;
     text-align: left; padding: 0 14px 4px;
     font-family: Georgia, "Times New Roman", serif;
   }
-  .rundschau-ausblick .ausblick-btn { display: inline-block; margin-top: 6px; }
   /* Tages-Awards: kompakte Liste, bis zu zwei Auszeichnungen pro Tag */
   .rundschau-awards { margin: 0 14px 4px; display: flex; flex-direction: column; gap: 6px; }
   .rundschau-award { display: flex; align-items: flex-start; gap: 8px; font-size: .82rem; text-align: left; }
   .rundschau-award .ra-emoji { font-size: 1.25rem; line-height: 1.3; }
   .rundschau-award .ra-txt { flex: 1; line-height: 1.4; font-family: -apple-system, Segoe UI, sans-serif; }
   .rundschau-award .ra-txt b { font-family: Georgia, "Times New Roman", serif; }
-  /* Tendenz-Radar: wie oft die Familie auf Heim/Remis/Auswärts tippte – und wie oft sie richtig lag */
-  .rundschau-radar {
-    margin: 0 14px 6px; font-size: .82rem; text-align: left;
-    font-family: -apple-system, Segoe UI, sans-serif; color: #333;
-  }
-  .rundschau-radar .radar-intro {
-    font-family: Georgia, "Times New Roman", serif; font-size: .88rem;
-    line-height: 1.45; margin-bottom: 7px;
-  }
-  .radar-zeile { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-  .radar-zeile .rz-label { width: 96px; flex-shrink: 0; }
-  .radar-zeile .rz-bar { flex: 1; height: 9px; background: #eee; border-radius: 5px; overflow: hidden; }
-  .radar-zeile .rz-fill { height: 100%; background: linear-gradient(90deg, #66bb6a, #2e7d32); border-radius: 5px; }
-  .radar-zeile .rz-wert { width: 80px; flex-shrink: 0; text-align: right; font-size: .76rem; color: #666; font-variant-numeric: tabular-nums; }
   /* Kolumne: wiederkehrende fiktive Stimme mit Running-Gag-Signatur */
   .rundschau-kolumne {
     margin: 6px 14px 4px; padding: 8px 12px;
@@ -457,6 +442,49 @@
     margin-top: 5px; font-size: .8rem;
     font-family: Georgia, "Times New Roman", serif; color: #8d6e63;
   }
+  /* Wettbüro Ladrière: Spaß-Quoten auf den morgigen Tagessieg (fiktiv, ohne Einsatz) */
+  .rundschau-quoten { margin: 0 14px 4px; font-family: -apple-system, Segoe UI, sans-serif; }
+  .rundschau-quoten .rq-intro {
+    font-size: .82rem; color: #777; margin-bottom: 6px; text-align: left;
+  }
+  .rq-zeile {
+    display: flex; align-items: center; gap: 8px; padding: 4px 0;
+    border-bottom: 1px dotted #ddd; font-size: .85rem;
+  }
+  .rq-zeile:last-child { border-bottom: none; }
+  .rq-zeile .rq-name { flex: 1; font-weight: 600; text-align: left; }
+  .rq-zeile .rq-quote {
+    font-weight: 900; font-family: Georgia, "Times New Roman", serif;
+    background: #fff3cd; color: #7a5c00; border-radius: 5px; padding: 2px 8px; font-size: .82rem;
+  }
+  /* Kleinanzeigen-Rubrik: spaßige, aus dem Tagesgeschehen generierte Anzeigen */
+  .rundschau-kleinanzeigen { margin: 0 14px 4px; display: flex; flex-direction: column; gap: 6px; }
+  .ka-anzeige {
+    border: 1px dashed #bbb; border-radius: 6px; padding: 7px 10px;
+    font-size: .82rem; text-align: left; line-height: 1.4;
+    font-family: Georgia, "Times New Roman", serif; color: #333;
+  }
+  .ka-anzeige .ka-kopf {
+    font-family: -apple-system, Segoe UI, sans-serif; font-weight: 800;
+    font-size: .72rem; letter-spacing: .5px; text-transform: uppercase; color: #888;
+    display: block; margin-bottom: 2px;
+  }
+  /* Sonntagsausgabe: erweiterter Wochenrückblick, erscheint nur sonntags zusätzlich */
+  .rundschau-wochenrueckblick {
+    margin: 6px 14px 4px; padding: 10px 12px;
+    background: #eef6ee; border: 1.5px dashed var(--gruen-hell); border-radius: 10px;
+    text-align: left;
+  }
+  .rundschau-wochenrueckblick .wr-titel {
+    font-family: -apple-system, Segoe UI, sans-serif; font-weight: 900;
+    font-size: .75rem; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--gruen); margin-bottom: 5px;
+  }
+  .rundschau-wochenrueckblick .wr-text {
+    font-family: Georgia, "Times New Roman", serif; font-size: .88rem; line-height: 1.5; color: #333;
+  }
+  .rundschau-wochenrueckblick .wr-liste { margin: 6px 0 0; padding: 0; list-style: none; font-size: .82rem; }
+  .rundschau-wochenrueckblick .wr-liste li { display: flex; justify-content: space-between; padding: 2px 0; }
   .schlagzeile-box .zitat {
     font-size: .85rem; font-style: italic; line-height: 1.35; color: #555;
     padding: 0 14px 12px; font-family: Georgia, "Times New Roman", serif;
@@ -472,13 +500,17 @@
   body.dark .rundschau-tabelle tr:nth-child(even) { background: rgba(255,255,255,.05); }
   body.dark .rundschau-highlight { background: #2a2000; color: #e0d090; border-left-color: #ffd54f; }
   body.dark .rundschau-duell { background: #2a2240; color: #d8cdf0; border-left-color: #9575cd; }
-  body.dark .rundschau-rampenlicht, body.dark .rundschau-pechvogel, body.dark .rundschau-ausblick { color: #ddd; }
-  body.dark .rundschau-radar { color: #ddd; }
-  body.dark .radar-zeile .rz-bar { background: #444; }
-  body.dark .radar-zeile .rz-wert { color: #999; }
+  body.dark .rundschau-rampenlicht, body.dark .rundschau-pechvogel { color: #ddd; }
   body.dark .rundschau-kolumne { background: #2c2622; border-left-color: #a1887f; }
   body.dark .rundschau-kolumne .rk-kopf, body.dark .rundschau-kolumne .rk-sig { color: #bcaaa4; }
   body.dark .rundschau-kolumne .rk-text { color: #e6d9cf; }
+  body.dark .rundschau-quoten .rq-intro { color: #999; }
+  body.dark .rq-zeile { border-bottom-color: #444; }
+  body.dark .rq-zeile .rq-quote { background: #4a3c00; color: #ffd54f; }
+  body.dark .ka-anzeige { border-color: #555; color: #ddd; }
+  body.dark .ka-anzeige .ka-kopf { color: #999; }
+  body.dark .rundschau-wochenrueckblick { background: #1f2e20; border-color: #4caf50; }
+  body.dark .rundschau-wochenrueckblick .wr-text { color: #ddd; }
   body.dark .schlagzeile-box .zitat { color: #bbb; border-top-color: #555; }
 
   /* Tipp-Erinnerung: noch offene Spiele bis zur nächsten 8-Uhr-Grenze */
@@ -2466,17 +2498,14 @@ function spieltagBericht(tf) {
     if (diff === 1) { kopfAnKopf = { a: sortiert[i], b: sortiert[i + 1], diff }; break; }
   }
 
-  // Tendenz-Radar: Heim/Remis/Auswärts-Vorlieben der ganzen Familie an diesem Tag.
-  const tendenzRadar = berechneTendenzRadar(fensterSpiele);
-
   // Tagessieger-Text (Spielbericht)
   const sieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
-  if (!sieger.length) return { text: "", spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards, kopfAnKopf, tendenzRadar };
+  if (!sieger.length) return { text: "", spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards, kopfAnKopf };
 
   if (sieger.length > 1) {
     const join2 = (arr) => arr.length <= 1 ? (arr[0] || "") : arr.slice(0, -1).join(", ") + " und " + arr[arr.length - 1];
     return { text: `${join2(sieger.map(s => esc(s.name)))} teilten sich den Tagessieg mit je ${sieger[0].punkte} Punkten.`,
-      spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards, kopfAnKopf, tendenzRadar };
+      spielerDetails, highlight, pechvogel, rampenlicht: null, tagesAwards, kopfAnKopf };
   }
 
   const haupt = sieger[0];
@@ -2518,7 +2547,7 @@ function spieltagBericht(tf) {
     serie: (serieInfo && serieInfo.spielerId === haupt.id) ? serieInfo.serie : null
   };
 
-  return { text, spielerDetails, highlight, pechvogel, rampenlicht, tagesAwards, kopfAnKopf, tendenzRadar };
+  return { text, spielerDetails, highlight, pechvogel, rampenlicht, tagesAwards, kopfAnKopf };
 }
 
 // Tages-Awards: bis zu zwei der auffälligsten Tagesleistungen – kleine,
@@ -2540,33 +2569,6 @@ function sparklineSvg(werte, farbe) {
   return `<svg class="sparkline" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
     <polyline points="${punkte}" fill="none" stroke="${farbe}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`;
-}
-
-// Tendenz-Radar des Tages: Wie oft tippte die ganze Familie über alle Spiele des
-// Fensters auf Heimsieg / Unentschieden / Auswärtssieg – und wie oft lag sie damit
-// richtig (Tendenz getroffen)? Liefert je Tendenz {tipps, treffer} plus die am
-// häufigsten gewählte (dominant). Erst ab 3 abgegebenen Tipps aussagekräftig.
-function berechneTendenzRadar(fensterSpiele) {
-  const tend = (a, b) => a > b ? "heim" : a < b ? "ausw" : "unent";
-  const radar = {
-    heim: { tipps: 0, treffer: 0 }, unent: { tipps: 0, treffer: 0 },
-    ausw: { tipps: 0, treffer: 0 }, gesamt: 0
-  };
-  fensterSpiele.forEach(spiel => {
-    const ist = tend(spiel.e1, spiel.e2);
-    state.spieler.forEach(sp => {
-      const t = state.tipps[sp.id]?.[spiel.id];
-      if (!t || t.e1 === null || t.e1 === undefined || t.e2 === null || t.e2 === undefined) return;
-      const tt = tend(t.e1, t.e2);
-      radar[tt].tipps++;
-      radar.gesamt++;
-      if (tt === ist) radar[tt].treffer++;
-    });
-  });
-  if (radar.gesamt < 3) return null;
-  let dominant = "heim";
-  ["unent", "ausw"].forEach(k => { if (radar[k].tipps > radar[dominant].tipps) dominant = k; });
-  return { ...radar, dominant };
 }
 
 function berechneTagesAwards(spielerDetails, anzahlSpiele) {
@@ -2604,19 +2606,6 @@ function berechneTagesAwards(spielerDetails, anzahlSpiele) {
   return kandidaten.slice(0, 2);
 }
 
-// Ausblick: das nächste noch tippbare Spiel + wer aus der Familie es noch
-// nicht getippt hat – verzahnt die Rundschau mit der Tipp-Erinnerung.
-function naechsterAusblick() {
-  if (!state.spieler.length) return null;
-  const naechstes = spieleChronologisch().find(s => istTippbar(s));
-  if (!naechstes) return null;
-  const fehlend = state.spieler.filter(sp => {
-    const t = state.tipps[sp.id]?.[naechstes.id];
-    return !(t && t.e1 !== null && t.e2 !== null);
-  });
-  return { spiel: naechstes, fehlend };
-}
-
 function schlagzeileDesTages() {
   const tf = berechneTagesform();
   if (!tf) return null;
@@ -2633,7 +2622,7 @@ function schlagzeileDesTages() {
     const ruheBericht = `Bei ${anzahlSpiele} Spiel${anzahlSpiele === 1 ? "" : "en"} wollte heute keinem ein Treffer gelingen – die ganze Familie ging leer aus.`;
     const ruheDetails = { text: ruheBericht,
       spielerDetails: tagesStand.map(s => ({ ...s, trend: null, verlauf: [], volltreff: 0, jokerGenutzt: false })),
-      highlight: null, pechvogel: null, rampenlicht: null, tagesAwards: [], kopfAnKopf: null, tendenzRadar: null };
+      highlight: null, pechvogel: null, rampenlicht: null, tagesAwards: [], kopfAnKopf: null };
     return { text: wahl(SCHLAGZEILEN.ruhetag), zitat: zitateRuhe[(seed + 3) % zitateRuhe.length], datum: fensterDatum, kategorie: "ruhetag", bericht: ruheDetails };
   }
 
@@ -2751,6 +2740,78 @@ function kolumneFuer(kategorie, name, seed) {
   return liste[seed % liste.length].replace(/\{name\}/g, name || "der heutige Sieger");
 }
 
+// Wettbüro Ladrière: rein fiktive Spaß-Quoten auf den morgigen Tagessieg – kein
+// echter Einsatz, nur eine spielerische Hochrechnung aus Gesamtpunkten und
+// laufender Tagessieger-Serie. Niedrige Quote = Favorit.
+function buchmacherQuoten(seed) {
+  const overall = berechneStand();
+  if (overall.length < 2) return null;
+  const serieInfo = tagessiegerSerie();
+  const maxPts = Math.max(1, ...overall.map(s => s.punkte));
+  const hashJitter = (id) => {
+    let h = 0; const str = id + "-" + seed;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 1000;
+    return (h / 1000 - 0.5) * 0.3;
+  };
+  const quoten = overall.map(s => {
+    let score = (s.punkte / maxPts) * 10;
+    if (serieInfo && serieInfo.spielerId === s.id) score += serieInfo.serie * 0.8;
+    return { spieler: s, score };
+  });
+  const maxScore = Math.max(1, ...quoten.map(s => s.score));
+  return quoten.map(s => {
+    const rel = s.score / maxScore;
+    const quote = Math.max(1.2, 1.5 + (1 - rel) * 5 + hashJitter(s.spieler.id));
+    return { spieler: s.spieler, quote: Math.round(quote * 100) / 100 };
+  }).sort((a, b) => a.quote - b.quote);
+}
+
+// Kleinanzeigen-Rubrik: spaßige, aus dem Tagesgeschehen generierte "Anzeigen" –
+// zieht ihre Aufhänger aus Pechvogel, Joker-Stand und Tages-Awards, damit es
+// sich nicht wiederholt anfühlt wie immer dieselbe Vorlage.
+function kleinanzeigen(spielerDetails, pechvogel, tagesAwards, seed) {
+  const anzeigen = [];
+  if (pechvogel && pechvogel.spieler.length) {
+    const n = namenListe(pechvogel.spieler);
+    anzeigen.push({ kopf: "Verkaufe", text: `1× Pechsträhne, kaum benutzt, dafür reichlich vorhanden. Abzuholen bei ${n}. VB.` });
+  }
+  const jokerFrei = state.spieler.filter(sp => !jokerVerbraucht(sp.id));
+  if (jokerFrei.length) {
+    anzeigen.push({ kopf: "Biete", text: `${jokerFrei.length === 1 ? "1 ungenutzter ⭐ Joker" : jokerFrei.length + " ungenutzte ⭐ Joker"}, glänzend, garantiert noch nie eingesetzt.` });
+  }
+  const scharfschuetze = tagesAwards.find(a => a.titel === "Scharfschütze des Tages");
+  if (scharfschuetze) {
+    anzeigen.push({ kopf: "Gesucht", text: "Nachhilfe in exaktem Tippen. Bitte beim heutigen Scharfschützen des Tages melden!" });
+  }
+  if (!anzeigen.length) {
+    anzeigen.push({ kopf: "Gesucht", text: "Glücksbringer für die nächste Runde. Zahle gut – notfalls auch in Punkten." });
+  }
+  if (seed % 2 === 1) anzeigen.reverse();
+  return anzeigen.slice(0, 2);
+}
+
+// Sonntagsausgabe: erweiterter Wochenrückblick, erscheint zusätzlich zur
+// normalen Tagesausgabe – nur sonntags, und nur sobald mind. 2 Tage in der
+// laufenden Woche Punkte gebracht haben (sonst lohnt sich kein Rückblick).
+function wochenRueckblick(fensterDatum) {
+  if (fensterDatum.getDay() !== 0) return null;
+  const matrix = tagesPunkteMatrix();
+  const currentKey = fensterKeyLokal(fensterDatum);
+  const currentIdx = matrix.findIndex(m => m.key === currentKey);
+  if (currentIdx < 0) return null;
+  const woche = matrix.slice(Math.max(0, currentIdx - 6), currentIdx + 1);
+  const tageAktiv = woche.filter(t => Object.values(t.punkte).some(p => p > 0)).length;
+  if (tageAktiv < 2) return null;
+  const summen = {};
+  state.spieler.forEach(sp => { summen[sp.id] = 0; });
+  woche.forEach(tag => {
+    Object.entries(tag.punkte).forEach(([id, p]) => { if (p !== null && p !== undefined && summen[id] !== undefined) summen[id] += p; });
+  });
+  const rangliste = state.spieler.map(sp => ({ ...sp, wochenPunkte: summen[sp.id] || 0 })).sort((a, b) => b.wochenPunkte - a.wochenPunkte);
+  if (!rangliste.length || rangliste[0].wochenPunkte <= 0) return null;
+  return { sieger: rangliste[0], rangliste, tage: woche.length, tageAktiv };
+}
+
 function renderSchlagzeile(ergebnis) {
   const c = document.getElementById("schlagzeileBox");
   if (!c) { return; }
@@ -2849,45 +2910,6 @@ function renderSchlagzeile(ergebnis) {
       <div class="rundschau-highlight">⚡ <b>${esc(h.spieler.avatar)} ${esc(h.spieler.name)}</b> – ${h.pts}&thinsp;P${typ} bei ${spielTxt}</div>`;
   }
 
-  // Abschnitt: Tendenz-Radar des Tages (Heim/Remis/Auswärts-Vorlieben der Familie)
-  let radarHtml = "";
-  if (details && details.tendenzRadar) {
-    const r = details.tendenzRadar;
-    const LABELS = { heim: "Heimsiege", unent: "Unentschieden", ausw: "Auswärtssiege" };
-    const dom = r[r.dominant];
-    const trefferTxt = dom.treffer === 0 ? "ging keiner auf"
-      : dom.treffer === dom.tipps ? "gingen alle auf"
-      : `gingen ${dom.treffer} auf`;
-    const intro = `📡 Die Familie setzte heute am häufigsten auf <b>${LABELS[r.dominant]}</b> (${dom.tipps}×) – davon ${trefferTxt}.`;
-    const maxT = Math.max(1, r.heim.tipps, r.unent.tipps, r.ausw.tipps);
-    const zeilen = ["heim", "unent", "ausw"].map(k => {
-      const x = r[k];
-      const pct = Math.round(x.tipps / maxT * 100);
-      return `<div class="radar-zeile">
-        <span class="rz-label">${LABELS[k]}</span>
-        <span class="rz-bar"><span class="rz-fill" style="width:${pct}%"></span></span>
-        <span class="rz-wert">${x.tipps}× · ${x.treffer}&thinsp;✓</span>
-      </div>`;
-    }).join("");
-    radarHtml = `<div class="rundschau-section">Tendenz-Radar des Tages</div>
-      <div class="rundschau-radar"><div class="radar-intro">${intro}</div>${zeilen}</div>`;
-  }
-
-  // Abschnitt: Ausblick (nächstes tippbares Spiel + wer noch nicht getippt hat)
-  let ausblickHtml = "";
-  const ausblick = naechsterAusblick();
-  if (ausblick) {
-    const a = ausblick;
-    const spielTxt = `${flaggeVon(a.spiel.t1)} ${esc(a.spiel.t1)} – ${esc(a.spiel.t2)} ${flaggeVon(a.spiel.t2)}`;
-    const datumTxt = a.spiel.datum ? ` (${esc(a.spiel.datum)})` : "";
-    const fehlendTxt = a.fehlend.length
-      ? `Noch nicht getippt: ${namenListe(a.fehlend)}.`
-      : "Alle haben schon getippt – nichts wie hin zum nächsten! 👀";
-    ausblickHtml = `<div class="rundschau-section">Ausblick</div>
-      <div class="rundschau-ausblick">📅 Als Nächstes: ${spielTxt}${datumTxt}<br>${fehlendTxt}
-      ${a.fehlend.length ? `<button class="klein sekundaer ausblick-btn" onclick="zeigeView('tippen')">⚽ Zum Tippen</button>` : ""}</div>`;
-  }
-
   // Abschnitt: Die Kolumne (wiederkehrende fiktive Stimme mit Tageskommentar)
   let kolumneHtml = "";
   const tagSeed = Math.floor(ergebnis.datum.getTime() / 86400000);
@@ -2906,6 +2928,46 @@ function renderSchlagzeile(ergebnis) {
       </div>`;
   }
 
+  // Abschnitt: Wettbüro Ladrière (Spaß-Quoten auf den morgigen Tagessieg)
+  let quotenHtml = "";
+  const quoten = buchmacherQuoten(tagSeed);
+  if (quoten && quoten.length) {
+    const top = quoten.slice(0, 3);
+    const zeilen = top.map(q => `<div class="rq-zeile">
+        <span class="rq-name">${esc(q.spieler.avatar)} ${esc(q.spieler.name)}</span>
+        <span class="rq-quote">${q.quote.toFixed(2).replace(".", ",")}</span>
+      </div>`).join("");
+    quotenHtml = `<div class="rundschau-section">Wettbüro Ladrière</div>
+      <div class="rundschau-quoten">
+        <div class="rq-intro">🎲 Rein fiktive Spaß-Quoten auf den morgigen Tagessieg – ohne Einsatz, nur zum Spaß.</div>
+        ${zeilen}
+      </div>`;
+  }
+
+  // Abschnitt: Kleinanzeigen (aus dem Tagesgeschehen generierte Spaß-Anzeigen)
+  let kleinanzeigenHtml = "";
+  if (details && details.spielerDetails && details.spielerDetails.length) {
+    const anzeigen = kleinanzeigen(details.spielerDetails, details.pechvogel, details.tagesAwards || [], tagSeed);
+    if (anzeigen.length) {
+      const items = anzeigen.map(a => `<div class="ka-anzeige"><span class="ka-kopf">${esc(a.kopf)}</span>${esc(a.text)}</div>`).join("");
+      kleinanzeigenHtml = `<div class="rundschau-section">Kleinanzeigen</div>
+        <div class="rundschau-kleinanzeigen">${items}</div>`;
+    }
+  }
+
+  // Abschnitt: Sonntagsausgabe (erweiterter Wochenrückblick, nur sonntags zusätzlich)
+  let wocheHtml = "";
+  const woche = wochenRueckblick(ergebnis.datum);
+  if (woche) {
+    const liste = woche.rangliste.slice(0, 4).map(s =>
+      `<li><span>${esc(s.avatar)} ${esc(s.name)}</span><span>${s.wochenPunkte}&thinsp;P</span></li>`).join("");
+    wocheHtml = `<div class="rundschau-wochenrueckblick">
+      <div class="wr-titel">📅 Sonntagsausgabe — Wochenrückblick</div>
+      <div class="wr-text">🏆 <b>${esc(woche.sieger.avatar)} ${esc(woche.sieger.name)}</b> war Spieler der Woche mit ${woche.sieger.wochenPunkte}&thinsp;Punkten an ${woche.tageAktiv} aktiven Spieltagen.</div>
+      <ul class="wr-liste">${liste}</ul>
+    </div>`;
+  }
+
   c.innerHTML = `
     <div class="schlagzeile-box">
       <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
@@ -2918,9 +2980,10 @@ function renderSchlagzeile(ergebnis) {
       ${awardsHtml}
       ${pechvogelHtml}
       ${highlightHtml}
-      ${radarHtml}
-      ${ausblickHtml}
+      ${quotenHtml}
+      ${kleinanzeigenHtml}
       ${kolumneHtml}
+      ${wocheHtml}
       <div class="zitat">💬 „${esc(ergebnis.zitat.z)}" — ${esc(ergebnis.zitat.w)}</div>
       <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Rundschau teilen</button>
     </div>`;
