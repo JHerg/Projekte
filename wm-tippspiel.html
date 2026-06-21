@@ -2999,7 +2999,6 @@ function renderSchlagzeile(ergebnis) {
       <div class="datum">Spieltag vom ${esc(ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
       <div class="rundschau-kopf">${bild}<div class="text">${ergebnis.text}</div></div>
       ${rampenlichtHtml}
-      ${fuehrungHtml}
       ${tabelleHtml}
       ${duellHtml}
       ${awardsHtml}
@@ -3008,6 +3007,7 @@ function renderSchlagzeile(ergebnis) {
       ${kleinanzeigenHtml}
       ${kolumneHtml}
       ${wocheHtml}
+      ${fuehrungHtml}
       <div class="zitat">💬 „${esc(ergebnis.zitat.z)}" — ${esc(ergebnis.zitat.w)}</div>
       <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Rundschau teilen</button>
     </div>`;
