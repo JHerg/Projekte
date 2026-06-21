@@ -373,6 +373,16 @@
     padding-top: 6px; text-align: left;
     font-family: -apple-system, Segoe UI, sans-serif;
   }
+  /* Übergang vom Tagesgeschehen zum Gesamtstand: deutlich kräftigere
+     Trennung, damit klar ist, dass hier von "heute" auf "insgesamt"
+     gewechselt wird. */
+  .rundschau-section-gesamt {
+    font-size: .68rem; font-weight: 900; letter-spacing: 1.5px;
+    text-transform: none; color: var(--gruen);
+    border-top: 3px solid var(--gruen-hell); margin: 14px 14px 6px;
+    padding-top: 10px; text-align: center;
+    font-family: -apple-system, Segoe UI, sans-serif;
+  }
   /* Tipper-Tabelle */
   .rundschau-tabelle {
     width: calc(100% - 28px); margin: 0 14px 2px;
@@ -473,6 +483,7 @@
   body.dark .schlagzeile-box .datum { color: #999; }
   body.dark .schlagzeile-box .rundschau-bild { background: #3a3528; border-color: #888; }
   body.dark .rundschau-section { color: #666; border-top-color: #444; }
+  body.dark .rundschau-section-gesamt { color: var(--gruen-hell); border-top-color: #2e7d32; }
   body.dark .rundschau-tabelle tr:nth-child(even) { background: rgba(255,255,255,.05); }
   body.dark .rundschau-duell { background: #2a2240; color: #d8cdf0; border-left-color: #9575cd; }
   body.dark .rundschau-rampenlicht, body.dark .rundschau-pechvogel, body.dark .rundschau-fuehrung { color: #ddd; }
@@ -2834,8 +2845,8 @@ function renderSchlagzeile(ergebnis) {
       const serieTxt = gf.serieTage >= 2 ? `, bereits seit ${gf.serieTage} Spieltagen an der Spitze` : "";
       satz = `👑 ${namen} führt die Gesamtwertung mit ${gf.fuehrende[0].punkte}&thinsp;Punkten${vorsprungTxt}${serieTxt}.`;
     }
-    fuehrungHtml = `<div class="rundschau-section">Tabellenführung</div>
-      <div class="rundschau-fuehrung">Und so sieht's im Gesamtstand aus: ${satz}</div>`;
+    fuehrungHtml = `<div class="rundschau-section-gesamt">— Und insgesamt? —</div>
+      <div class="rundschau-fuehrung">${satz}</div>`;
   }
 
   // Abschnitt: Tipper-Tabelle
