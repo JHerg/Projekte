@@ -1034,6 +1034,16 @@
       <p class="info-zeile nur-admin" style="margin-top:6px">Nutze das einmalig, wenn die Cloud noch leer ist – danach läuft alles automatisch.</p>
     </div>
 
+    <div class="karte">
+      <h2>🔄 App-Update</h2>
+      <p class="info-zeile">
+        Siehst du nach einer Ankündigung nicht die neueste Version (z. B. fehlende Funktionen)?
+        Dann hat dein Gerät noch eine alte Version zwischengespeichert. Mit diesem Knopf wird der
+        Cache geleert und die App komplett neu geladen.
+      </p>
+      <button onclick="appHartAktualisieren()" class="sekundaer" style="width:100%;margin-top:8px">🔄 App-Cache leeren &amp; neu laden</button>
+    </div>
+
     <div class="karte nur-admin">
       <h2>🌍 Echter WM-2026-Spielplan</h2>
       <p class="info-zeile">
@@ -5998,10 +6008,28 @@ if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
     });
   }
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").then(reg => {
+    // updateViaCache: "none" – verhindert, dass der Browser sw.js selbst aus
+    // dem HTTP-Cache bedient und so neue Versionen verzögert erkennt.
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg => {
       reg.update();                                  // sofort nach neuer Version suchen
       setInterval(() => reg.update(), 60 * 60 * 1000); // stündlich erneut prüfen
     }).catch(() => {});
+  });
+}
+
+// Manueller Notausgang für Geräte, bei denen das automatische Update (z.B.
+// wegen eines hängenden Service Workers oder Browser-Caches) nicht greift:
+// löscht alle eigenen Caches, deregistriert den Service Worker und lädt die
+// Seite frisch vom Netz neu.
+function appHartAktualisieren() {
+  toast("🔄 Aktualisiere …");
+  Promise.all([
+    "caches" in window ? caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))) : Promise.resolve(),
+    "serviceWorker" in navigator
+      ? navigator.serviceWorker.getRegistrations().then((regs) => Promise.all(regs.map((r) => r.unregister())))
+      : Promise.resolve()
+  ]).finally(() => {
+    location.reload();
   });
 }
 </script>
