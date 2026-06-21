@@ -446,18 +446,6 @@
     font-family: Georgia, "Times New Roman", serif; font-style: italic;
     font-size: .9rem; line-height: 1.5; color: #1a3a5c; text-align: left;
   }
-  /* Kleinanzeigen-Rubrik: spaßige, aus dem Tagesgeschehen generierte Anzeigen */
-  .rundschau-kleinanzeigen { margin: 0 14px 4px; display: flex; flex-direction: column; gap: 6px; }
-  .ka-anzeige {
-    border: 1px dashed #bbb; border-radius: 6px; padding: 7px 10px;
-    font-size: .82rem; text-align: left; line-height: 1.4;
-    font-family: Georgia, "Times New Roman", serif; color: #333;
-  }
-  .ka-anzeige .ka-kopf {
-    font-family: -apple-system, Segoe UI, sans-serif; font-weight: 800;
-    font-size: .72rem; letter-spacing: .5px; text-transform: uppercase; color: #888;
-    display: block; margin-bottom: 2px;
-  }
   /* Sonntagsausgabe: erweiterter Wochenrückblick, erscheint nur sonntags zusätzlich */
   .rundschau-wochenrueckblick {
     margin: 6px 14px 4px; padding: 10px 12px;
@@ -494,8 +482,6 @@
   body.dark .rundschau-presse { background: #18222e; border-left-color: #64b5f6; }
   body.dark .rundschau-presse .rp-kopf { color: #90caf9; }
   body.dark .rundschau-presse .rp-text { color: #cfe3f7; }
-  body.dark .ka-anzeige { border-color: #555; color: #ddd; }
-  body.dark .ka-anzeige .ka-kopf { color: #999; }
   body.dark .rundschau-wochenrueckblick { background: #1f2e20; border-color: #4caf50; }
   body.dark .rundschau-wochenrueckblick .wr-text { color: #ddd; }
   body.dark .schlagzeile-box .zitat { color: #bbb; border-top-color: #555; }
@@ -2783,30 +2769,6 @@ function pressekonferenzZitat(rampenlicht, seed) {
   return { spieler: rampenlicht.spieler, text: liste[seed % liste.length] };
 }
 
-// Kleinanzeigen-Rubrik: spaßige, aus dem Tagesgeschehen generierte "Anzeigen" –
-// zieht ihre Aufhänger aus Pechvogel, Joker-Stand und Tages-Awards, damit es
-// sich nicht wiederholt anfühlt wie immer dieselbe Vorlage.
-function kleinanzeigen(spielerDetails, pechvogel, tagesAwards, seed) {
-  const anzeigen = [];
-  if (pechvogel && pechvogel.spieler.length) {
-    const n = namenListe(pechvogel.spieler);
-    anzeigen.push({ kopf: "Verkaufe", text: `1× Pechsträhne, kaum benutzt, dafür reichlich vorhanden. Abzuholen bei ${n}. VB.` });
-  }
-  const jokerFrei = state.spieler.filter(sp => !jokerVerbraucht(sp.id));
-  if (jokerFrei.length) {
-    anzeigen.push({ kopf: "Biete", text: `${jokerFrei.length === 1 ? "1 ungenutzter ⭐ Joker" : jokerFrei.length + " ungenutzte ⭐ Joker"}, glänzend, garantiert noch nie eingesetzt.` });
-  }
-  const scharfschuetze = tagesAwards.find(a => a.titel === "Scharfschütze des Tages");
-  if (scharfschuetze) {
-    anzeigen.push({ kopf: "Gesucht", text: "Nachhilfe in exaktem Tippen. Bitte beim heutigen Scharfschützen des Tages melden!" });
-  }
-  if (!anzeigen.length) {
-    anzeigen.push({ kopf: "Gesucht", text: "Glücksbringer für die nächste Runde. Zahle gut – notfalls auch in Punkten." });
-  }
-  if (seed % 2 === 1) anzeigen.reverse();
-  return anzeigen.slice(0, 2);
-}
-
 // Sonntagsausgabe: erweiterter Wochenrückblick, erscheint zusätzlich zur
 // normalen Tagesausgabe – nur sonntags, und nur sobald mind. 2 Tage in der
 // laufenden Woche Punkte gebracht haben (sonst lohnt sich kein Rückblick).
@@ -2969,16 +2931,6 @@ function renderSchlagzeile(ergebnis) {
       </div>`;
   }
 
-  // Abschnitt: Kleinanzeigen (aus dem Tagesgeschehen generierte Spaß-Anzeigen)
-  let kleinanzeigenHtml = "";
-  if (details && details.spielerDetails && details.spielerDetails.length) {
-    const anzeigen = kleinanzeigen(details.spielerDetails, details.pechvogel, details.tagesAwards || [], tagSeed);
-    if (anzeigen.length) {
-      const items = anzeigen.map(a => `<div class="ka-anzeige"><span class="ka-kopf">${esc(a.kopf)}</span>${esc(a.text)}</div>`).join("");
-      kleinanzeigenHtml = `<div class="rundschau-section">Kleinanzeigen</div>
-        <div class="rundschau-kleinanzeigen">${items}</div>`;
-    }
-  }
 
   // Abschnitt: Sonntagsausgabe (erweiterter Wochenrückblick, nur sonntags zusätzlich)
   let wocheHtml = "";
@@ -3004,7 +2956,6 @@ function renderSchlagzeile(ergebnis) {
       ${awardsHtml}
       ${pechvogelHtml}
       ${presseHtml}
-      ${kleinanzeigenHtml}
       ${kolumneHtml}
       ${wocheHtml}
       ${fuehrungHtml}
