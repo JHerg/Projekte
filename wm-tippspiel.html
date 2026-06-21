@@ -2824,7 +2824,8 @@ function renderSchlagzeile(ergebnis) {
     rampenlichtHtml = `<div class="rundschau-section">Im Rampenlicht</div>
       <div class="rundschau-rampenlicht">${profil}${details.text ? " " + details.text : ""}</div>`;
   } else if (details && details.text) {
-    rampenlichtHtml = `<div class="rundschau-section">Im Rampenlicht</div>
+    // Kein Einzelsieger (Punktgleichstand) – "Im Rampenlicht" passt dann nicht.
+    rampenlichtHtml = `<div class="rundschau-section">Tagesbilanz</div>
       <div class="rundschau-rampenlicht">${details.text}</div>`;
   }
 
