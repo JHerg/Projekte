@@ -2494,7 +2494,7 @@ function spieltagBericht(tf) {
     }
   }
 
-  const tagesAwards = berechneTagesAwards(spielerDetails, anzahlSpiele);
+  const tagesAwards = berechneTagesAwards(spielerDetails, anzahlSpiele, pechvogel);
 
   // Kopf-an-Kopf des Tages: knappster Abstand (genau 1 Punkt) zwischen zwei
   // direkt aufeinanderfolgenden Plätzen im Tagesstand – egal wo in der
@@ -2579,7 +2579,7 @@ function sparklineSvg(werte, farbe) {
   </svg>`;
 }
 
-function berechneTagesAwards(spielerDetails, anzahlSpiele) {
+function berechneTagesAwards(spielerDetails, anzahlSpiele, pechvogel) {
   if (!spielerDetails.length) return [];
   const kandidaten = [];
 
@@ -2606,8 +2606,18 @@ function berechneTagesAwards(spielerDetails, anzahlSpiele) {
   const maxP2 = Math.max(0, ...spielerDetails.map(s => s.p2));
   if (maxP2 >= 2) {
     const top = spielerDetails.filter(s => s.p2 === maxP2);
-    kandidaten.push({ prio: 1.5, e: "🍀", titel: "Glückspilz des Tages",
-      text: `${namenListe(top)} lag ${maxP2}× nur mit der Tendenz richtig – Hauptsache getroffen!` });
+    // Kein "Glückspilz", wenn es genau dieselben Personen wie der Pechvogel
+    // des Tages sind – sonst ist jemand gleichzeitig Glücks- und Pechvogel,
+    // was sich widerspricht (die paar Tendenz-Treffer haben dann ja nicht
+    // mal gereicht, um Letzter zu vermeiden).
+    const pvIds = pechvogel ? pechvogel.spieler.map(s => s.id).sort() : [];
+    const topIds = top.map(s => s.id).sort();
+    const gleichWiePechvogel = pvIds.length === topIds.length &&
+      topIds.every((id, i) => id === pvIds[i]);
+    if (!gleichWiePechvogel) {
+      kandidaten.push({ prio: 1.5, e: "🍀", titel: "Glückspilz des Tages",
+        text: `${namenListe(top)} lag ${maxP2}× nur mit der Tendenz richtig – Hauptsache getroffen!` });
+    }
   }
 
   kandidaten.sort((a, b) => b.prio - a.prio);
