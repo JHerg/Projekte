@@ -2218,66 +2218,74 @@ function spruchDesTages(stand) {
 // Tagesfensters (18:00–08:00 Uhr – derselbe Zeitraum wie beim Tagessieger).
 // Mehrere Formulierungs-Varianten pro Kategorie, tagesfest ausgewählt, damit
 // die Schlagzeile sich nicht bei jedem Neu-Rendern ändert.
+// Bewusst NUR tagesbezogene Kategorien (perfekter Tag, Tagessieg-Serie, knapper/
+// normaler Tagessieg, Nieten, Ruhetag). Alles rund um die Gesamttabelle bleibt
+// dem Abschnitt "Tabellenführung" am Ende vorbehalten – keine Vermischung.
 const SCHLAGZEILEN = {
   perfekt: [
     "👑 PERFEKTER TAG! {name} räumt ALLES ab – {punkte} von {max} möglichen Punkten! Unfassbar! 🤯",
     "🚨 EILMELDUNG: {name} tippt einen MAKELLOSEN Spieltag – {punkte}/{max} Punkte! Wie geht das?! 😱",
-    "💯 VOLLTREFFER-ORGIE! {name} holt das Maximum – {punkte} von {max} Punkten am Stück! 🎯"
+    "💯 VOLLTREFFER-ORGIE! {name} holt das Maximum – {punkte} von {max} Punkten am Stück! 🎯",
+    "🎯 ALLES RICHTIG! {name} lässt sich keinen einzigen Punkt entgehen – {punkte}/{max}! Lehrbuchreif! 📘",
+    "🧙 HELLSEHER AM WERK! {name} sagt den ganzen Spieltag voraus – {punkte} von {max} Punkten! 🔮",
+    "🏆 FEHLERFREI! {name} liefert die perfekte Tippreihe ab – {punkte}/{max}, kein Wackler! 💎",
+    "🤖 MASCHINENGLEICH! {name} arbeitet den Spieltag fehlerfrei ab – {punkte} von {max} Punkten! ⚙️",
+    "🎰 JACKPOT! {name} knackt den perfekten Spieltag – {punkte}/{max}, volle Ausbeute! 💰",
+    "🌟 STERNSTUNDE! {name} tippt sich in die Familien-Geschichtsbücher – makellose {punkte}/{max} Punkte! ✨",
+    "🎩 ZAUBEREI! {name} holt restlos alles raus – {punkte} von {max} Punkten, wie aus dem Hut gezaubert! 🪄"
   ],
   serie: [
     "🔥 NICHT ZU STOPPEN! {name} gewinnt den {serie}. Spieltag IN FOLGE – wer beendet endlich diesen Lauf?! 😤",
     "👑 SERIENTÄTER {name}! Schon {serie} Tagessiege am Stück – die Familie schaut nur noch fassungslos zu! 🙀",
-    "🚂 DER {name}-EXPRESS ROLLT WEITER! {serie} Spieltage in Serie gewonnen – kein Halten mehr! 🚆",
-    "⚡ DYNASTIE-ALARM! {name} dominiert den {serie}. Tag hintereinander – regiert hier bald ein Alleinherrscher?! 👀",
-    "🏰 DIE {name}-FESTUNG STEHT! {serie} Spieltage am Stück erobert – die Konkurrenz beißt sich die Zähne aus! 💪"
-  ],
-  // Tagessieger erobert NEU die Tabellenspitze (war vorher schlechter platziert).
-  machtUebernahme: [
-    "👑 MACHTÜBERNAHME! {name} gewinnt den Spieltag UND erklimmt die TABELLENSPITZE – von Platz {vonRang} ganz nach oben! 🚀",
-    "🚨 PUTSCH AN DER SPITZE! {name} reißt mit dem Tagessieg die Tabellenführung an sich – ein neuer Thron ist besetzt! 👑",
-    "🎢 WACHWECHSEL! {name} schnappt sich Tagessieg und Platz 1 in einem Aufwasch – die alte Spitze ist entthront! ⚡"
-  ],
-  // Tagessieger ist UND bleibt Tabellenführer (verteidigt Platz 1).
-  thronVerteidigt: [
-    "🛡️ THRON VERTEIDIGT! {name} holt den Tagessieg und bleibt souverän Tabellenführer – wer soll das stoppen? 💪",
-    "👑 ALLES BEIM ALTEN AN DER SPITZE: {name} gewinnt den Spieltag und thront weiter ganz oben! 🏆",
-    "🔒 SPITZE EINBETONIERT! {name} mauert den Vorsprung mit einem Tagessieg zu – die Verfolger verzweifeln! 😤"
-  ],
-  // Tagessieger führt die Tabelle seit mehreren Spieltagen ununterbrochen an.
-  thronSerie: [
-    "👑 DAUER-HERRSCHER {name}! Tagessieg kassiert UND seit {tage} Spieltagen ununterbrochen Platz 1 – eine echte Dynastie! 🏰",
-    "🏆 UNANGEFOCHTEN! {name} gewinnt erneut den Spieltag und führt die Tabelle seit {tage} Spieltagen am Stück an! 🔥",
-    "⏳ DIE {name}-ÄRA HÄLT AN: Tagessieg und {tage} Spieltage in Serie an der Spitze – wann endet diese Herrschaft? 👀"
-  ],
-  // Tagessieger klettert in der Gesamttabelle, ohne (schon) Platz 1 zu sein.
-  kletterer: [
-    "📈 DURCHMARSCH! {name} gewinnt den Spieltag und klettert {klettern} auf Rang {rang} – die Aufholjagd läuft! 🏃",
-    "🪜 SPRUNG NACH OBEN! Mit dem Tagessieg schiebt sich {name} um {klettern} auf Rang {rang} – es geht steil bergauf! 🔝",
-    "🚀 RAKETENSTART! {name} sammelt den Tagessieg ein und schießt {klettern} hoch auf Platz {rang}! 💥"
-  ],
-  aufsteiger: [
-    "🚀 ERDBEBEN IN DER TABELLE! {name} katapultiert sich von Platz {gr} auf Platz {rang} – wer hätte DAS gedacht?! 😲",
-    "📈 SENSATIONS-COMEBACK! {name} springt {sprung} Plätze nach vorne – die Konkurrenz zittert! 😨",
-    "🔥 SIEGESZUG! {name} pflügt sich von Platz {gr} auf Platz {rang} – stoppt diesen Lauf, wenn ihr könnt! 💪"
+    "🚂 DER {name}-EXPRESS ROLLT WEITER! {serie} Tagessiege in Serie – kein Halten mehr! 🚆",
+    "⚡ SERIEN-ALARM! {name} schnappt sich den {serie}. Tagessieg hintereinander – stoppt das endlich jemand?! 👀",
+    "🏰 DIE {name}-FESTUNG STEHT! {serie} Tagessiege am Stück – die Konkurrenz beißt sich die Zähne aus! 💪",
+    "📅 ABO AUF DEN TAGESSIEG! {name} gewinnt zum {serie}. Mal in Folge – langsam wird's unheimlich! 😅",
+    "🎶 IMMER DIESELBE PLATTE: {name} holt den {serie}. Tagessieg am Stück – Wiederholung mit Ansage! 🔁",
+    "🦾 KEINE GNADE! {name} reißt den {serie}. Tagessieg in Serie an sich – wer bremst diesen Lauf? 🛑",
+    "🌶️ HEISSER LAUF! {name} brennt weiter – {serie} Tagessiege hintereinander! 🔥",
+    "🎯 WIE EIN UHRWERK: {name} liefert den {serie}. Tagessieg in Folge – Pünktlichkeit siegt! ⏰"
   ],
   tagessiegKnapp: [
     "🥊 KOPF-AN-KOPF-RENNEN! {name} sichert sich den Tagessieg hauchdünn mit {punkte} Punkten! 🔥",
-    "⚡ NERVENKITZEL! Nur ein Wimpernschlag trennt {name} vom Rest – Tagessieg mit {punkte} Punkten! 😬"
+    "⚡ NERVENKITZEL! Nur ein Wimpernschlag trennt {name} vom Rest – Tagessieg mit {punkte} Punkten! 😬",
+    "📸 ZIELFOTO NÖTIG! {name} gewinnt den Tag um Haaresbreite mit {punkte} Punkten! 🏁",
+    "😅 PUH, GERADE NOCH! {name} rettet den Tagessieg knapp über die Linie – {punkte} Punkte! 🫣",
+    "🪡 AUF MESSERS SCHNEIDE! {name} entscheidet den Spieltag um Nadelstichbreite – {punkte} Punkte! ⚔️",
+    "⏱️ FOTOFINISH! {name} schnappt sich den Tagessieg in letzter Sekunde – {punkte} Punkte! 🎞️",
+    "🎢 HERZSCHLAG-FINALE! {name} gewinnt den Tag denkbar knapp mit {punkte} Punkten! 💓",
+    "🤏 HAARSCHARF! {name} holt den Tagessieg mit hauchdünnem Vorsprung – {punkte} Punkte! ✨"
   ],
   tagessieg: [
     "🏅 TAGESSIEGER {name}! Mit {punkte} Punkten lässt die Familie heute hinter sich! 🎉",
     "📰 {name} dominiert den Tag mit {punkte} Punkten – Hut ab! 🎩",
-    "🌟 STAR DES TAGES: {name} mit starken {punkte} Punkten – Applaus, Applaus! 👏"
+    "🌟 STAR DES TAGES: {name} mit starken {punkte} Punkten – Applaus, Applaus! 👏",
+    "🎯 TAGESBESTER {name}! {punkte} Punkte eingesammelt und souverän vorn! 💪",
+    "🥇 GOLD GEHT AN {name}! Heute mit {punkte} Punkten nicht zu schlagen! 🏆",
+    "📣 DER TAG GEHÖRT {name}! {punkte} Punkte – heute führte kein Weg vorbei! 🚀",
+    "😎 LOCKER GEMACHT: {name} holt sich den Tagessieg mit {punkte} Punkten! 🕶️",
+    "🍀 RICHTIG GETIPPT! {name} ist Tagessieger mit {punkte} Punkten – stark gespielt! 👍",
+    "📺 SCHLAGZEILE DES TAGES: {name} triumphiert mit {punkte} Punkten! 🎬",
+    "🎉 BÜHNE FREI FÜR {name}! Tagessieg mit {punkte} Punkten – verdient! 👑"
   ],
   niete: [
     "😱 KATASTROPHE! {name} geht heute komplett LEER aus – 0 Punkte! Morgen wird alles besser. 🫣",
     "🪦 SCHWARZER TAG für {name}: kein einziger Punkt heute. Kopf hoch und weitertippen! 🤗",
-    "💔 AUTSCH! {name} liegt heute bei ALLEN Tipps daneben – 0 Punkte! Kommt schon wieder! 💪"
+    "💔 AUTSCH! {name} liegt heute bei ALLEN Tipps daneben – 0 Punkte! Kommt schon wieder! 💪",
+    "🫥 KOMPLETT DANEBEN: {name} erwischt heute keinen einzigen Treffer – 0 Punkte! Morgen neu! 🌅",
+    "🌧️ REGENTAG für {name}: alle Tipps gingen daneben, 0 Punkte. Nach Regen kommt Sonne! ☀️",
+    "🙈 LIEBER WEGSCHAUEN: {name} kassiert heute eine glatte Null. Schwamm drüber, weiter geht's! 🧽",
+    "📉 TIEFFLUG! {name} bleibt heute punktlos – 0 auf dem Konto. Aufstehen, Krone richten! 👑",
+    "🃏 ALLES AUF DIE FALSCHE KARTE: {name} ohne Punkte heute. Neue Runde, neues Glück! 🍀"
   ],
   ruhetag: [
     "😴 NULLNUMMER! Heute hat's bei der GANZEN Familie nicht geklappt – 0 Punkte für alle. Morgen ist ein neuer Tag! 🌅",
     "🤷 KEIN GLÜCK HEUTE: Niemand konnte heute punkten – Aufgeben gilt aber nicht! 💪",
-    "🌫️ STILLER SPIELTAG: Heute gab's für niemanden Punkte – Zeit, sich fürs nächste Spiel warmzulaufen! 🔥"
+    "🌫️ STILLER SPIELTAG: Heute gab's für niemanden Punkte – Zeit, sich fürs nächste Spiel warmzulaufen! 🔥",
+    "🦗 GRILLENZIRPEN IN DER TABELLE: Heute punktete kein Mensch – ein echter Ruhetag! 😴",
+    "🎭 GROSSES SCHWEIGEN: Die ganze Familie geht heute leer aus – 0 Punkte für alle. Vorhang zu, morgen neu! 🎬",
+    "🧊 EISZEIT BEIM TIPPEN: Niemand traf heute ins Schwarze – kollektive Nullrunde! ❄️",
+    "🌚 SCHWARZE NACHT FÜR ALLE: Heute blieb jeder ohne Punkte – morgen scheint wieder die Tippsonne! 🌞"
   ]
 };
 // Kleine, handgezeichnete SVG-Illustrationen je Kategorie – wie ein Pressefoto
@@ -2286,15 +2294,10 @@ const SCHLAGZEILEN = {
 const SCHLAGZEILE_BILDER = {
   perfekt: `<svg viewBox="0 0 48 48"><circle cx="26" cy="22" r="17" fill="#fff" stroke="#1a1a1a" stroke-width="2"/><circle cx="26" cy="22" r="11" fill="#ffd54f" stroke="#1a1a1a" stroke-width="1.5"/><circle cx="26" cy="22" r="5" fill="#e53935"/><path d="M3 45 L26 22" stroke="#43a047" stroke-width="3" stroke-linecap="round"/><path d="M2 46 l1.5 -7 l5.5 5.5 z" fill="#2e7d32"/></svg>`,
   serie: `<svg viewBox="0 0 48 48"><path d="M24 4 C30 14 38 18 36 30 C35 40 28 44 24 44 C20 44 12 40 12 30 C12 24 16 22 18 18 C20 24 22 22 22 16 C26 18 22 10 24 4 Z" fill="#ff7043" stroke="#1a1a1a" stroke-width="1.5" stroke-linejoin="round"/><path d="M24 24 C28 28 28 34 24 40 C21 36 20 32 22 28 Z" fill="#ffd54f"/></svg>`,
-  machtUebernahme: `<svg viewBox="0 0 48 48"><path d="M6 38 L10 16 L20 28 L24 12 L28 28 L38 16 L42 38 Z" fill="#ffd54f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><rect x="6" y="38" width="36" height="6" fill="#ffb300" stroke="#1a1a1a" stroke-width="2"/><circle cx="24" cy="10" r="3" fill="#e53935" stroke="#1a1a1a" stroke-width="1.5"/></svg>`,
-  thronVerteidigt: `<svg viewBox="0 0 48 48"><path d="M24 4 L40 10 V24 C40 34 33 41 24 44 C15 41 8 34 8 24 V10 Z" fill="#4caf50" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M16 24 l6 6 l10 -12" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-  thronSerie: `<svg viewBox="0 0 48 48"><rect x="8" y="20" width="32" height="22" fill="#b0bec5" stroke="#1a1a1a" stroke-width="2"/><path d="M8 20 v-6 h4 v3 h4 v-3 h4 v3 h4 v-3 h4 v3 h4 v-3 h4 v6 Z" fill="#90a4ae" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><rect x="20" y="30" width="8" height="12" fill="#5d4037" stroke="#1a1a1a" stroke-width="1.5"/><path d="M24 6 v6" stroke="#1a1a1a" stroke-width="2"/><path d="M24 6 l8 2 l-8 2 z" fill="#e53935"/></svg>`,
-  aufsteiger: `<svg viewBox="0 0 48 48"><path d="M6 38 L18 26 L26 32 L40 14" fill="none" stroke="#43a047" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 14 H40 V24" fill="none" stroke="#43a047" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   tagessiegKnapp: `<svg viewBox="0 0 48 48"><rect x="20" y="2" width="8" height="5" rx="1" fill="#1a1a1a"/><circle cx="24" cy="28" r="17" fill="#fff" stroke="#1a1a1a" stroke-width="2.5"/><path d="M24 28 V17" stroke="#e53935" stroke-width="2.5" stroke-linecap="round"/><path d="M24 28 L31 31" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"/><path d="M24 7 v3 M39 13 l2 -2" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"/></svg>`,
   tagessieg: `<svg viewBox="0 0 48 48"><path d="M16 4 L22 22 M32 4 L26 22" stroke="#1976d2" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="30" r="13" fill="#ffd54f" stroke="#1a1a1a" stroke-width="2"/><path d="M24 23 l2 4.5 l4.5 .5 l-3.2 3.2 l1 4.5 l-4.3 -2.3 l-4.3 2.3 l1 -4.5 l-3.2 -3.2 l4.5 -.5 z" fill="#ffb300" stroke="#1a1a1a" stroke-width="1" stroke-linejoin="round"/></svg>`,
   niete: `<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="#90a4ae" stroke="#1a1a1a" stroke-width="2"/><circle cx="17" cy="20" r="2.5" fill="#1a1a1a"/><circle cx="31" cy="20" r="2.5" fill="#1a1a1a"/><path d="M15 34 q9 -8 18 0" fill="none" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"/><path d="M32 24 q2 5 4 0" fill="none" stroke="#42a5f5" stroke-width="2.5" stroke-linecap="round"/></svg>`,
-  ruhetag: `<svg viewBox="0 0 48 48"><path d="M30 6 a18 18 0 1 0 12 30 A14 14 0 0 1 30 6 Z" fill="#ffd54f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M30 12 h6 l-6 7 h6" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M38 5 h4 l-4 5 h4" fill="none" stroke="#1a1a1a" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`,
-  kletterer: `<svg viewBox="0 0 48 48"><path d="M4 42 L18 16 L26 30 L32 22 L44 42 Z" fill="#8d6e63" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M18 16 L13 26 L23 26 Z" fill="#fff"/><path d="M32 22 L28 30 L36 30 Z" fill="#fff"/><path d="M18 16 V6" stroke="#1a1a1a" stroke-width="2"/><path d="M18 6 l8 2 l-8 3 z" fill="#e53935"/></svg>`
+  ruhetag: `<svg viewBox="0 0 48 48"><path d="M30 6 a18 18 0 1 0 12 30 A14 14 0 0 1 30 6 Z" fill="#ffd54f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M30 12 h6 l-6 7 h6" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M38 5 h4 l-4 5 h4" fill="none" stroke="#1a1a1a" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`
 };
 // Passende Fußballer-Weisheiten je Kategorie – täglich wechselnd, zur
 // Schlagzeile passend ausgewählt.
@@ -2303,67 +2306,53 @@ const FUSSBALL_ZITATE = {
     { z: "Der Ball ist rund, ein Spiel dauert 90 Minuten – alles andere ist Theorie.", w: "Sepp Herberger" },
     { z: "Mia san mia.", w: "Franz Beckenbauer" },
     { z: "Erfolg ist kein Zufall, sondern das Ergebnis harter Arbeit.", w: "Pep Guardiola" },
-    { z: "Wir wollten heute gewinnen, und genau das haben wir auch geschafft.", w: "Jürgen Klopp" }
+    { z: "Wir wollten heute gewinnen, und genau das haben wir auch geschafft.", w: "Jürgen Klopp" },
+    { z: "Wenn's läuft, dann läuft's.", w: "Volksmund" },
+    { z: "Perfektion ist kein Zufall – heute schon gar nicht.", w: "frei nach Pep Guardiola" },
+    { z: "Manchmal stimmt einfach alles.", w: "Fußball-Weisheit" },
+    { z: "Heute hat einfach alles gepasst.", w: "Joachim Löw" }
   ],
   serie: [
     { z: "Form ist temporär, Klasse ist permanent.", w: "Volksmund" },
     { z: "Never change a winning team.", w: "Fußball-Weisheit" },
     { z: "Ein Lauf endet erst, wenn er endet.", w: "frei nach Yogi Berra" },
-    { z: "Wer einmal oben steht, der will da auch bleiben.", w: "Volksmund" }
-  ],
-  machtUebernahme: [
-    { z: "Wer oben angreift, muss auch oben ankommen.", w: "Volksmund" },
-    { z: "Die Tabelle lügt nie.", w: "Otto Rehhagel" },
-    { z: "Erst gewinnen, dann lächeln.", w: "Jürgen Klopp" },
-    { z: "Angriff ist die beste Verteidigung.", w: "Fußball-Weisheit" }
-  ],
-  thronVerteidigt: [
-    { z: "Einen Vorsprung muss man verteidigen wie einen Schatz.", w: "Volksmund" },
-    { z: "Mia san mia.", w: "Franz Beckenbauer" },
-    { z: "Wer vorne liegt, darf nie nachlassen.", w: "Joachim Löw" },
-    { z: "Souveränität ist auch eine Form von Stärke.", w: "Pep Guardiola" }
-  ],
-  thronSerie: [
-    { z: "Konstanz ist die schwierigste Disziplin im Fußball.", w: "Volksmund" },
-    { z: "Eine Dynastie baut man nicht an einem Tag.", w: "frei nach Pep Guardiola" },
-    { z: "Wer dauerhaft oben steht, hat es sich verdient.", w: "Otto Rehhagel" },
-    { z: "Klasse setzt sich auf Dauer durch.", w: "Fußball-Weisheit" }
-  ],
-  kletterer: [
-    { z: "Der Weg nach oben beginnt mit einem Schritt.", w: "Volksmund" },
-    { z: "Aufstehen, Krone richten, weitermachen.", w: "Volksmund" },
-    { z: "Wer kämpft, kann verlieren – wer nicht kämpft, hat schon verloren.", w: "Bertolt Brecht" },
-    { z: "Nach oben gibt's keine Abkürzung, nur harte Arbeit.", w: "frei nach Pep Guardiola" }
-  ],
-  aufsteiger: [
-    { z: "Es ist noch nicht vorbei, bis es vorbei ist.", w: "Yogi Berra" },
-    { z: "Aufstehen, Krone richten, weitermachen.", w: "Volksmund" },
-    { z: "Man kann verlieren, aber man darf nicht aufgeben.", w: "Otto Rehhagel" },
-    { z: "Der Ball ist rund, und das Leben geht weiter.", w: "frei nach Sepp Herberger" }
+    { z: "Wer gewinnt, hat immer recht.", w: "Volksmund" },
+    { z: "Ein Sieg ist schön, eine Serie ist schöner.", w: "Fußball-Weisheit" },
+    { z: "Erfolg macht hungrig, nicht satt.", w: "Volksmund" },
+    { z: "Wer einmal gewinnt, will immer gewinnen.", w: "frei nach Jürgen Klopp" }
   ],
   tagessiegKnapp: [
     { z: "Am Ende zählt nur das Ergebnis.", w: "Otto Rehhagel" },
     { z: "Ein Tor reicht – Hauptsache vorne.", w: "Volksmund" },
     { z: "Manchmal entscheidet das Quäntchen Glück.", w: "Joachim Löw" },
-    { z: "Der Sieg gehört der Mannschaft.", w: "Joachim Löw" }
+    { z: "Der Sieg gehört der Mannschaft.", w: "Joachim Löw" },
+    { z: "Knapp gewonnen ist auch gewonnen.", w: "Volksmund" },
+    { z: "Glück ist, wenn Können auf Gelegenheit trifft.", w: "Fußball-Weisheit" }
   ],
   tagessieg: [
     { z: "Schau'n mer mal.", w: "Sepp Herberger" },
     { z: "Fleiß schlägt Talent, wenn Talent nicht fleißig ist.", w: "Tim Notke" },
     { z: "Erst gewinnen, dann lächeln.", w: "Jürgen Klopp" },
-    { z: "Der Sieg gehört der Mannschaft.", w: "Joachim Löw" }
+    { z: "Der Sieg gehört der Mannschaft.", w: "Joachim Löw" },
+    { z: "Entscheidend is auf'm Platz.", w: "Alfred Preißler" },
+    { z: "Wer gewinnt, hat gut lachen.", w: "Volksmund" },
+    { z: "Ein guter Tag fängt mit einem Sieg an.", w: "Fußball-Weisheit" }
   ],
   niete: [
     { z: "Nach dem Spiel ist vor dem Spiel.", w: "Sepp Herberger" },
     { z: "Verlieren ist erlaubt, aufgeben nicht.", w: "Jürgen Klopp" },
     { z: "Auch aus einer Niederlage kann man lernen – wenn man will.", w: "Joachim Löw" },
-    { z: "Morgen ist auch noch ein Tag.", w: "Volksmund" }
+    { z: "Morgen ist auch noch ein Tag.", w: "Volksmund" },
+    { z: "Wer nie verliert, weiß den Sieg nicht zu schätzen.", w: "Fußball-Weisheit" },
+    { z: "Aufstehen ist wichtiger als Hinfallen.", w: "Volksmund" }
   ],
   ruhetag: [
     { z: "Nach dem Spiel ist vor dem Spiel.", w: "Sepp Herberger" },
     { z: "Der Ball ist rund, ein Spiel dauert 90 Minuten – alles andere ist Theorie.", w: "Sepp Herberger" },
     { z: "Morgen ist auch noch ein Tag.", w: "Volksmund" },
-    { z: "Auch aus einer Niederlage kann man lernen – wenn man will.", w: "Joachim Löw" }
+    { z: "Auch aus einer Niederlage kann man lernen – wenn man will.", w: "Joachim Löw" },
+    { z: "Ruhe ist die Kraft der Starken.", w: "Volksmund" },
+    { z: "Manchmal ist Pause auch ein Ergebnis.", w: "Fußball-Weisheit" }
   ]
 };
 function schlagzeileVorlage(tpl, vals) {
@@ -2627,7 +2616,7 @@ function berechneTagesAwards(spielerDetails, anzahlSpiele, pechvogel) {
 function schlagzeileDesTages() {
   const tf = berechneTagesform();
   if (!tf) return null;
-  const { tagesStand, aufsteiger, sprung, anzahlSpiele, fensterDatum, fensterSpielIds } = tf;
+  const { tagesStand, anzahlSpiele, fensterDatum, fensterSpielIds } = tf;
 
   const seed = Math.floor(fensterDatum.getTime() / 86400000);
   const wahl = (arr) => arr[seed % arr.length];
@@ -2671,42 +2660,12 @@ function schlagzeileDesTages() {
     }
   }
 
-  // Spieltag-Sieger vs. Tabelle: Was macht der heutige Tagessieg mit der
-  // Gesamtplatzierung? (Übernahme der Spitze, Verteidigung, Aufstieg um X Plätze)
-  if (tagessieger.length === 1) {
-    const winId = tagessieger[0].id;
-    const standVorher = berechneStand(fensterSpielIds);
-    // Nur wenn es schon ein aussagekräftiges "vorher" gab (nicht am allerersten Spieltag).
-    if (standVorher.some(s => s.punkte > 0)) {
-      const rangJetzt = berechneStand().find(s => s.id === winId)?.rang;
-      const rangVorher = standVorher.find(s => s.id === winId)?.rang;
-      const name = namen(tagessieger);
-      if (rangJetzt === 1 && rangVorher > 1) {
-        kandidaten.push({ prio: 3.8, kategorie: "machtUebernahme",
-          text: schlagzeileVorlage(wahl(SCHLAGZEILEN.machtUebernahme), { name, vonRang: rangVorher }) });
-      } else if (rangJetzt === 1) {
-        // Bleibt an der Spitze – mit Führungs-Serie noch reißerischer.
-        const fs = fuehrungsSerie();
-        if (fs && fs.spielerId === winId && fs.serie >= 2) {
-          kandidaten.push({ prio: 3.6, kategorie: "thronSerie",
-            text: schlagzeileVorlage(wahl(SCHLAGZEILEN.thronSerie), { name, tage: fs.serie }) });
-        } else {
-          kandidaten.push({ prio: 3.3, kategorie: "thronVerteidigt",
-            text: schlagzeileVorlage(wahl(SCHLAGZEILEN.thronVerteidigt), { name }) });
-        }
-      } else if (rangVorher && rangJetzt && rangVorher > rangJetzt) {
-        const anz = rangVorher - rangJetzt;
-        kandidaten.push({ prio: 3.1, kategorie: "kletterer",
-          text: schlagzeileVorlage(wahl(SCHLAGZEILEN.kletterer),
-            { name, klettern: anz === 1 ? "1 Platz" : anz + " Plätze", rang: rangJetzt }) });
-      }
-    }
-  }
-
-  if (aufsteiger && sprung >= 2) {
-    kandidaten.push({ prio: 3, kategorie: "aufsteiger", text: schlagzeileVorlage(wahl(SCHLAGZEILEN.aufsteiger),
-      { name: `${aufsteiger.avatar} ${esc(aufsteiger.name)}`, gr: aufsteiger.gesamtRang, rang: aufsteiger.rang, sprung }) });
-  }
+  // Hinweis: Tabellen-/Gesamtplatzierungs-Storys (Führung übernommen, verteidigt,
+  // in der Tabelle hochgeklettert) gehören bewusst NICHT in den Tages-Block. Sie
+  // würden den Tagessieg mit der Gesamtwertung vermischen und sind oft sogar
+  // irreführend – der Tagessieger ist nicht automatisch der Tabellenführer. Diese
+  // Gesamt-Geschichten erzählt ausschließlich der Abschnitt "Tabellenführung" am
+  // Ende der Rundschau. Der Tages-Block bleibt damit rein tagesbezogen.
   if (tagessieger.length && zweiter && (tagessieger[0].punkte - zweiter.punkte <= 1) && tagesStand.length > 2) {
     kandidaten.push({ prio: 2, kategorie: "tagessiegKnapp", text: schlagzeileVorlage(wahl(SCHLAGZEILEN.tagessiegKnapp),
       { name: namen(tagessieger), punkte: tagessieger[0].punkte }) });
@@ -2740,18 +2699,58 @@ const KOLUMNIST = {
   rubrik: "Ferdis Senf",
   signatur: "Aber was weiß ich schon – ich tippe ja nur vom Sofa aus."
 };
+// Ferdis Senf bleibt rein tagesbezogen: er kommentiert den Tagessieg, nicht die
+// Gesamttabelle. Mehrere Varianten je Kategorie, damit der Alte nicht in
+// Wiederholungen verfällt.
 const KOLUMNE_TEXTE = {
-  perfekt: ["Ein perfekter Tag von {name}? Zu meiner Zeit nannte man so jemanden schlicht: verdächtig gut."],
-  serie: ["{name} kriegt ja keiner mehr eingefangen. Da oben wird's langsam langweilig – im allerbesten Sinne."],
-  machtUebernahme: ["Neuer Chef im Haus: {name}. Mein Rat – genießt die Aussicht von der Spitze, solange sie hält."],
-  thronSerie: ["{name} thront unbeirrt weiter. Ein Hoch auf die Beständigkeit, das gibt's bei mir nicht oft!"],
-  thronVerteidigt: ["{name} verteidigt die Spitze. Solide Hausmannskost – mehr Lob ist heute nicht drin."],
-  kletterer: ["{name} klettert die Tabelle hoch wie ich früher die Kirschleiter. Weiter so, bloß nicht runterfallen!"],
-  aufsteiger: ["Achtung, {name} kommt von hinten angerauscht. Hab ich natürlich längst kommen sehen."],
-  tagessiegKnapp: ["Hauchdünner Tagessieg für {name}. Solche Krimis sind fast zu viel für mein altes Herz."],
-  tagessieg: ["Tagessieg für {name}. Verdient? Sagen wir's so: heute schon."],
-  niete: ["Null Punkte sind auch eine Ansage. Kopf hoch – viel schlechter wird's kaum noch."],
-  ruhetag: ["Ein ganzer Tag ohne Treffer. Da bleibt selbst mir die Spucke weg – und das will was heißen."]
+  perfekt: [
+    "Ein perfekter Tag von {name}? Zu meiner Zeit nannte man so jemanden schlicht: verdächtig gut.",
+    "{name} tippt fehlerfrei. So was hab ich zuletzt bei meiner Frau beim Kartenspielen gesehen – und die hat geschummelt.",
+    "Alles richtig, {name}? Respekt. Ich krieg ja nicht mal die Fernbedienung auf Anhieb bedient.",
+    "Ein makelloser Spieltag von {name}. Sowas muss man erstmal nachmachen – ich jedenfalls nicht.",
+    "Volle Punktzahl für {name}. Entweder pures Können oder ein Pakt mit dem Fußballgott. Ich tippe auf Letzteres.",
+    "{name} ohne einen einzigen Fehler. Da werd sogar ich neidisch – und das will im Alter was heißen."
+  ],
+  serie: [
+    "{name} gewinnt schon wieder den Tag. Diesen Lauf kriegt ja keiner mehr eingefangen!",
+    "Tagessieg um Tagessieg von {name}. Solche Serien kenn ich sonst nur vom Sonntagsbraten – jede Woche dasselbe, aber gut.",
+    "{name} sammelt Tagessiege wie ich früher Briefmarken. Eine schönere Sammlung als meine, das gebe ich zu.",
+    "Noch ein Tagessieg für {name}. Langsam sollte man Eintritt verlangen für diese Vorstellung.",
+    "{name} und der tägliche Tagessieg – ein eingespieltes Paar. Fast schon ein Abo, würde ich sagen.",
+    "Schon wieder {name} ganz vorn am Tagesende. Beständigkeit nennt man das – oder schlicht: nervig gut."
+  ],
+  tagessiegKnapp: [
+    "Hauchdünner Tagessieg für {name}. Solche Krimis sind fast zu viel für mein altes Herz.",
+    "Knapper geht's kaum, {name}. Bei so einem Fotofinish brauch ich erstmal einen Schluck Kamillentee.",
+    "{name} gewinnt den Tag um Haaresbreite. Spannender als jeder Sonntagskrimi, sage ich euch.",
+    "Ein Zittersieg von {name}. Mein Blutdruck und ich hätten gut auf dieses Finale verzichten können.",
+    "So knapp, {name}? Da hätte auch eine Münze entscheiden können. Hauptsache, sie fiel auf eure Seite.",
+    "{name} rettet den Tagessieg ganz knapp über die Ziellinie. Glück gehört eben auch dazu."
+  ],
+  tagessieg: [
+    "Tagessieg für {name}. Verdient? Sagen wir's so: heute schon.",
+    "{name} gewinnt den Tag. Ordentlich gemacht – mehr Lob gibt's bei mir aber erst beim nächsten Mal.",
+    "Sauberer Tagessieg von {name}. Nicht spektakulär, aber wirkungsvoll – so mag ich das.",
+    "{name} schnappt sich den Tag. Brav getippt, brav getippt.",
+    "Heute gehört der Tag {name}. Genießt ihn, morgen wird wieder neu gemischt.",
+    "{name} holt den Tagessieg. Solide Arbeit – ganz nach meinem altmodischen Geschmack."
+  ],
+  niete: [
+    "Null Punkte sind auch eine Ansage. Kopf hoch – viel schlechter wird's kaum noch.",
+    "Ein Tag ganz ohne Treffer. Passiert den Besten – und offenbar auch heute jemandem.",
+    "Keine Punkte heute? Halb so wild. Auch ich hab schon ganze Tippscheine in die Tonne getreten.",
+    "Null auf dem Konto. Das nennt man dann wohl ausbaufähig – mit ganz viel Luft nach oben.",
+    "Ein gebrauchter Tag, würde ich sagen. Morgen kann's nur besser werden, glaubt's mir.",
+    "Mal kein Punkt dabei. Macht nichts – Hauptsache, der Humor bleibt erhalten."
+  ],
+  ruhetag: [
+    "Ein ganzer Tag ohne Treffer. Da bleibt selbst mir die Spucke weg – und das will was heißen.",
+    "Heute punktet keiner. So ein kollektiver Fehltag hat ja fast schon was Beruhigendes.",
+    "Nullrunde für alle. Da können wir uns wenigstens gemeinsam an den Köpfen kratzen.",
+    "Niemand trifft heute. Tja, manchmal gewinnt eben der Fußball gegen die ganze Familie.",
+    "Ein stiller Tag in der Tabelle. Nutzt die Ruhe – morgen geht das Theater von vorne los.",
+    "Kein Punkt für niemanden. Das nenne ich mal demokratisch verteiltes Pech."
+  ]
 };
 function kolumneFuer(kategorie, name, seed) {
   const liste = KOLUMNE_TEXTE[kategorie] || KOLUMNE_TEXTE.tagessieg;
@@ -2762,22 +2761,37 @@ function kolumneFuer(kategorie, name, seed) {
 // aus dem "Im Rampenlicht"-Profil (Joker-Coup, laufende Serie, Scharfschütze
 // oder solide Tendenz) – erscheint daher nur an Tagen mit klarem Einzelsieger.
 const PRESSE_ICON = `<svg viewBox="0 0 48 48"><rect x="19" y="3" width="10" height="20" rx="5" fill="#37474f" stroke="#1a1a1a" stroke-width="2"/><path d="M12 21 a12 12 0 0 0 24 0" fill="none" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><path d="M24 33 v7" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><path d="M16 44 h16" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/></svg>`;
+// O-Töne des TAGESSIEGERS – beziehen sich auf seine heutige Leistung bzw. seinen
+// laufenden Tagessieg-Lauf, NICHT auf die Tabellenführung (er muss gar nicht
+// Tabellenführer sein). Mehrere Varianten je Stimmung, damit es frisch bleibt.
 const PRESSE_ZITATE = {
   joker: [
     "Der Joker war reine Mathematik – ich hab nur gewartet, bis er sich lohnt.",
-    "Ehrlich? Ich hab einfach aufs richtige Pferd gesetzt – heute war's mein Joker."
+    "Ehrlich? Ich hab einfach aufs richtige Pferd gesetzt – heute war's mein Joker.",
+    "Den Joker spielt man mit dem Bauch und rechnet hinterher nach. Hat ja geklappt.",
+    "Joker drauf und Augen zu – manchmal ist Mut die beste Strategie.",
+    "Ich wusste, der Joker zahlt sich heute aus. Nennt es ruhig Instinkt."
   ],
   serie: [
     "Eine Serie ist wie ein guter Espresso – man will sie nicht stoppen.",
-    "Ich genieße jeden Tag an der Spitze, als wäre es der letzte."
+    "Tagessieg um Tagessieg – ich nehme einfach jeden Tag, wie er kommt.",
+    "Ich denke nicht an die Serie, ich denke an den nächsten Tipp. So bleibt man im Lauf.",
+    "Mehrere Tage in Folge gewinnen? Das macht hungrig auf mehr, nicht satt.",
+    "Solange der Lauf hält, genieße ich jeden einzelnen Tagessieg."
   ],
   scharf: [
     "Ich seh das Ergebnis manchmal einfach vorher. Kein Hexenwerk, nur Übung.",
-    "Wer exakt tippt, hat auch exakt verdient zu gewinnen."
+    "Wer exakt tippt, hat auch exakt verdient zu gewinnen.",
+    "Volltreffer sind kein Glück – das ist Gefühl für den Fußball.",
+    "Ich tippe nicht das Wahrscheinliche, ich tippe das Richtige.",
+    "Wenn man lang genug hinschaut, sieht man das Ergebnis kommen."
   ],
   default: [
     "War heute einfach mein Tag. Morgen ist wieder alles offen.",
-    "Kein Geheimnis – ich bin einfach meinem Bauchgefühl gefolgt."
+    "Kein Geheimnis – ich bin einfach meinem Bauchgefühl gefolgt.",
+    "Heute lief's, morgen schau'n mer mal. So einfach ist das.",
+    "Ich hab getippt, was ich für richtig hielt – und heute stimmte es.",
+    "Ein guter Tag im Büro, würde ich sagen. Mehr steckt nicht dahinter."
   ]
 };
 function pressekonferenzZitat(rampenlicht, seed) {
