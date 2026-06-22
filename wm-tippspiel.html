@@ -2744,90 +2744,92 @@ function schlagzeileDesTages() {
   try { bericht = spieltagBericht(tf); } catch(e) { console.error("spieltagBericht:", e); }
   return { text: sieger.text, zitat, datum: fensterDatum, kategorie: sieger.kategorie, bericht };
 }
-// Die Kolumne: eine feste, wiederkehrende Stimme ("Ferdis Senf") mit eigener
-// Meinung und einem Running-Gag-Sign-off, die jeden Tag denselben Charakter
-// behält – im Gegensatz zu den wechselnden echten Fußball-Zitaten darunter.
+// Die Kolumne "Billes Ballorakel": kommentiert von Bille, dem verfressenen und
+// sehr anhänglichen Cockerspaniel der Familie. Sie versteht das ganze Tippen
+// nicht, deutet aber alles in Hundelogik um (Leberwurst, Lachs, Schoß, Sofa,
+// Ball, Nickerchen). Feste Stimme mit Running-Gag-Sign-off, jeden Tag derselbe
+// Charakter – im Gegensatz zu den wechselnden echten Fußball-Zitaten darunter.
 const KOLUMNIST = {
-  name: "Ferdinand",
-  avatar: "🧓",
-  rubrik: "Ferdis Senf",
-  signatur: "Aber was weiß ich schon – ich tippe ja nur vom Sofa aus."
+  name: "Bille",
+  avatar: "🐶",
+  rubrik: "Billes Ballorakel",
+  signatur: "Mehr weiß ich auch nicht – ich bin nur der Hund. Wer wirft jetzt den Ball? 🎾"
 };
-// Ferdis Senf bleibt rein tagesbezogen: er kommentiert den Tagessieg, nicht die
-// Gesamttabelle. Mehrere Varianten je Kategorie, damit der Alte nicht in
-// Wiederholungen verfällt.
+// Billes Ballorakel bleibt rein tagesbezogen: sie kommentiert den Tagessieg, nicht
+// die Gesamttabelle. Viele Varianten je Kategorie, damit der kleine Schlingel
+// nicht in Wiederholungen verfällt.
 const KOLUMNE_TEXTE = {
   perfekt: [
-    "Ein perfekter Tag von {name}? Zu meiner Zeit nannte man so jemanden schlicht: verdächtig gut.",
-    "{name} tippt fehlerfrei. So was hab ich zuletzt bei meiner Frau beim Kartenspielen gesehen – und die hat geschummelt.",
-    "Alles richtig, {name}? Respekt. Ich krieg ja nicht mal die Fernbedienung auf Anhieb bedient.",
-    "Ein makelloser Spieltag von {name}. Sowas muss man erstmal nachmachen – ich jedenfalls nicht.",
-    "Volle Punktzahl für {name}. Entweder pures Können oder ein Pakt mit dem Fußballgott. Ich tippe auf Letzteres.",
-    "{name} ohne einen einzigen Fehler. Da werd sogar ich neidisch – und das will im Alter was heißen.",
-    "Ein fehlerfreier Tag von {name}. So jung und schon so abgezockt – das gefällt dem alten Ferdinand.",
-    "Alles richtig getippt, {name}. Früher hätte man gesagt: Da hat einer den Riecher. Hat sich nichts geändert.",
-    "{name} mit der perfekten Runde. Wenn das so weitergeht, muss ich mir glatt eine zweite Lesebrille zulegen.",
-    "Volltreffer über Volltreffer von {name}. Ich applaudiere – leise, sonst wacht die Katze auf."
+    "{name} hat heute ALLES richtig getippt! Das Ballorakel hat's natürlich längst gewusst – ich hab vorsorglich schon am Wurstpapier geschnuppert. So ein perfekter Tag schreit nach Leberwurst, und zwar für mich.",
+    "Ein makelloser Spieltag von {name}! Vor lauter Aufregung bin ich dreimal um den Sofatisch geflitzt. Jetzt brauch ich aber dringend einen Happen Lachs zur Beruhigung – und einen Schoß zum Reinkuscheln.",
+    "{name} ohne einen einzigen Fehler – Wahnsinn! So laut wird hier sonst nur gejubelt, wenn die Leberwurstdose aufgeht. Mein Stummelschwanz wedelt jedenfalls auf Maximalstufe.",
+    "Perfekter Tag für {name}! Ich als Ballorakel sage: war Schicksal. Belohnung für den Hund, der das vorausgesehen hat? Ich nehme Lachs. Oder Wurst. Oder beides, ich bin da nicht wählerisch.",
+    "Alles richtig, {name}! Ich war so hibbelig, dass ich glatt vergessen hab, meinen Quietscheball zu bewachen. Das passiert mir wirklich nur an ganz großen Tagen.",
+    "Volltreffer auf ganzer Linie von {name}. Ich hab das vom besten Platz aus verfolgt – mitten zwischen euch auf dem Sofa. So ein perfekter Tag verlangt jetzt nach Streicheleinheiten. Und Wurst. Vor allem Wurst.",
+    "{name} macht den perfekten Spieltag! Sowas feiert man im Rudel – am besten mit einer Runde Leberwurst für alle. Und mit 'alle' meine ich natürlich in erster Linie mich.",
+    "Ein fehlerfreier Tag, {name}! Ich hab dir die ganze Zeit vom Schoß aus die Daumen gedrückt – also, so gut das mit Pfoten eben geht. Trainerhonorar bitte in Lachs.",
+    "Das Ballorakel hat gesprochen und {name} hat geliefert: alles richtig! Ich bin so stolz, dass ich glatt mein Nachmittagsnickerchen verschoben hab. Und das will bei mir wirklich was heißen.",
+    "{name} räumt restlos alles ab! Ich konnte vor Freude kaum stillhalten – dabei bin ich sonst Weltmeisterin im Stillhalten, sobald es Richtung Sofa und Decke geht. Jetzt aber: Belohnung. Für uns beide."
   ],
   serie: [
-    "{name} gewinnt schon wieder den Tag. Diesen Lauf kriegt ja keiner mehr eingefangen!",
-    "Tagessieg um Tagessieg von {name}. Solche Serien kenn ich sonst nur vom Sonntagsbraten – jede Woche dasselbe, aber gut.",
-    "{name} sammelt Tagessiege wie ich früher Briefmarken. Eine schönere Sammlung als meine, das gebe ich zu.",
-    "Noch ein Tagessieg für {name}. Langsam sollte man Eintritt verlangen für diese Vorstellung.",
-    "{name} und der tägliche Tagessieg – ein eingespieltes Paar. Fast schon ein Abo, würde ich sagen.",
-    "Schon wieder {name} ganz vorn am Tagesende. Beständigkeit nennt man das – oder schlicht: nervig gut.",
-    "{name} gewinnt und gewinnt. Diese Platte hat keinen Sprung, die läuft einfach rund.",
-    "Wieder {name} am Tagesende vorn. Beständigkeit ist eine Tugend – und offenbar eine Familieneigenschaft.",
-    "{name} legt Tagessieg um Tagessieg nach. Da komm sogar ich mit dem Staunen kaum hinterher.",
-    "Noch ein Tag, noch ein Sieg für {name}. Man könnte fast die Uhr danach stellen."
+    "{name} gewinnt schon wieder! Das ist so zuverlässig wie mein Mittagsschlaf – einmal angefangen, hört's nicht mehr auf. Davor zieh ich die Schlappohren.",
+    "Noch ein Tagessieg für {name}. Diese Serie läuft so rund wie mein täglicher Bettel-Plan vor dem Kühlschrank. Respekt, Rudel!",
+    "{name} und der nächste Sieg – als Ballorakel hab ich das natürlich kommen sehen. Ungefähr so sicher, wie dass ich gleich wieder auf irgendeinem Schoß lande.",
+    "Schon wieder {name} vorn. Beständigkeit nenne ich das – so beständig wie meine Liebe zu Leberwurst. Und die ist grenzenlos, das könnt ihr mir glauben.",
+    "{name} legt Sieg um Sieg nach. So eine Serie muss gefeiert werden, am besten täglich, am besten mit Wurst. Ich hätte da sofort Zeit.",
+    "Wieder gewonnen, {name}! Das geht ja zu wie bei mir und dem Ball – einmal geworfen, apportier ich ihn hundertmal. Aufhören gibt's nicht.",
+    "Die {name}-Serie hält an. Ich find Routinen super: aufstehen, fressen, Schoß, schlafen, Ball, schlafen. Funktioniert bei mir, funktioniert bei {name}.",
+    "{name} bleibt oben dran. Als Ballorakel sage ich: Das hört so schnell nicht auf – ungefähr so wenig wie mein Hunger. Und mein Hunger ist legendär.",
+    "Noch ein Tag, noch ein Sieg für {name}. Ich wedel mir hier langsam den Stummelschwanz wund. Vielleicht gibt's für die Dauerleistung ja mal Lachs? Für mich, meine ich.",
+    "{name} gewinnt einfach weiter. Hibbelig wie ich bin, kann ich vor Freude kaum auf dem Sofa liegen bleiben – und das passiert mir wirklich selten."
   ],
   tagessiegKnapp: [
-    "Hauchdünner Tagessieg für {name}. Solche Krimis sind fast zu viel für mein altes Herz.",
-    "Knapper geht's kaum, {name}. Bei so einem Fotofinish brauch ich erstmal einen Schluck Kamillentee.",
-    "{name} gewinnt den Tag um Haaresbreite. Spannender als jeder Sonntagskrimi, sage ich euch.",
-    "Ein Zittersieg von {name}. Mein Blutdruck und ich hätten gut auf dieses Finale verzichten können.",
-    "So knapp, {name}? Da hätte auch eine Münze entscheiden können. Hauptsache, sie fiel auf eure Seite.",
-    "{name} rettet den Tagessieg ganz knapp über die Ziellinie. Glück gehört eben auch dazu.",
-    "{name} mit dem Zittersieg des Tages. Mein Kreislauf und ich machen jetzt erstmal eine Verschnaufpause.",
-    "So knapp gewinnt {name} den Tag, dass ich zweimal hinschauen musste. Hat aber gereicht.",
-    "Ein Wimpernschlag entscheidet zugunsten von {name}. Genau dafür liebe ich diesen Sport.",
-    "{name} rettet den Tagessieg mit Ach und Krach. Hauptsache, gerettet ist gerettet."
+    "Ganz knapp gewinnt {name}! So spannend war's, dass ich vor Aufregung den Quietscheball hab fallen lassen. Und ich lasse NIE den Ball fallen.",
+    "Hauchdünner Sieg für {name}. Mein Hundeherz hat so geklopft, ich brauch jetzt erstmal ein Nickerchen auf irgendeinem Schoß. Freiwillige vor.",
+    "{name} holt den Tag um eine Schnauzenlänge. Das Ballorakel war sich da ehrlich gesagt unsicher – ich hab vorsichtshalber schon mal mitgewinselt.",
+    "So knapp, {name}! Ich war so hibbelig, dass ich dreimal vom Sofa gehüpft und wieder rauf bin. Jetzt aber Belohnung für die Nerven – Lachs hilft da erfahrungsgemäß.",
+    "{name} rettet den Sieg über die Linie. Puh. Ich leg mich jetzt mitten zwischen euch und atme einmal tief durch. Ein Stück Wurst zur Beruhigung wäre nicht verkehrt.",
+    "Ein Zittersieg von {name}! Bei so viel Spannung wackelt sogar mein Stummelschwanz vor Aufregung. Solche Krimis sind eigentlich nichts für einen Hund, der so gern schläft wie ich.",
+    "Knapper geht's kaum, {name}. Ich hab vor lauter Mitfiebern glatt vergessen zu betteln – und das ist mir, ehrlich, noch nie passiert.",
+    "{name} mit dem Last-Minute-Sieg. Mein Ballorakel-Tipp wäre anders ausgefallen, aber gut – Hauptsache, das Rudel jubelt und es fällt was Essbares ab.",
+    "So eng, {name}! Ich klebe vor Aufregung noch fester an deinem Bein als sonst. Und ich klebe wirklich schon ziemlich fest, fragt die Familie.",
+    "{name} gewinnt auf den letzten Drücker. Bei dem Herzklopfen brauch ich jetzt Trost-Kuscheln. Und Lachs. In genau der Reihenfolge. Oder andersrum, egal."
   ],
   tagessieg: [
-    "Tagessieg für {name}. Verdient? Sagen wir's so: heute schon.",
-    "{name} gewinnt den Tag. Ordentlich gemacht – mehr Lob gibt's bei mir aber erst beim nächsten Mal.",
-    "Sauberer Tagessieg von {name}. Nicht spektakulär, aber wirkungsvoll – so mag ich das.",
-    "{name} schnappt sich den Tag. Brav getippt, brav getippt.",
-    "Heute gehört der Tag {name}. Genießt ihn, morgen wird wieder neu gemischt.",
-    "{name} holt den Tagessieg. Solide Arbeit – ganz nach meinem altmodischen Geschmack.",
-    "{name} macht den Tagessieg klar. Kein großes Tamtam, einfach solide – mag ich.",
-    "Heute tippt {name} am besten. Verdienter Tagessieg, da gibt's nichts zu meckern. Ausnahmsweise.",
-    "{name} schnappt sich den Tag. Ordentlich, unaufgeregt, wirkungsvoll – ganz mein Stil.",
-    "Der Tagessieg geht an {name}. Brav gemacht – jetzt aber nicht übermütig werden, junger Freund."
+    "Sieg für {name}! Ich hab den ganzen Spieltag brav danebengelegen und moralisch unterstützt. Trainerhonorar? Ich hätte da was: Wurst. Und danach kuscheln. Sofort.",
+    "{name} macht den Tagessieg klar. Vom besten Platz aus verfolgt – mitten unter euch auf dem Sofa, wie immer. Jetzt bitte den Sieg mit mir teilen, am liebsten in Leberwurst.",
+    "Tagessieg für {name}! Als Ballorakel sage ich: verdient. Und als verfressener Hund sage ich: Das ruft nach einer Belohnung. Für den Sieger ein Lob, für mich ein Happen.",
+    "{name} gewinnt den Tag. Schön gemacht! Ich würd jetzt gern auf den Schoß und mitfeiern – und falls dabei zufällig was Essbares in meine Richtung fällt, sag ich auch nicht nein.",
+    "Heute gehört der Tag {name}. Ich feiere auf meine Art: einmal aufgeregt durchs Wohnzimmer flitzen, dann ab auf den Schoß zum Kuscheln. Wurst optional, aber sehr erwünscht.",
+    "Sieg eingefahren, {name}! Ich hab extra mein Nickerchen unterbrochen, um zu wedeln. Das gibt's bei mir nicht umsonst – ich sag nur: Lachs.",
+    "{name} ist heute vorn. Das Rudel ist glücklich, also bin ich's auch. Glückliche Stimmung macht nämlich erfahrungsgemäß großzügig beim Verteilen von Leckerlis.",
+    "Tagessieg für {name}! Ich apportiere jetzt symbolisch den Pokal – also meinen Quietscheball – und leg ihn dir vor die Füße. Eine kleine Wurst als Finderlohn?",
+    "{name} gewinnt, das Rudel jubelt, ich wedel mit. Am schönsten wär's jetzt: alle zusammen aufs Sofa, ich in die Mitte, und irgendwer hat hoffentlich Käse dabei.",
+    "Sauberer Sieg, {name}. Als Ballorakel nicke ich anerkennend. Als Hund frag ich: Reicht mein anerkennendes Nicken für ein Stück Leberwurst? Bitte?"
   ],
   niete: [
-    "Null Punkte sind auch eine Ansage. Kopf hoch – viel schlechter wird's kaum noch.",
-    "Ein Tag ganz ohne Treffer. Passiert den Besten – und offenbar auch heute jemandem.",
-    "Keine Punkte heute? Halb so wild. Auch ich hab schon ganze Tippscheine in die Tonne getreten.",
-    "Null auf dem Konto. Das nennt man dann wohl ausbaufähig – mit ganz viel Luft nach oben.",
-    "Ein gebrauchter Tag, würde ich sagen. Morgen kann's nur besser werden, glaubt's mir.",
-    "Mal kein Punkt dabei. Macht nichts – Hauptsache, der Humor bleibt erhalten.",
-    "Heute kein Punkt für jemanden – das nennt man dann wohl einen Lerntag. Kopf hoch!",
-    "Null Zähler. Tja, auch das gehört dazu. Morgen schmeckt der Erfolg dafür doppelt so gut.",
-    "Ein Tag zum Vergessen für den einen oder anderen. Macht nichts – vergessen kann ich gut.",
-    "Mal kein Treffer dabei. Halb so wild – der nächste Spieltag wartet schon ums Eck."
+    "Null Punkte für {name}? Komm her, leg dich zu mir, wir sind jetzt kurz traurig zusammen. Und dann essen wir was – hilft immer. Mir zumindest.",
+    "Heute kein Treffer für {name}. Kenn ich – genau so guck ich, wenn das Eichhörnchen entkommt. Kopf hoch, Schwanz hoch, und ab auf den Schoß zum Trösten.",
+    "{name} ohne Punkte heute. Macht nichts! Ich find dich trotzdem toll und würd mich am liebsten sofort bei dir einkuscheln. Vielleicht teilen wir uns ein Stück Wurst zum Trost?",
+    "Null für {name}. Das Ballorakel hat sich da wohl verschnüffelt, sorry. Aber weißt du, was hilft? Sofa, Decke, ich auf deinem Schoß. Probieren wir's aus.",
+    "Heute lief's nicht für {name}. So einen Tag verschläft man am besten – das ist mein Spezialgebiet, da kann ich dir was beibringen. Erst aber: ein Trost-Leckerli.",
+    "Keine Punkte, {name}? Nicht weiter schlimm. Komm, wir besuchen die Oma – die kennt mich als Foxy und hat IMMER was Gutes da. Da vergisst man jeden Fehltipp.",
+    "{name} geht heute leer aus. Ich auch, was mein Betteln angeht – wir sind also im selben Korb. Lass uns gemeinsam jammern, am besten auf dem Sofa, ganz eng aneinander.",
+    "Null Punkte für {name}. Halb so wild. Ich leg meine Schnauze auf dein Knie, du kraulst mich, und die Welt ist wieder in Ordnung. Ein Häppchen Lachs schadet aber auch nicht.",
+    "Heute mal nix, {name}. Bei mir gilt die Regel: Wenn der Tag schlecht ist, helfen Fressen und Kuscheln. Funktioniert zuverlässig. Sollen wir?",
+    "{name} ohne Punkte – Kopf hoch! Ich bin trotzdem dein größter Fan und kleb wie immer an dir. Spätestens nach einer Streicheleinheit (und einer Wurst) ist alles wieder gut."
   ],
   ruhetag: [
-    "Ein ganzer Tag ohne Treffer. Da bleibt selbst mir die Spucke weg – und das will was heißen.",
-    "Heute punktet keiner. So ein kollektiver Fehltag hat ja fast schon was Beruhigendes.",
-    "Nullrunde für alle. Da können wir uns wenigstens gemeinsam an den Köpfen kratzen.",
-    "Niemand trifft heute. Tja, manchmal gewinnt eben der Fußball gegen die ganze Familie.",
-    "Ein stiller Tag in der Tabelle. Nutzt die Ruhe – morgen geht das Theater von vorne los.",
-    "Kein Punkt für niemanden. Das nenne ich mal demokratisch verteiltes Pech.",
-    "Heute punktet wirklich keiner. So viel geballte Ratlosigkeit hat ja fast schon was Gemütliches.",
-    "Eine Nullrunde für alle. Da lehne ich mich entspannt zurück und freue mich auf morgen.",
-    "Kein Mensch trifft heute. Manchmal ist der Fußball eben stärker als die ganze Sippe.",
-    "Ein stiller Spieltag. Genießt die Ruhe vor dem nächsten Tipp-Sturm, sage ich da nur."
+    "Heute hat keiner was geholt. Endlich mal Ruhe im Rudel – perfektes Wetter für ein ausgiebiges Nickerchen mitten zwischen euch auf dem Sofa.",
+    "Nullrunde für alle. Mir soll's recht sein: kein Jubel, kein Stress, dafür viel Zeit zum Schlafen. Mein absolutes Lieblingsprogramm.",
+    "Kein Mensch trifft heute. Tja, manchmal gewinnt eben der Fußball gegen die ganze Familie. Ich nutz die Gelegenheit für ein Schoß-Schläfchen, ganz pragmatisch.",
+    "Heute punktet niemand. Als Ballorakel sage ich: Auch das gehört dazu. Als müder Hund sage ich: Umso besser, dann kuscheln wir uns eben alle zusammen aufs Sofa.",
+    "Ein stiller Spieltag. Wunderbar – da kann ich endlich in Ruhe liegen, am liebsten quer über drei Familienschöße verteilt. Wer hat heute Decke und Lachs?",
+    "Keiner holt Punkte. Gähn. Klingt nach einem Tag, der zum Verschlafen gemacht ist. Vielleicht besuchen wir später Oma – Foxy braucht schließlich ihre Streicheleinheiten.",
+    "Heute null für alle. Ich find ja: kein schlechter Tag ist ein Tag, an dem man viel schlafen und betteln kann. Und davon hatte ich heute reichlich.",
+    "Ruhetag im Rudel. Niemand aufgeregt, niemand laut – herrlich. Ich roll mich jetzt in eurer Mitte zusammen und mach, was ich am besten kann: schlummern.",
+    "Heute gab's nichts zu holen. Macht nichts, dann gibt's eben extra Kuschelzeit. Ich halt schon mal den besten Platz auf dem Sofa warm. Wurst nehm ich trotzdem, falls wer fragt.",
+    "Kein Punkt für niemanden. Demokratisch verteilte Ruhe, sozusagen. Perfekt für ein Hundeleben wie meins: fressen, kuscheln, schlafen – und das Ballorakel macht auch mal Pause."
   ]
 };
 function kolumneFuer(kategorie, name, seed) {
