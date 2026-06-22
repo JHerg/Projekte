@@ -422,10 +422,14 @@
   .rundschau-award .ra-txt b { font-family: Georgia, "Times New Roman", serif; }
   /* Kolumne: wiederkehrende fiktive Stimme mit Running-Gag-Signatur */
   .rundschau-kolumne {
+    display: flex; gap: 10px; align-items: flex-start;
     margin: 6px 14px 4px; padding: 8px 12px;
     background: #fbf6ef; border-left: 3px solid #8d6e63;
     border-radius: 0 6px 6px 0; text-align: left;
   }
+  .rundschau-kolumne .rk-icon { width: 38px; height: 38px; flex-shrink: 0; }
+  .rundschau-kolumne .rk-icon svg { width: 100%; height: 100%; display: block; }
+  .rundschau-kolumne .rk-body { flex: 1; min-width: 0; }
   .rundschau-kolumne .rk-kopf {
     font-family: -apple-system, Segoe UI, sans-serif;
     font-size: .7rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
@@ -2749,9 +2753,11 @@ function schlagzeileDesTages() {
 // nicht, deutet aber alles in Hundelogik um (Leberwurst, Lachs, Schoß, Sofa,
 // Ball, Nickerchen). Feste Stimme mit Running-Gag-Sign-off, jeden Tag derselbe
 // Charakter – im Gegensatz zu den wechselnden echten Fußball-Zitaten darunter.
+// Kleines handgezeichnetes Icon: schwarzer Cockerspaniel mit langen Schlappohren
+// (es gibt keinen schwarzen Hund als Emoji) – sitzt links neben Billes Kolumne.
+const BILLE_ICON = `<svg viewBox="0 0 48 48"><path d="M14 13 C5 15 3 28 7 38 C10 45 18 42 18 33 C18 25 18 17 14 13 Z" fill="#1c1c1c"/><path d="M34 13 C43 15 45 28 41 38 C38 45 30 42 30 33 C30 25 30 17 34 13 Z" fill="#1c1c1c"/><path d="M24 7 C15 7 12 14 12 22 C12 31 17 39 24 39 C31 39 36 31 36 22 C36 14 33 7 24 7 Z" fill="#2b2b2b"/><path d="M24 10 C22 12 22 16 24 17 C26 16 26 12 24 10 Z" fill="#3c3c3c"/><ellipse cx="24" cy="30" rx="7.5" ry="6.5" fill="#3a3a3a"/><circle cx="19.5" cy="21" r="2.6" fill="#fff"/><circle cx="20.1" cy="21.4" r="1.4" fill="#161616"/><circle cx="28.5" cy="21" r="2.6" fill="#fff"/><circle cx="29.1" cy="21.4" r="1.4" fill="#161616"/><ellipse cx="24" cy="27.5" rx="2.7" ry="2.1" fill="#000"/><circle cx="23.1" cy="26.9" r=".6" fill="#777"/><path d="M24 29.5 C24 33 21 34 18.5 32.8 M24 29.5 C24 33 27 34 29.5 32.8" fill="none" stroke="#000" stroke-width="1.1" stroke-linecap="round"/></svg>`;
 const KOLUMNIST = {
   name: "Bille",
-  avatar: "🐶",
   rubrik: "Billes Ballorakel",
   signatur: "Mehr weiß ich auch nicht – ich bin nur der Hund. Wer wirft jetzt den Ball? 🎾"
 };
@@ -2853,7 +2859,11 @@ const PRESSE_ZITATE = {
     "Ich wusste, der Joker zahlt sich heute aus. Nennt es ruhig Instinkt.",
     "Beim Joker muss man mutig sein – Zögern bringt keine Punkte.",
     "Ich hab den Joker im richtigen Moment gezogen. Timing ist alles.",
-    "Manchmal muss man eben alles auf eine Karte setzen. Heute ging's auf."
+    "Manchmal muss man eben alles auf eine Karte setzen. Heute ging's auf.",
+    "Beim Joker zählt Timing, nicht Mut allein. Heute hat beides gepasst.",
+    "Ich setze den Joker nur, wenn ich ein gutes Gefühl hab – und das hatte ich.",
+    "Manche zögern beim Joker. Ich nicht. Das hat sich heute ausgezahlt.",
+    "Der Joker ist wie Salz beim Kochen: richtig dosiert macht er den Unterschied."
   ],
   serie: [
     "Eine Serie ist wie ein guter Espresso – man will sie nicht stoppen.",
@@ -2863,7 +2873,11 @@ const PRESSE_ZITATE = {
     "Solange der Lauf hält, genieße ich jeden einzelnen Tagessieg.",
     "Ich bleibe einfach bei meinem Rhythmus, dann läuft das schon.",
     "Jeder Tag ist neu – ich will den nächsten genauso gewinnen.",
-    "Druck? Welcher Druck? Ich tippe einfach weiter mein Ding."
+    "Druck? Welcher Druck? Ich tippe einfach weiter mein Ding.",
+    "Solange es läuft, mache ich einfach genau so weiter.",
+    "Eine Serie ist schön, aber jeder Tag fängt bei null an – so seh ich das.",
+    "Den Schwung nehm ich gern mit, verkrampfen will ich aber nicht.",
+    "Ich feiere kurz und konzentriere mich dann schon auf morgen."
   ],
   scharf: [
     "Ich seh das Ergebnis manchmal einfach vorher. Kein Hexenwerk, nur Übung.",
@@ -2873,7 +2887,11 @@ const PRESSE_ZITATE = {
     "Wenn man lang genug hinschaut, sieht man das Ergebnis kommen.",
     "Genau hinschauen, dann passt das mit den Ergebnissen.",
     "Ich tippe mit dem Kopf, nicht mit dem Herzen – heute hat's sich ausgezahlt.",
-    "Volltreffer kommen nicht von ungefähr, da steckt Arbeit drin."
+    "Volltreffer kommen nicht von ungefähr, da steckt Arbeit drin.",
+    "Ich vertraue meinem Auge für die Ergebnisse – heute lag ich goldrichtig.",
+    "Exakt tippen ist Übungssache. Ich übe quasi jeden Tag.",
+    "Ich rechne nicht lange – ich sehe das Ergebnis und tippe es.",
+    "Ich tippe lieber mutig das genaue Ergebnis als auf Nummer sicher."
   ],
   default: [
     "War heute einfach mein Tag. Morgen ist wieder alles offen.",
@@ -2883,7 +2901,11 @@ const PRESSE_ZITATE = {
     "Ein guter Tag im Büro, würde ich sagen. Mehr steckt nicht dahinter.",
     "Heute hat einfach das Bauchgefühl gestimmt.",
     "Ich mach mir keinen Kopf, ich tippe und schau, was rauskommt.",
-    "Schön, dass es geklappt hat – mehr gibt's dazu nicht zu sagen."
+    "Schön, dass es geklappt hat – mehr gibt's dazu nicht zu sagen.",
+    "Heute hat einfach alles zusammengepasst, mehr ist da nicht.",
+    "Ich nehm's, wie's kommt – und heute kam's richtig gut.",
+    "Kein großes Geheimnis – ein bisschen Glück, ein bisschen Gefühl.",
+    "Schön gelaufen heute. Morgen ist wieder ein neues Spiel."
   ]
 };
 function pressekonferenzZitat(rampenlicht, seed) {
@@ -3038,9 +3060,12 @@ function renderSchlagzeile(ergebnis) {
   if (kolText) {
     kolumneHtml = `<div class="rundschau-section">Die Kolumne</div>
       <div class="rundschau-kolumne">
-        <div class="rk-kopf">${KOLUMNIST.avatar} ${esc(KOLUMNIST.rubrik)} — von ${esc(KOLUMNIST.name)}</div>
-        <div class="rk-text">${kolText}</div>
-        <div class="rk-sig">— ${esc(KOLUMNIST.signatur)}</div>
+        <div class="rk-icon">${BILLE_ICON}</div>
+        <div class="rk-body">
+          <div class="rk-kopf">${esc(KOLUMNIST.rubrik)} — von ${esc(KOLUMNIST.name)}</div>
+          <div class="rk-text">${kolText}</div>
+          <div class="rk-sig">— ${esc(KOLUMNIST.signatur)}</div>
+        </div>
       </div>`;
   }
 
