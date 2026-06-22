@@ -400,21 +400,14 @@
   /* Mini-Trendlinie: kleine Sparkline mit den letzten Spieltagen je Spieler */
   .trend-cell { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
   .trend-cell .sparkline { width: 26px; height: 13px; display: block; flex-shrink: 0; }
-  /* Kopf-an-Kopf-Box: knappes Duell zwischen zwei Tippern */
-  .rundschau-duell {
-    margin: 4px 14px 6px; padding: 6px 10px;
-    background: #ede7f6; border-left: 3px solid #7e57c2;
-    border-radius: 0 6px 6px 0; font-size: .85rem; text-align: left;
-    font-family: Georgia, "Times New Roman", serif; line-height: 1.4; color: #333;
-  }
-  /* Im Rampenlicht / Pechvogel / Tabellenführung: kurze Fließtext-Absätze im
+  /* Im Rampenlicht / Tabellenführung: kurze Fließtext-Absätze im
      gleichen Stil wie der Spielbericht. */
-  .rundschau-rampenlicht, .rundschau-pechvogel, .rundschau-fuehrung {
+  .rundschau-rampenlicht, .rundschau-fuehrung {
     font-size: .88rem; line-height: 1.5; color: #333;
     text-align: left; padding: 0 14px 4px;
     font-family: Georgia, "Times New Roman", serif;
   }
-  /* Tages-Awards: kompakte Liste, bis zu zwei Auszeichnungen pro Tag */
+  /* Tages-Awards: kompakte Liste, bis zu drei Auszeichnungen pro Tag */
   .rundschau-awards { margin: 0 14px 4px; display: flex; flex-direction: column; gap: 6px; }
   .rundschau-award { display: flex; align-items: flex-start; gap: 8px; font-size: .82rem; text-align: left; }
   .rundschau-award .ra-emoji { font-size: 1.25rem; line-height: 1.3; }
@@ -489,8 +482,7 @@
   body.dark .rundschau-section { color: #666; border-top-color: #444; }
   body.dark .rundschau-section-gesamt { color: var(--gruen-hell); border-top-color: #2e7d32; }
   body.dark .rundschau-tabelle tr:nth-child(even) { background: rgba(255,255,255,.05); }
-  body.dark .rundschau-duell { background: #2a2240; color: #d8cdf0; border-left-color: #9575cd; }
-  body.dark .rundschau-rampenlicht, body.dark .rundschau-pechvogel, body.dark .rundschau-fuehrung { color: #ddd; }
+  body.dark .rundschau-rampenlicht, body.dark .rundschau-fuehrung { color: #ddd; }
   body.dark .rundschau-kolumne { background: #2c2622; border-left-color: #a1887f; }
   body.dark .rundschau-kolumne .rk-kopf, body.dark .rundschau-kolumne .rk-sig { color: #bcaaa4; }
   body.dark .rundschau-kolumne .rk-text { color: #e6d9cf; }
@@ -2541,8 +2533,6 @@ function spieltagBericht(tf) {
     }
   }
 
-  const tagesAwards = berechneTagesAwards(spielerDetails, anzahlSpiele, pechvogel);
-
   // Kopf-an-Kopf des Tages: knappster Abstand (genau 1 Punkt) zwischen zwei
   // direkt aufeinanderfolgenden Plätzen im Tagesstand – egal wo in der
   // Rangliste, Hauptsache wirklich eng.
@@ -2552,6 +2542,8 @@ function spieltagBericht(tf) {
     const diff = sortiert[i].punkte - sortiert[i + 1].punkte;
     if (diff === 1) { kopfAnKopf = { a: sortiert[i], b: sortiert[i + 1], diff }; break; }
   }
+
+  const tagesAwards = berechneTagesAwards(spielerDetails, anzahlSpiele, pechvogel, kopfAnKopf);
 
   // Tagessieger-Text (Spielbericht)
   const sieger = tagesStand.filter(s => s.rang === 1 && s.punkte > 0);
@@ -2605,8 +2597,9 @@ function spieltagBericht(tf) {
   return { text, spielerDetails, pechvogel, rampenlicht, tagesAwards, kopfAnKopf };
 }
 
-// Tages-Awards: bis zu zwei der auffälligsten Tagesleistungen – kleine,
-// tagesbezogene Geschwister der Turnier-Abzeichen (BADGES).
+// Tages-Awards: bis zu drei der auffälligsten Tagesleistungen – kleine,
+// tagesbezogene Geschwister der Turnier-Abzeichen (BADGES). Pechvogel und
+// Kopf-an-Kopf laufen hier als Kandidaten mit, statt eigene Abschnitte zu sein.
 function namenListe(arr) { return arr.map(s => `${s.avatar} ${esc(s.name)}`).join(" & "); }
 
 // Mini-Trendlinie: kleine Sparkline-SVG aus einer Punktereihe (älteste zuerst).
@@ -2626,9 +2619,24 @@ function sparklineSvg(werte, farbe) {
   </svg>`;
 }
 
-function berechneTagesAwards(spielerDetails, anzahlSpiele, pechvogel) {
+function berechneTagesAwards(spielerDetails, anzahlSpiele, pechvogel, kopfAnKopf) {
   if (!spielerDetails.length) return [];
   const kandidaten = [];
+
+  // Pechvogel und Kopf-an-Kopf sind inhaltlich selbst kleine Tages-Auszeichnungen –
+  // sie laufen daher als Award-Kandidaten statt als eigene Abschnitte mit, mit
+  // hoher Priorität, damit sie wie bisher fast immer sichtbar bleiben.
+  if (pechvogel) {
+    const namenTxt = namenListe(pechvogel.spieler);
+    const verbForm = pechvogel.spieler.length > 1 ? "gingen" : "ging";
+    kandidaten.push({ prio: 5, e: "🙃", titel: "Pechvogel des Tages",
+      text: `${namenTxt} ${verbForm} heute mit nur ${pechvogel.punkte}&thinsp;P ${pechvogel.punkte === 0 ? "leer aus" : "unter die Räder"} – nächste Chance kommt bestimmt! 🤗` });
+  }
+
+  if (kopfAnKopf) {
+    kandidaten.push({ prio: 4.5, e: "🤺", titel: "Kopf-an-Kopf des Tages",
+      text: `${namenListe([kopfAnKopf.a])} (${kopfAnKopf.a.punkte}&thinsp;P) lag nur ${kopfAnKopf.diff}&thinsp;P vor ${namenListe([kopfAnKopf.b])} (${kopfAnKopf.b.punkte}&thinsp;P) – ganz schön knapp! 😅` });
+  }
 
   const maxP4 = Math.max(0, ...spielerDetails.map(s => s.volltreff));
   if (maxP4 >= 1) {
@@ -2668,7 +2676,7 @@ function berechneTagesAwards(spielerDetails, anzahlSpiele, pechvogel) {
   }
 
   kandidaten.sort((a, b) => b.prio - a.prio);
-  return kandidaten.slice(0, 2);
+  return kandidaten.slice(0, 3);
 }
 
 function schlagzeileDesTages() {
@@ -2949,13 +2957,14 @@ function renderSchlagzeile(ergebnis) {
     ? `<div class="rundschau-bild">${SCHLAGZEILE_BILDER[ergebnis.kategorie]}</div>` : "";
   const details = ergebnis.bericht;  // {text, spielerDetails, pechvogel, rampenlicht, tagesAwards}
 
-  // Abschnitt: Im Rampenlicht – Kurzprofil des Tagessiegers + Punkte-
-  // Aufschlüsselung in einem Absatz (statt zwei Abschnitten für denselben Sieger).
+  // Abschnitt: Im Rampenlicht – Punkte-Aufschlüsselung des Tagessiegers.
+  // Der Tipp-Stil (r.stil) steht bewusst NICHT mehr hier, weil die Schlagzeile
+  // darüber bereits dieselbe Leistung einordnet – Joker/Serie liefern hier
+  // noch echten Mehrwert, der Rest wäre doppelt erzählt.
   let rampenlichtHtml = "";
   if (details && details.rampenlicht) {
     const r = details.rampenlicht;
     const teile = [];
-    if (r.stil) teile.push(r.stil);
     if (r.jokerGenutzt) teile.push("setzte dabei den ⭐ Joker ein");
     if (r.serie && r.serie >= 2) teile.push(`bereits der ${r.serie}. Tagessieg in Folge`);
     const profil = `🔍 <b>${esc(r.spieler.avatar)} ${esc(r.spieler.name)}</b>${teile.length ? " – " + teile.join(", ") + "." : "."}`;
@@ -3018,16 +3027,9 @@ function renderSchlagzeile(ergebnis) {
       <table class="rundschau-tabelle">${rows}</table>`;
   }
 
-  // Abschnitt: Kopf-an-Kopf des Tages (genau 1 Punkt Abstand zwischen zwei Plätzen)
-  let duellHtml = "";
-  if (details && details.kopfAnKopf) {
-    const d = details.kopfAnKopf;
-    duellHtml = `<div class="rundschau-section">Kopf-an-Kopf des Tages</div>
-      <div class="rundschau-duell">🤺 <b>${esc(d.a.avatar)} ${esc(d.a.name)}</b> (${d.a.punkte}&thinsp;P) lag nur ${d.diff}&thinsp;P vor
-      <b>${esc(d.b.avatar)} ${esc(d.b.name)}</b> (${d.b.punkte}&thinsp;P) – ganz schön knapp! 😅</div>`;
-  }
-
-  // Abschnitt: Tages-Awards (bis zu zwei tagesbezogene Auszeichnungen)
+  // Abschnitt: Tages-Awards (bis zu drei tagesbezogene Auszeichnungen –
+  // Pechvogel und Kopf-an-Kopf laufen hier als Award-Kandidaten mit statt
+  // als eigene Abschnitte, da sie konzeptionell dasselbe sind).
   let awardsHtml = "";
   if (details && details.tagesAwards && details.tagesAwards.length) {
     const items = details.tagesAwards.map(a => `<div class="rundschau-award">
@@ -3036,16 +3038,6 @@ function renderSchlagzeile(ergebnis) {
       </div>`).join("");
     awardsHtml = `<div class="rundschau-section">Tages-Awards</div>
       <div class="rundschau-awards">${items}</div>`;
-  }
-
-  // Abschnitt: Pechvogel des Tages
-  let pechvogelHtml = "";
-  if (details && details.pechvogel) {
-    const pv = details.pechvogel;
-    const namenTxt = namenListe(pv.spieler);
-    const verbForm = pv.spieler.length > 1 ? "gingen" : "ging";
-    pechvogelHtml = `<div class="rundschau-section">Pechvogel des Tages</div>
-      <div class="rundschau-pechvogel">🙃 ${namenTxt} ${verbForm} heute mit nur ${pv.punkte}&thinsp;P ${pv.punkte === 0 ? "leer aus" : "unter die Räder"} – nächste Chance kommt bestimmt! 🤗</div>`;
   }
 
   // Abschnitt: Die Kolumne (wiederkehrende fiktive Stimme mit Tageskommentar)
@@ -3097,6 +3089,12 @@ function renderSchlagzeile(ergebnis) {
     </div>`;
   }
 
+  // Abschluss-Zitat: nur zeigen, wenn an dem Tag weder Presse noch Kolumne
+  // erscheinen – sonst kommentieren am Ende schon zwei "Stimmen" das
+  // Tagesgeschehen, ein drittes generisches Zitat wäre dann zu viel.
+  const zitatHtml = (!presse && !kolText)
+    ? `<div class="zitat">💬 „${esc(ergebnis.zitat.z)}" — ${esc(ergebnis.zitat.w)}</div>` : "";
+
   c.innerHTML = `
     <div class="schlagzeile-box">
       <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
@@ -3104,14 +3102,12 @@ function renderSchlagzeile(ergebnis) {
       <div class="rundschau-kopf">${bild}<div class="text">${ergebnis.text}</div></div>
       ${rampenlichtHtml}
       ${tabelleHtml}
-      ${duellHtml}
       ${awardsHtml}
-      ${pechvogelHtml}
       ${presseHtml}
       ${kolumneHtml}
       ${wocheHtml}
       ${fuehrungHtml}
-      <div class="zitat">💬 „${esc(ergebnis.zitat.z)}" — ${esc(ergebnis.zitat.w)}</div>
+      ${zitatHtml}
       <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Rundschau teilen</button>
     </div>`;
 }
