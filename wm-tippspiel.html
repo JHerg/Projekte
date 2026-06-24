@@ -2846,7 +2846,32 @@ const KOLUMNE_TEXTE = {
     "Kein Punkt für niemanden. Demokratisch verteilte Ruhe, sozusagen. Perfekt für ein Hundeleben wie meins: fressen, kuscheln, schlafen – und das Ballorakel macht auch mal Pause."
   ]
 };
-function kolumneFuer(kategorie, name, seed) {
+
+// Billes absolute Lieblinge: gewinnt eine von ihnen, flippt Bille komplett aus –
+// am meisten Spielen, die ganz besonderen Leckerlis. Dieser Sonder-Pool ersetzt
+// an Gewinn-Tagen (perfekt/serie/knapp/tagessieg) die normale Kolumne, sobald
+// eine Lieblingsmenschin ganz oben steht.
+const KOLUMNE_LIEBLINGE = ["mama", "foxy", "foxi"];
+const KOLUMNE_GEWINN_KATEGORIEN = ["perfekt", "serie", "tagessiegKnapp", "tagessieg"];
+const KOLUMNE_LIEBLING = [
+  "{name} gewinnt – und das ist ja meine absolute Lieblingsmenschin! Mit niemandem spiel ich so gern und so lang Ball. So ein Sieg verdient die guten Leckerlis, die ganz besonderen, ihr wisst schon welche.",
+  "Tagessieg für {name}! 🥰 Bei niemandem werd ich so hibbelig vor Freude. Ich apportier den Ball heut nur für {name} – und hoffe natürlich auf die Extra-Wurst, die es bei Lieblingen einfach gibt.",
+  "{name} ganz oben – mein Herz! Ich klebe sowieso den ganzen Tag an {name}, aber heute erst recht. Jetzt bitte: kuscheln, Ball werfen und das gute Leckerli aus der oberen Schublade.",
+  "Sieg für {name}, meinen Schatz! Mit {name} spiel ich am allerliebsten und am längsten – heute apportier ich, bis mir die Pfoten qualmen. Und danach gibt's hoffentlich Lachs vom Feinsten.",
+  "{name} gewinnt den Tag! Genau richtig, denn {name} gehört zu meinen zwei Allerliebsten. Da wird heut extra lang gespielt und ganz besonders fein gefuttert – so muss ein Siegestag sein.",
+  "Mein Liebling {name} ist vorn! Ich flipp fast aus vor Freude und schnapp schon mal den Quietscheball – mit {name} wird der heut bestimmt hundertmal geworfen. Belohnung für uns beide: das gute Zeug.",
+  "{name} holt sich den Sieg – und {name} ist halt mein Mensch. Niemand krault besser, niemand wirft schöner. Heut gibt's bestimmt die Sonntags-Leckerlis, auch wenn gar nicht Sonntag ist.",
+  "Tagessieg für {name}! 💛 Bei meinen Lieblingen feier ich doppelt so wild. Erst eine Extra-Runde Ball mit {name}, dann ab auf den Schoß – und ein ganz besonderes Häppchen wär jetzt die Krönung.",
+  "{name} gewinnt – mein Lieblingsmensch ganz oben! Da wedelt der Stummelschwanz auf Stufe zehn. Mit {name} spiel ich heut am meisten, kuschel am längsten und bettel am erfolgreichsten. Lachs olé!",
+  "Sieg für {name}, und {name} ist mein Ein und Alles! Heute weich ich {name} nicht von der Seite, apportier jeden Ball und hoff inständig auf die guten Leckerlis. Lieblinge kriegen die schließlich immer."
+];
+function istKolumnenLiebling(name) {
+  return KOLUMNE_LIEBLINGE.includes((name || "").trim().toLowerCase());
+}
+function kolumneFuer(kategorie, name, seed, liebling) {
+  if (liebling && KOLUMNE_GEWINN_KATEGORIEN.includes(kategorie)) {
+    return KOLUMNE_LIEBLING[seed % KOLUMNE_LIEBLING.length].replace(/\{name\}/g, name || "der heutige Sieger");
+  }
   const liste = KOLUMNE_TEXTE[kategorie] || KOLUMNE_TEXTE.tagessieg;
   return liste[seed % liste.length].replace(/\{name\}/g, name || "der heutige Sieger");
 }
@@ -3044,11 +3069,19 @@ function renderSchlagzeile(ergebnis) {
   let kolumneHtml = "";
   const tagSeed = Math.floor(ergebnis.datum.getTime() / 86400000);
   let gewinnerName = "";
+  let gewinnerIstLiebling = false;
   if (details && details.spielerDetails) {
-    const top = details.spielerDetails.find(s => s.rang === 1 && s.punkte > 0);
-    if (top) gewinnerName = `${esc(top.avatar)} ${esc(top.name)}`;
+    const sieger = details.spielerDetails.filter(s => s.rang === 1 && s.punkte > 0);
+    if (sieger.length) {
+      // Steht eine von Billes Lieblingen (Mama/Foxy) unter den Tagessiegern,
+      // bekommt sie den Namen – und Bille die Extra-Liebling-Kolumne.
+      const lieb = sieger.find(s => istKolumnenLiebling(s.name));
+      const top = lieb || sieger[0];
+      gewinnerName = `${esc(top.avatar)} ${esc(top.name)}`;
+      gewinnerIstLiebling = !!lieb;
+    }
   }
-  const kolText = kolumneFuer(ergebnis.kategorie, gewinnerName, tagSeed);
+  const kolText = kolumneFuer(ergebnis.kategorie, gewinnerName, tagSeed, gewinnerIstLiebling);
   if (kolText) {
     kolumneHtml = `<div class="rundschau-section">Die Kolumne</div>
       <div class="rundschau-kolumne">
