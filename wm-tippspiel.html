@@ -469,6 +469,29 @@
   }
   .rundschau-wochenrueckblick .wr-liste { margin: 6px 0 0; padding: 0; list-style: none; font-size: .82rem; }
   .rundschau-wochenrueckblick .wr-liste li { display: flex; justify-content: space-between; padding: 2px 0; }
+  /* Wochenporträts: ein Kärtchen pro Mitspieler mit Geschichte + Billes Kommentar */
+  .wr-portraets { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .wr-portraet {
+    background: #fff; border-radius: 8px; padding: 8px 10px;
+    border: 1px solid #d8ead8;
+  }
+  .wr-portraet .wrp-kopf {
+    font-family: -apple-system, Segoe UI, sans-serif; font-weight: 700;
+    font-size: .8rem; color: var(--gruen); margin-bottom: 3px;
+  }
+  .wr-portraet .wrp-text {
+    font-family: Georgia, "Times New Roman", serif; font-size: .85rem; line-height: 1.45; color: #333;
+  }
+  .wr-portraet .wrp-bille {
+    display: flex; gap: 7px; align-items: flex-start; margin-top: 6px;
+    padding-top: 6px; border-top: 1px dashed #d8ead8;
+  }
+  .wr-portraet .wrp-bille-icon { width: 24px; height: 24px; flex-shrink: 0; }
+  .wr-portraet .wrp-bille-icon svg { width: 100%; height: 100%; display: block; }
+  .wr-portraet .wrp-bille-text {
+    font-family: Georgia, "Times New Roman", serif; font-size: .8rem; line-height: 1.4;
+    color: #5d4037; font-style: italic;
+  }
   .schlagzeile-box .zitat {
     font-size: .85rem; font-style: italic; line-height: 1.35; color: #555;
     padding: 0 14px 12px; font-family: Georgia, "Times New Roman", serif;
@@ -491,6 +514,10 @@
   body.dark .rundschau-presse .rp-text { color: #cfe3f7; }
   body.dark .rundschau-wochenrueckblick { background: #1f2e20; border-color: #4caf50; }
   body.dark .rundschau-wochenrueckblick .wr-text { color: #ddd; }
+  body.dark .wr-portraet { background: #16241a; border-color: #2e4d33; }
+  body.dark .wr-portraet .wrp-text { color: #ddd; }
+  body.dark .wr-portraet .wrp-bille { border-top-color: #2e4d33; }
+  body.dark .wr-portraet .wrp-bille-text { color: #d7c2b8; }
   body.dark .schlagzeile-box .zitat { color: #bbb; border-top-color: #555; }
 
   /* Tipp-Erinnerung: noch offene Spiele bis zur nächsten 8-Uhr-Grenze */
@@ -2970,8 +2997,183 @@ function wochenRueckblick(fensterDatum) {
   });
   const rangliste = state.spieler.map(sp => ({ ...sp, wochenPunkte: summen[sp.id] || 0 })).sort((a, b) => b.wochenPunkte - a.wochenPunkte);
   if (!rangliste.length || rangliste[0].wochenPunkte <= 0) return null;
-  return { sieger: rangliste[0], rangliste, tage: woche.length, tageAktiv };
+  return { sieger: rangliste[0], rangliste, tage: woche.length, tageAktiv, woche };
 }
+
+// Detaillierte Wochenstatistik je Spieler (für die Sonntagsausgabe): Volltreffer,
+// Tendenz-Treffer, Nieten, Joker-Einsatz sowie bester/schwächster Tag der Woche –
+// Basis für die kleine Wochengeschichte und Billes Kommentar pro Mitspieler.
+function wochenSpielerStats(woche) {
+  const tageKeys = new Set(woche.map(t => t.key));
+  const wochenSpiele = spieleChronologisch(true).filter(s => {
+    const d = parseSpielDatum(s);
+    const f = d ? tagesfensterDatum(d) : null;
+    return f && tageKeys.has(fensterKeyLokal(f));
+  });
+  return state.spieler.map(sp => {
+    let p4 = 0, p3 = 0, p2 = 0, p0 = 0, getippt = 0, jokerGenutzt = false, jokerBonus = 0, punkte = 0;
+    wochenSpiele.forEach(spiel => {
+      const tipp = state.tipps[sp.id]?.[spiel.id];
+      const basis = punkteFuer(tipp, spiel);
+      if (basis === null) return;
+      getippt++;
+      punkte += punkteFuerSpieler(sp.id, spiel);
+      if (basis === 4) p4++; else if (basis === 3) p3++; else if (basis === 2) p2++; else p0++;
+      if (istJoker(sp.id, spiel.id)) { jokerGenutzt = true; jokerBonus = punkteFuerSpieler(sp.id, spiel) - basis; }
+    });
+    const tagesPunkte = woche.map(t => t.punkte[sp.id]).filter(p => p !== null && p !== undefined);
+    const bester = tagesPunkte.length ? Math.max(...tagesPunkte) : 0;
+    const schwaechster = tagesPunkte.length ? Math.min(...tagesPunkte) : 0;
+    return { ...sp, punkte, getippt, p4, p3, p2, p0, jokerGenutzt, jokerBonus, bester, schwaechster };
+  }).filter(s => s.getippt > 0);
+}
+
+// Ordnet einen Wochenspieler in eine erzählerische Kategorie ein – Priorität
+// vom auffälligsten zum normalsten Muster.
+function wochenKategorie(s, maxPunkte) {
+  if (s.punkte > 0 && s.punkte === maxPunkte) return "topform";
+  if (s.p4 >= 2) return "scharfschuetze";
+  if (s.jokerGenutzt && s.jokerBonus > 0) return "joker";
+  if (s.getippt >= 3 && s.p0 / s.getippt >= 0.5 && s.punkte <= 4) return "pechwoche";
+  if (s.bester - s.schwaechster >= 4 && s.bester >= 4) return "schwankend";
+  return "solide";
+}
+
+// Einfacher String-Hash (für stabile, aber pro Spieler unterschiedliche
+// Varianten-Auswahl bei den Wochenporträts).
+function strHash(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+// Wochengeschichte je Kategorie: kleine Erzähltexte zu Stärken/Schwächen
+// der Woche eines Mitspielers.
+const WOCHE_GESCHICHTE = {
+  topform: [
+    "{name} war diese Woche einfach nicht zu bremsen: {punkte} Punkte aus {getippt} getippten Spielen – die klare Wochenbestleistung der Familie.",
+    "Die Woche gehörte {name}! Mit {punkte} Punkten liegt niemand sonst vorn – Konstanz und ein gutes Auge für Ergebnisse zahlen sich aus.",
+    "{name} hat diese Woche den Ton angegeben: {punkte} Punkte, keiner war besser. So sieht eine Spitzenwoche aus.",
+    "Wer diese Woche an {name} vorbeiwollte, hatte schlechte Karten – {punkte} Punkte und die Tabellenführung der Woche.",
+    "{name} liefert die Wochenbestmarke: {punkte} Punkte aus {getippt} Tipps. Diese Woche lief es einfach rund.",
+    "Souverän durch die Woche: {name} sammelt {punkte} Punkte und lässt damit die ganze Familie hinter sich.",
+    "{name} zeigt diese Woche, wie's geht: {punkte} Punkte, keine Schwächephase erkennbar.",
+    "Die stärkste Wochenbilanz kommt von {name}: {punkte} Punkte – verdiente Nummer eins dieser Woche."
+  ],
+  scharfschuetze: [
+    "{name} hat diese Woche mehrfach exakt ins Schwarze getroffen: {p4} Volltreffer! Wenn das Auge so gut bleibt, wird's für die Konkurrenz eng.",
+    "Scharf getippt: {name} mit {p4} exakten Ergebnissen diese Woche. Da steckt mehr als Glück dahinter.",
+    "{name} tippt diese Woche aufs Komma genau – {p4} Volltreffer sprechen für sich.",
+    "Wenn {name} diese Woche tippt, dann meistens exakt: {p4} Volltreffer aus {getippt} Spielen.",
+    "{name} hatte diese Woche ein besonders gutes Auge fürs genaue Ergebnis – {p4}× den Nagel auf den Kopf getroffen.",
+    "Beeindruckende Treffsicherheit: {name} landet diese Woche {p4} Volltreffer. Respekt!",
+    "{name} zeigt diese Woche, dass Tendenz allein nicht reicht – {p4} exakte Treffer beweisen das Feingefühl.",
+    "Die Woche der exakten Tipps: {name} trifft {p4}× ganz genau."
+  ],
+  joker: [
+    "{name} hat diese Woche den ⭐ Joker goldrichtig platziert und ordentlich Extra-Punkte mitgenommen – klug eingesetzt!",
+    "Guter Riecher: {name} hat den Joker diese Woche zur richtigen Zeit gezogen und damit kräftig zugelegt.",
+    "{name} hat diese Woche bewiesen, dass der Joker kein Glücksspiel sein muss – goldrichtig eingesetzt.",
+    "Strategisch stark: {name} hat den Joker diese Woche genau ins richtige Spiel gelegt.",
+    "Der Joker hat diese Woche bei {name} voll eingeschlagen – Extra-Punkte für die richtige Wahl.",
+    "{name} hat diese Woche gezeigt, wie man den Joker richtig timt – das hat sich ausgezahlt."
+  ],
+  pechwoche: [
+    "Für {name} lief es diese Woche nicht rund: {p0} von {getippt} Tipps gingen leer aus. Nächste Woche wird's wieder besser.",
+    "{name} hatte diese Woche eine echte Pechsträhne – {p0} Nieten bei {getippt} Versuchen. Kopf hoch!",
+    "Diese Woche war für {name} zum Vergessen: viele Tipps, wenig Ausbeute. Aber jede Woche ist eine neue Chance.",
+    "{name} konnte diese Woche einfach nicht treffen – {p0} Nieten. Statistisch gesehen muss da bald die Wende kommen.",
+    "Schwache Wochenbilanz für {name}: zu viele Nieten, zu wenig Punkte. Die nächste Woche zählt schon wieder neu.",
+    "Für {name} war diese Woche einfach nicht der richtige Riecher dabei – aber Aufgeben gilt nicht.",
+    "{name} hat diese Woche mehr Pech als Tipp-Glück gehabt – {p0} Nieten. Comeback ist Pflicht!",
+    "Eine harte Woche für {name}: wenig Treffer, viele Fehlversuche. Bald dreht sich der Wind wieder."
+  ],
+  schwankend: [
+    "{name} hatte diese Woche echte Berg- und Talfahrten: ein Spitzentag mit {bester} Punkten, dann wieder Flaute. Konstanz wäre der nächste Schritt.",
+    "Wechselhafte Woche für {name}: mal richtig stark, mal gar nichts – {bester} Punkte am besten Tag zeigen, was möglich ist.",
+    "{name} schwankt diese Woche zwischen Top-Form und Flaute – an guten Tagen bis zu {bester} Punkten, an schlechten praktisch nichts.",
+    "Auf und ab bei {name}: ein Tag mit {bester} Punkten, andere Tage komplett leer. Die Frage ist, welche Form bleibt.",
+    "{name} zeigt diese Woche zwei Gesichter – an einem Tag {bester} Punkte, an anderen kaum etwas. Spannend, wie es weitergeht.",
+    "Wechselbad der Gefühle für {name}: starke {bester} Punkte an einem Tag, dafür Ausfälle an anderen.",
+    "{name} liefert diese Woche unberechenbare Ergebnisse – von {bester} Punkten am Spitzentag bis zu gar nichts."
+  ],
+  solide: [
+    "{name} tippt diese Woche unauffällig, aber zuverlässig: {punkte} Punkte aus {getippt} Spielen – kein Ausreißer nach oben oder unten.",
+    "Solide Woche für {name}: nichts Spektakuläres, aber stetig Punkte gesammelt.",
+    "{name} hält diese Woche die Linie – {punkte} Punkte, ruhig und beständig.",
+    "Keine großen Schlagzeilen für {name} diese Woche, aber ein ordentlicher, gleichmäßiger Beitrag.",
+    "{name} sammelt diese Woche ruhig die Punkte ein – {punkte} insgesamt, ohne große Ausschläge.",
+    "Eine unaufgeregte Woche für {name}: solide getippt, ordentlich gepunktet.",
+    "{name} bleibt diese Woche im grünen Bereich – {punkte} Punkte, stetig und unaufgeregt.",
+    "Nichts Aufregendes, aber auch nichts falsch gemacht: {name} mit {punkte} soliden Punkten diese Woche."
+  ]
+};
+
+// Billes Wochenkommentar je Kategorie – kurze Reaktion in ihrer Stimme auf
+// dieselbe Wochenbilanz wie in WOCHE_GESCHICHTE.
+const WOCHE_BILLE_KOMMENTAR = {
+  topform: [
+    "{name} war diese Woche der Star – da hab ich extra lange neben dem Sofa gewartet, um als Erste zu gratulieren. Eine Wurst wäre jetzt angemessen.",
+    "Wow, {name}! Diese Woche ganz oben. Ich wedel hier schon seit Tagen im Vorbeigehen. Lachs zur Feier der Woche?",
+    "Das Ballorakel hat's geahnt: {name} läuft diese Woche zur Bestform auf. Belohnung bitte in Leberwurst.",
+    "{name} macht diese Woche keine Gefangenen. Ich feier mit – Stummelschwanz auf Höchstgeschwindigkeit.",
+    "Diese Woche: {name} ganz vorn. Ich leg mich stolz auf den Schoß und genieß den Erfolg mit.",
+    "{name} ist diese Woche einfach nicht zu schlagen. Da gönn ich mir – und hoffentlich auch dir – was Gutes aus der Küche."
+  ],
+  scharfschuetze: [
+    "{name} trifft diese Woche so genau, dass selbst ich beeindruckt bin – und ich rieche sonst nur Wurst auf hundert Meter.",
+    "So ein scharfes Auge wie {name} diese Woche hatte ich noch nie, nicht mal beim Anschleichen an die Leberwurst.",
+    "{name} tippt diese Woche aufs Komma genau. Ich apportier dafür extra oft den Ball – Ehrensache.",
+    "Das Ballorakel nickt anerkennend: {name} mit Treffsicherheit pur diese Woche. Da ist ein Leckerli fällig.",
+    "{name} hat diese Woche ein Adlerauge für Ergebnisse. Ich hab nur ein Adlerauge fürs Wurstpapier, aber jedem sein Talent.",
+    "Scharf geschossen, {name}! Ich feier mit einer Extra-Runde Quietscheball."
+  ],
+  joker: [
+    "{name} hat den Joker diese Woche perfekt gesetzt – so clever wie ich beim Erschnüffeln der Leberwurst im Schrank.",
+    "Guter Zug, {name}! Der Joker hat diese Woche voll eingeschlagen. Das Ballorakel ist beeindruckt.",
+    "{name} hat diese Woche bewiesen: Timing ist alles – bei mir beim Betteln, bei dir beim Joker.",
+    "Cleverer Move von {name} mit dem Joker diese Woche. Dafür gibt's von mir ein anerkennendes Wedeln.",
+    "{name} hat den Joker diese Woche goldrichtig gezogen. Ich feier das mit einer Runde Schoß-Kuscheln.",
+    "Strategisch stark, {name}! So gut hab ich noch nicht mal die beste Bettel-Position am Esstisch ausgetüftelt."
+  ],
+  pechwoche: [
+    "{name}, diese Woche lief's nicht so – komm, leg dich zu mir, wir sind jetzt kurz traurig zusammen. Danach gibt's Trost-Leberwurst.",
+    "Keine leichte Woche für {name}. Ich kleb dafür umso fester an deinem Bein. Und ein Leckerli hilft auch immer.",
+    "{name} hatte diese Woche Pech – so wie ich, wenn das Eichhörnchen entkommt. Kopf hoch, wir holen uns beide die nächste Chance.",
+    "Schwere Woche, {name}? Komm aufs Sofa, mitten zwischen uns – das hilft garantiert, notfalls mit etwas Wurst.",
+    "{name}, das Ballorakel hat sich diese Woche wohl verschnüffelt. Tut mir leid – Schmusestunde als Wiedergutmachung?",
+    "Nicht die beste Woche für {name}. Aber weißt du, was hilft? Ich, dein Schoß, und ein Stück Lachs."
+  ],
+  schwankend: [
+    "{name} diese Woche: erst ganz oben, dann wieder unten – wie meine Stimmung zwischen Ballwurf und leerem Napf.",
+    "Auf und ab bei {name} diese Woche, ungefähr wie mein Tagesplan zwischen Schlafen und Betteln. Kenn ich, kein Problem.",
+    "{name} schwankt diese Woche ordentlich – so wie ich zwischen 'noch ein Nickerchen' und 'sofort Spazierengehen'.",
+    "Wechselhafte Woche für {name}. Ich bleib treu an deiner Seite, egal ob Spitzentag oder Flaute – Hauptsache Schoß und Streicheleinheiten.",
+    "{name} diese Woche: einmal Held, einmal Pechvogel. Ich find dich trotzdem an jedem Tag gleich gut.",
+    "Berg- und Talfahrt bei {name} diese Woche – wie bei mir zwischen Top-Form am Fressnapf und Müdigkeit danach."
+  ],
+  solide: [
+    "{name} tippt diese Woche schön gleichmäßig – wie mein Schlafrhythmus, nur mit mehr Punkten und weniger Nickerchen.",
+    "Ruhige, solide Woche von {name}. Genau mein Stil: keine Aufregung, einfach zuverlässig. Dafür reicht auch ein kleines Leckerli.",
+    "{name} bleibt diese Woche entspannt auf Kurs – fast so entspannt wie ich auf meinem Lieblingsplatz auf dem Sofa.",
+    "Unaufgeregte Woche für {name}. Ich mag das – erinnert mich an meinen Alltag: fressen, kuscheln, schlafen, wiederholen.",
+    "{name} liefert diese Woche zuverlässig ab, ohne großes Tamtam. Genau wie ich beim täglichen Betteln – beständig erfolgreich.",
+    "Solide Leistung, {name}. Dafür gibt's von mir ein zufriedenes Schwanzwedeln und vielleicht ein Häppchen."
+  ]
+};
+
+// Billes Wochenkommentar für ihre absoluten Lieblinge (Mama/Foxy) – unabhängig
+// von der Kategorie, denn die Zuneigung gilt unabhängig vom Wochenergebnis.
+const WOCHE_BILLE_LIEBLING = [
+  "{name} – meine absolute Lieblingsmenschin der Woche! Egal wie die Punkte liefen, mit niemandem kuschel ich lieber. Die besten Leckerlis bitte hier hin.",
+  "Diese Woche war wieder eine Woche mit {name} – und das ist für mich sowieso immer die beste Woche. Extra Ball, extra Schmusen, extra gute Häppchen.",
+  "{name} ist und bleibt mein Herzensmensch, egal was die Tabelle sagt. Diese Woche gab's wieder besonders viel Spielzeit zusammen.",
+  "Wie auch immer die Woche für {name} lief – für mich ist und bleibt {name} die Nummer eins. Da ist die Extra-Wurst aus der oberen Schublade einfach Pflicht.",
+  "Mit {name} ist jede Woche eine gute Woche. Ich klebe sowieso am meisten an dieser Seite – diese Woche ganz besonders.",
+  "{name}, mein Lieblingsmensch! Diese Woche durfte ich wieder am längsten mitspielen und am meisten kuscheln. Bestes Wochenprogramm überhaupt.",
+  "Egal ob Topform oder Flaute – {name} bleibt mein absoluter Favorit. Da gibt's diese Woche eine Extra-Portion Zuneigung von mir.",
+  "{name} und ich – das beste Team der Woche, ganz unabhängig von den Punkten. Lachs und Kuscheln stehen jedenfalls schon bereit."
+];
 
 function renderSchlagzeile(ergebnis) {
   const c = document.getElementById("schlagzeileBox");
@@ -3109,16 +3311,38 @@ function renderSchlagzeile(ergebnis) {
   }
 
 
-  // Abschnitt: Sonntagsausgabe (erweiterter Wochenrückblick, nur sonntags zusätzlich)
+  // Abschnitt: Sonntagsausgabe (erweiterter Wochenrückblick, nur sonntags zusätzlich) –
+  // neben der Kurzübersicht bekommt jeder aktive Mitspieler ein Wochenporträt:
+  // eine kleine Geschichte zu Stärken/Schwächen der Woche plus Billes Kommentar dazu.
   let wocheHtml = "";
   const woche = wochenRueckblick(ergebnis.datum);
   if (woche) {
     const liste = woche.rangliste.slice(0, 4).map(s =>
       `<li><span>${esc(s.avatar)} ${esc(s.name)}</span><span>${s.wochenPunkte}&thinsp;P</span></li>`).join("");
+
+    const stats = wochenSpielerStats(woche.woche).sort((a, b) => b.punkte - a.punkte);
+    const maxWochenPunkte = Math.max(0, ...stats.map(s => s.punkte));
+    const wochenSeed = Math.floor(ergebnis.datum.getTime() / (7 * 86400000));
+    const portraets = stats.map((s, idx) => {
+      const kategorie = wochenKategorie(s, maxWochenPunkte);
+      const seed = wochenSeed + strHash(String(s.id)) + idx;
+      const vals = { name: `${esc(s.avatar)} ${esc(s.name)}`, punkte: s.punkte, p4: s.p4, p2: s.p2, p0: s.p0, getippt: s.getippt, bester: s.bester };
+      const geschichteListe = WOCHE_GESCHICHTE[kategorie];
+      const geschichte = schlagzeileVorlage(geschichteListe[seed % geschichteListe.length], vals);
+      const kommentarListe = istKolumnenLiebling(s.name) ? WOCHE_BILLE_LIEBLING : WOCHE_BILLE_KOMMENTAR[kategorie];
+      const kommentar = schlagzeileVorlage(kommentarListe[seed % kommentarListe.length], vals);
+      return `<div class="wr-portraet">
+        <div class="wrp-kopf">${esc(s.avatar)} ${esc(s.name)} — ${s.punkte}&thinsp;P</div>
+        <div class="wrp-text">${geschichte}</div>
+        <div class="wrp-bille"><span class="wrp-bille-icon">${BILLE_ICON}</span><span class="wrp-bille-text">${kommentar}</span></div>
+      </div>`;
+    }).join("");
+
     wocheHtml = `<div class="rundschau-wochenrueckblick">
       <div class="wr-titel">📅 Sonntagsausgabe — Wochenrückblick</div>
       <div class="wr-text">🏆 <b>${esc(woche.sieger.avatar)} ${esc(woche.sieger.name)}</b> war Spieler der Woche mit ${woche.sieger.wochenPunkte}&thinsp;Punkten an ${woche.tageAktiv} aktiven Spieltagen.</div>
       <ul class="wr-liste">${liste}</ul>
+      <div class="wr-portraets">${portraets}</div>
     </div>`;
   }
 
@@ -4339,6 +4563,12 @@ function rundschauBildBloecke(box) {
       if (wtext) bloecke.push({ typ: "para", text: clean(wtext) });
       [...el.querySelectorAll(".wr-liste li")].forEach(li =>
         bloecke.push({ typ: "row", text: clean(li) }));
+      [...el.querySelectorAll(".wr-portraet")].forEach(p => {
+        const pk = p.querySelector(".wrp-kopf"), pt = p.querySelector(".wrp-text"), pb = p.querySelector(".wrp-bille-text");
+        if (pk) bloecke.push({ typ: "row", text: clean(pk) });
+        if (pt) bloecke.push({ typ: "para", text: clean(pt) });
+        if (pb) bloecke.push({ typ: "para", text: clean(pb) });
+      });
     } else {
       const t = clean(el);
       if (t) bloecke.push({ typ: "para", text: t });
