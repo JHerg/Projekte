@@ -2887,7 +2887,7 @@ function normName(name) {
 const KOLUMNE_GEWINN_KATEGORIEN = ["perfekt", "serie", "tagessiegKnapp", "tagessieg"];
 function lieblingKey(name) {
   const n = normName(name);
-  if (n === "mama") return "mama";
+  if (n === "mama" || n === "natalie") return "mama";
   if (n === "foxy" || n === "foxi") return "foxy";
   return null;
 }
@@ -2902,7 +2902,17 @@ const KOLUMNE_LIEBLING = {
     "{name} holt sich den Sieg – und {name} ist halt mein Mensch. Niemand krault besser, niemand wirft schöner. Heut gibt's bestimmt die Sonntags-Leckerlis, auch wenn gar nicht Sonntag ist.",
     "Tagessieg für {name}! 💛 Bei meinen Lieblingen feier ich doppelt so wild. Erst eine Extra-Runde Ball mit {name}, dann ab auf den Schoß – und ein ganz besonderes Häppchen wär jetzt die Krönung.",
     "{name} gewinnt – mein Lieblingsmensch ganz oben! Da wedelt der Stummelschwanz auf Stufe zehn. Mit {name} spiel ich heut am meisten, kuschel am längsten und bettel am erfolgreichsten. Lachs olé!",
-    "Sieg für {name}, und {name} ist mein Ein und Alles! Heute weich ich {name} nicht von der Seite, apportier jeden Ball und hoff inständig auf die guten Leckerlis. Lieblinge kriegen die schließlich immer."
+    "Sieg für {name}, und {name} ist mein Ein und Alles! Heute weich ich {name} nicht von der Seite, apportier jeden Ball und hoff inständig auf die guten Leckerlis. Lieblinge kriegen die schließlich immer.",
+    "{name} ist Tagessieger – und das ist meine absolute Herzensmenschin! Bei {name} fehlt mir sowieso nie was, sie hat als Einzige immer ein Auge drauf. Heute wird zur Feier zusammen gespielt und besonders fein gefuttert.",
+    "Tagessieg für {name}! 🥰 Mein Lieblingsmensch ganz vorn – da kenn ich kein Halten. Erst ausgiebig Ball, dann lang kuscheln und zur Belohnung das gute Zeug aus der oberen Schublade.",
+    "{name} holt den Sieg, und mein Schwänzchen wedelt sich fast ab! Bei {name} bin ich immer bestens versorgt, und das beste Essen gibt's da sowieso – heute zur Feier gleich eine Extra-Portion.",
+    "Sieg für meine {name}! Niemanden lieb ich so wie {name}, niemand wirft den Ball so schön. Heute bettel ich besonders charmant – die Sonder-Leckerlis hat {name} schließlich verdient.",
+    "{name} ganz oben – mein absoluter Lieblingsmensch triumphiert! Da spiel ich heut, bis die Pfoten glühen, und kuschel mich danach an {name}. Und ein Extra-Häppchen, bitte.",
+    "Tagessieg für {name}, mein Goldstück! 💛 Bei {name} dreh ich vor Freude komplett auf. Ball ohne Ende, Schmusen ohne Ende – und das ganz besondere Leckerli zur Krönung.",
+    "{name} gewinnt – meine Nummer eins von allen! Bei {name} muss ich mir nie Gedanken machen, da fehlt's an nichts. Heute weich ich keinen Schritt von der Seite und freu mich auf das beste Essen weit und breit.",
+    "Sieg für {name}! Mit niemandem ist's so schön wie mit {name} – am längsten gespielt, am meisten gekuschelt, am erfolgreichsten gebettelt. So muss ein Lieblings-Siegestag aussehen.",
+    "{name} ist Tagessieger – mein Herzensmensch strahlt, und ich strahl gleich mit! {name} achtet als Einzige wirklich drauf, dass mir nichts fehlt – heute gibt's das volle Programm: Ball, Kuscheln und die feinste Küche im Haus.",
+    "Sieg für {name}, meine Allerliebste! Bei {name} bin ich rundum versorgt, da fehlt mir nie was – heute apportier ich jeden Ball und freu mich auf das beste Essen weit und breit."
   ],
   foxy: [
     "{name} gewinnt den Tag – und {name} ist sowieso eine meiner Allerliebsten! Seit {name} mir die Angst vor dem Fahrstuhl genommen hat, fahr ich freiwillig und ganz ohne Zittern. Heute flipp ich aus wie am ersten Tag – nur ohne die kleine Pfütze von früher.",
@@ -2914,7 +2924,17 @@ const KOLUMNE_LIEBLING = {
     "{name} holt sich den Tagessieg – und bei {name} gibt's bei jedem Besuch Leckerlis, das weiß ich genau. Ins Bett darf ich zwar nicht, aber das verzeih ich sofort, schließlich liebe ich {name} trotzdem.",
     "Sieg für {name}! Seit {name} mir die Fahrstuhl-Angst genommen hat, ist nichts mehr wie früher – ich steig heute mutig ein und freu mich auf jeden Besuch genauso wild wie am ersten Tag.",
     "{name} gewinnt den Tag, und ich flipp aus wie immer, wenn {name} da ist – nur eben ohne das Pippi-Malheur von früher. Bett gibt's für mich zwar keins, aber Leckerlis garantiert.",
-    "Tagessieg für {name}! 💛 Egal ob Fahrstuhl, Bett oder Besuch – mit {name} ist einfach alles gut. Früher war ich vor Aufregung kaum zu bremsen, heute zeig ich die Freude etwas trockener, aber genauso laut."
+    "Tagessieg für {name}! 💛 Egal ob Fahrstuhl, Bett oder Besuch – mit {name} ist einfach alles gut. Früher war ich vor Aufregung kaum zu bremsen, heute zeig ich die Freude etwas trockener, aber genauso laut.",
+    "{name} gewinnt – und {name} gehört zu meinen Allerliebsten! Ohne {name} würde ich wohl heute noch zitternd vor dem Fahrstuhl stehen. Jetzt fahr ich mutig mit und feier den Sieg mit ganz viel Trubel.",
+    "Sieg für {name}! Wenn {name} kommt, flipp ich aus wie eh und je – das hat sich seit dem ersten Tag nicht geändert. Leckerlis gibt's garantiert, und heute zur Feier des Tages gleich doppelt.",
+    "{name} ganz oben – mein Schatz! Ins Bett von {name} darf ich nicht, aber ehrlich, das ist mir völlig egal, so lieb hab ich {name}. Heute wird der Tagessieg mit Extra-Häppchen gefeiert.",
+    "Tagessieg für {name}! 🥰 {name} hat mir damals die Fahrstuhl-Angst genommen – seitdem steig ich freiwillig ein. Heute steig ich vor Freude fast an die Decke, so toll ist dieser Sieg.",
+    "{name} holt sich den Tag! Bei {name} gibt's bei jedem Besuch Leckerlis, das weiß ich genau – und heute feiern wir den Sieg noch ein bisschen ausgelassener als sonst.",
+    "Mein Liebling {name} gewinnt! Früher hatte ich Panik im Aufzug, bis {name} mir die Angst genommen hat. Heute fahr ich voller Mut mit und jubel über den Tagessieg.",
+    "Sieg für {name}! Auch wenn ich nicht in {name}s Bett schlafen darf – meine Liebe ist riesig, und heute zeig ich sie mit wildem Schwanzwedeln und der Hoffnung auf extra Leckerlis.",
+    "{name} ist Tagessieger – und ich freu mich wie am allerersten Besuch! Nur dass ich heute trocken bleib statt vor Freude zu pieseln. Dafür gibt's hoffentlich was Feines aus der Leckerli-Dose.",
+    "Tagessieg für {name}! Mit {name} ist alles gut – Aufzug fahren ohne Angst, Besuche voller Leckerlis und ein Jubel wie am ersten Tag. Heute drehen wir gemeinsam eine Extra-Runde Freude.",
+    "{name} gewinnt – meine geliebte {name}! Seit {name} an meiner Seite ist, gibt's keine Fahrstuhl-Angst mehr. Heute steig ich mutig ein, fahr zum Feiern und freu mich auf die Sieger-Leckerlis."
   ]
 };
 
@@ -2926,7 +2946,6 @@ function bezKey(name) {
   if (n === "jacob") return "jacob";
   if (n === "helene") return "helene";
   if (n === "jurgen") return "jurgen";
-  if (n === "natalie") return "natalie";
   return null;
 }
 const BILLE_BEZIEHUNG_SIEG = {
@@ -2935,28 +2954,36 @@ const BILLE_BEZIEHUNG_SIEG = {
     " Ach, und {name} ist ja mein kleiner Mitstreiter – wir beide sind die Kleinsten hier, und Ball spielen mögen wir beide am allerliebsten.",
     " {name} und ich, die zwei Kleinsten im Haus – da versteht man sich beim Ballspielen einfach blind.",
     " Unter uns: {name} und ich sind beide die Kleinsten – und beide würden wir den ganzen Tag nur Ball spielen, wenn man uns ließe.",
-    " Schön, dass {name} gewinnt – schließlich sind wir beide die Kleinsten der Familie und lieben nichts mehr als eine gute Runde Ball."
+    " Schön, dass {name} gewinnt – schließlich sind wir beide die Kleinsten der Familie und lieben nichts mehr als eine gute Runde Ball.",
+    " {name} und ich sind eben aus demselben Holz: die zwei Kleinsten, und beide nicht vom Ball wegzukriegen.",
+    " Klar freu ich mich für {name} – wir zwei Kleinsten halten zusammen, vor allem wenn irgendwo ein Ball rollt.",
+    " Mit {name} hab ich was gemeinsam: Wir sind beide die Kleinsten, und Ball spielen geht für uns beide über alles.",
+    " Was {name} und mich verbindet? Wir sind die zwei Kleinsten im Haus – und kein Spiel ist uns lieber als Ball.",
+    " {name} weiß, wie man mit mir umgeht: Wir sind beide klein und beide ballverrückt. Eine bessere Spielkameradin gibt's für mich nicht."
   ],
   helene: [
     " Und weil {name} heute bester Laune ist: Da kuschel ich am liebsten ganz dicht, sitz auf dem Schoß beim Fernsehen und lass mich von {name} mit der Hand füttern – herrlich.",
     " Bei guter Laune ist {name} sowieso unschlagbar zum Kuscheln – am liebsten sitz ich dann auf dem Schoß vor dem Fernseher und lass mir das Futter von Hand geben.",
     " {name} in guter Laune heißt für mich: ganz viel Kuscheln, ein Plätzchen auf dem Schoß beim Fernsehabend und Futter direkt aus der Hand.",
     " Heute ist {name} bestens gelaunt – genau dann kuschel ich am meisten, sitz auf dem Schoß und lass mich verwöhnt füttern.",
-    " Wenn {name} gute Laune hat wie heute, gibt's für mich Kuscheln satt, einen Platz auf dem Schoß und Häppchen direkt von der Hand."
+    " Wenn {name} gute Laune hat wie heute, gibt's für mich Kuscheln satt, einen Platz auf dem Schoß und Häppchen direkt von der Hand.",
+    " So gut gelaunt wie heute ist {name} der schönste Kuschelplatz überhaupt – Schoß, Fernsehen und das Futter direkt aus der Hand, mehr brauch ich nicht.",
+    " Bei dieser Laune kleb ich heute an {name}: erst lang kuscheln, dann auf den Schoß beim Fernsehabend und ein paar Häppchen aus der Hand.",
+    " {name} strahlt heute – und ich profitier davon am meisten: ganz viel Schmusen, der beste Schoßplatz und Handfütterung deluxe.",
+    " Gute Laune bei {name} bedeutet für mich Vollprogramm: kuscheln, auf dem Schoß liegen und mir das Futter von der Hand geben lassen.",
+    " Heute ist mit {name} alles gut – da rück ich ganz nah ran, mach's mir auf dem Schoß bequem und lass mich von Hand verwöhnen."
   ],
   jurgen: [
     " Apropos {name}: Da ruh ich am liebsten auf dem Schoß und relaxe – das mochte ich schon immer. Und ganz nebenbei: {name} ist auch am leichtesten zu überreden, wenn's um Leckerlis geht.",
     " Bei {name} leg ich mich am liebsten auf den Schoß und entspann mich total – schon immer mein Lieblingsplatz. Und überreden lässt sich {name} sowieso am leichtesten.",
     " {name} und ich, das ist Schoß-Relaxen auf höchstem Niveau – das liebe ich, seit ich denken kann. Und ein bisschen betteln reicht bei {name} meistens schon.",
     " Mit {name} kuschel ich gern auf dem Schoß und ruh mich aus – das war schon immer so. Und ehrlich, ein Hundeblick reicht bei {name}, um fast alles zu bekommen.",
-    " Bei {name} ist Entspannen auf dem Schoß Pflichtprogramm. Und wenn ich ehrlich bin: Leckerlis bekomm ich bei {name} am leichtesten von allen."
-  ],
-  natalie: [
-    " Und bei {name} weiß ich: Da fehlt mir nie was. {name} hat als Einzige wirklich immer ein Auge drauf, dass alles passt – und kocht obendrein das beste Essen.",
-    " Bei {name} bin ich immer bestens versorgt – niemand achtet so genau darauf, dass mir nichts fehlt. Und das Essen von {name} ist sowieso unschlagbar.",
-    " {name} ist die Einzige, bei der ich mir nie Sorgen mach – es fehlt nie was, und gegessen wird bei {name} am besten.",
-    " Verlässlich wie immer: {name} sorgt dafür, dass mir wirklich nichts fehlt. Und das beste Essen gibt's bei {name} obendrauf.",
-    " Mit {name} bin ich rundum versorgt – da achtet niemand so gut auf mich, und gekocht wird bei {name} am allerbesten."
+    " Bei {name} ist Entspannen auf dem Schoß Pflichtprogramm. Und wenn ich ehrlich bin: Leckerlis bekomm ich bei {name} am leichtesten von allen.",
+    " {name}s Schoß ist mein Stammplatz zum Dösen, schon ewig. Und das Beste: Bei {name} muss ich nicht lange betteln, da gibt's schnell ein Leckerli.",
+    " Heute geht's bei {name} aufs Schoß und ausgeruht – mein Lieblingsprogramm. Überreden kann ich {name} dabei nebenbei am einfachsten von allen.",
+    " Auf {name}s Schoß zu relaxen ist für mich das Größte, das war schon als Welpe so. Und ein bisschen Hundeblick, schon rückt {name} ein Häppchen raus.",
+    " {name} und der Schoß – da entspann ich am liebsten den ganzen Abend. Und wenn ich was will, krieg ich's bei {name} am leichtesten durch.",
+    " Bei {name} mach ich's mir auf dem Schoß gemütlich, wie immer. Und mal ehrlich: Niemanden wickel ich so leicht um die Pfote wie {name}."
   ]
 };
 function kolumneFuer(kategorie, name, seed, liebKey, bezKeyVal) {
@@ -3243,7 +3270,15 @@ const WOCHE_BILLE_LIEBLING = {
     "Mit {name} ist jede Woche eine gute Woche. Ich klebe sowieso am meisten an dieser Seite – diese Woche ganz besonders.",
     "{name}, mein Lieblingsmensch! Diese Woche durfte ich wieder am längsten mitspielen und am meisten kuscheln. Bestes Wochenprogramm überhaupt.",
     "Egal ob Topform oder Flaute – {name} bleibt mein absoluter Favorit. Da gibt's diese Woche eine Extra-Portion Zuneigung von mir.",
-    "{name} und ich – das beste Team der Woche, ganz unabhängig von den Punkten. Lachs und Kuscheln stehen jedenfalls schon bereit."
+    "{name} und ich – das beste Team der Woche, ganz unabhängig von den Punkten. Lachs und Kuscheln stehen jedenfalls schon bereit.",
+    "Ob die Woche gut lief oder nicht – {name} ist und bleibt meine Liebste. Bei {name} fehlt mir nie was, sie hat als Einzige immer alles im Blick. Und gegessen wird da am besten.",
+    "Diese Woche gehört für mich sowieso {name}, ganz egal, was die Punkte sagen. Niemand wirft den Ball schöner und krault besser.",
+    "{name} ist mein Fels in der Brandung – jede Woche aufs Neue. Da kleb ich am liebsten den ganzen Tag an dieser Seite.",
+    "Mit {name} war's auch diese Woche wieder am schönsten. Bei {name} bin ich immer bestens versorgt, da fehlt's an nichts – und das beste Essen gibt's obendrauf.",
+    "{name}, meine Herzensmenschin der Woche! Da gibt's von mir das volle Programm: Ball, Schmusen und natürlich die guten Leckerlis.",
+    "Für mich ist {name} jede Woche die Nummer eins, ganz ohne Tabelle. Diese Woche durfte ich wieder besonders viel mitspielen und kuscheln.",
+    "Egal wie die Punkte standen – mit {name} ist immer alles gut. {name} achtet als Einzige wirklich drauf, dass mir nichts fehlt, und kocht obendrein am besten.",
+    "{name} und ich, das passt einfach – Woche für Woche. Diese hier war wieder voller Kuscheln, Spielen und kleiner Leckereien."
   ],
   foxy: [
     "{name} – diese Woche wieder meine Lieblingsmenschin! Seit {name} mir die Fahrstuhl-Angst genommen hat, fahr ich freiwillig mit, ganz ohne Zittern. Und bei jedem Besuch gibt's Leckerlis – ich flipp aus wie am ersten Tag.",
@@ -3253,7 +3288,15 @@ const WOCHE_BILLE_LIEBLING = {
     "Mit {name} ist jede Woche eine gute Woche. Ins Bett darf ich zwar nicht, aber das stört die Liebe überhaupt nicht – Hauptsache, es gibt Leckerlis bei jedem Besuch.",
     "{name}, meine Lieblingsmenschin! Ohne {name} würde ich wohl heute noch jeden Fahrstuhl verweigern – jetzt steig ich mutig ein, ganz ohne Angst.",
     "Diese Woche wieder: {name} kommt, und ich flipp aus wie verrückt – nur eben kontrollierter als früher, ohne das Pippi-Malheur von damals.",
-    "{name} und ich – das beste Team, ganz unabhängig von der Tabelle. Fahrstuhl, Besuch, Leckerlis: mit {name} passt einfach alles."
+    "{name} und ich – das beste Team, ganz unabhängig von der Tabelle. Fahrstuhl, Besuch, Leckerlis: mit {name} passt einfach alles.",
+    "Diese Woche hab ich wieder an {name} gedacht – an die Besuche, die Leckerlis und daran, dass ich dank {name} keine Fahrstuhl-Angst mehr hab.",
+    "Wie auch immer die Punkte lagen: {name} ist und bleibt meine Liebste. Schlafen darf ich in ihrem Bett zwar nicht, aber das tut der Liebe keinen Abbruch.",
+    "{name}, meine Herzensmenschin! Jeder Besuch von {name} ist ein Fest mit Leckerlis – und ich freu mich noch immer so wild wie ganz am Anfang.",
+    "Egal wie die Woche lief – sobald {name} kommt, dreh ich frei vor Freude. Nur eben trocken inzwischen, das hab ich mir abgewöhnt.",
+    "Mit {name} ist jede Woche besonders. Früher hat mich der Fahrstuhl in Panik versetzt, heute fahr ich dank {name} ganz entspannt mit.",
+    "{name} bleibt mein absoluter Liebling, ob Topform oder Flaute. Bei jedem Besuch gibt's Leckerlis, und meine Begeisterung ist ungebrochen.",
+    "Diese Woche im Zeichen von {name}: kein Bett für mich, dafür ganz viel Liebe, Leckerlis und ein Aufzug, der mir keine Angst mehr macht.",
+    "{name} und ich – einfach unzertrennlich. Egal was die Tabelle sagt, ich flipp bei jedem Wiedersehen aus wie am allerersten Tag."
   ]
 };
 
@@ -3267,35 +3310,48 @@ const BILLE_BEZIEHUNG_WOCHE = {
     " {name} und ich, die zwei Kleinsten der Familie – kein Wunder, dass wir uns beim Ballspielen so gut verstehen.",
     " Diese Woche wieder viel Ball gespielt mit {name} – als die beiden Kleinsten hier verstehen wir uns da einfach blind.",
     " {name} ist mein kleiner Mitstreiter – beide die Kleinsten, beide am liebsten mit dem Ball unterwegs.",
-    " Egal wie die Woche lief: {name} und ich sind die Kleinsten im Haus, und Ball spielen verbindet uns immer."
+    " Egal wie die Woche lief: {name} und ich sind die Kleinsten im Haus, und Ball spielen verbindet uns immer.",
+    " {name} und ich sind aus demselben Holz: die zwei Kleinsten, und beide nicht vom Ball wegzukriegen.",
+    " Mit {name} hab ich diese Woche wieder am liebsten Ball gespielt – wir Kleinsten müssen schließlich zusammenhalten.",
+    " Was {name} und mich verbindet, bleibt jede Woche gleich: Wir sind die Kleinsten, und nichts geht über eine Runde Ball.",
+    " {name} ist meine liebste Spielkameradin – beide klein, beide ballverrückt, das passt einfach.",
+    " Auch diese Woche gilt: {name} und ich, die zwei Kleinsten, am glücklichsten mit einem Ball zwischen uns."
   ],
   helene_gut: [
     " {name} hatte diese Woche gute Laune – und da gab's für mich besonders viel Kuscheln, einen Platz auf dem Schoß beim Fernsehen und Futter von Hand.",
     " Bei guter Laune ist {name} unschlagbar – ganz viel Kuscheln, Schoß-Platz vor dem Fernseher und Häppchen direkt aus der Hand.",
     " Diese Woche war {name} bester Stimmung, und das heißt für mich: kuscheln, Schoß und Handfütterung satt.",
     " Wenn {name} so gut gelaunt ist wie diese Woche, sitz ich am liebsten auf dem Schoß und lass mich verwöhnen.",
-    " Gute Laune bei {name} diese Woche – perfekt für mich, denn dann gibt's Kuscheln, Fernsehabende auf dem Schoß und Futter von Hand."
+    " Gute Laune bei {name} diese Woche – perfekt für mich, denn dann gibt's Kuscheln, Fernsehabende auf dem Schoß und Futter von Hand.",
+    " So gut gelaunt wie diese Woche ist {name} mein liebster Kuschelplatz – Schoß, Fernsehen und Futter aus der Hand inklusive.",
+    " Diese Woche strahlte {name}, und ich hab's genossen: ganz nah ran, auf den Schoß und mir die Häppchen von Hand geben lassen.",
+    " Gute Stimmung bei {name} bedeutet für mich Vollprogramm – kuscheln, Schoßplatz beim Fernsehabend und Handfütterung.",
+    " Weil {name} diese Woche bestens drauf war, durfte ich besonders viel schmusen und auf dem Schoß liegen.",
+    " Bei {name}s guter Laune diese Woche war ich kaum vom Schoß zu kriegen – kuscheln und von Hand gefüttert werden, herrlich."
   ],
   helene_schlecht: [
     " {name} war diese Woche nicht so gut gelaunt – da bin ich lieber schnell zu Jürgen aufs Sofa oder hab mich in einer ruhigen Ecke versteckt.",
     " Bei schlechter Laune mach ich mich bei {name} lieber rar – ab zu Jürgen oder in mein stilles Eckchen, bis sich die Stimmung wieder hebt.",
     " Diese Woche war's bei {name} mal nicht so entspannt – dann flüchte ich lieber schnell, am liebsten zu Jürgen oder in eine ruhige Ecke.",
     " Wenn {name} schlecht gelaunt ist wie diese Woche, halt ich mich lieber zurück und such mir ein ruhiges Plätzchen.",
-    " Schlechte Laune bei {name} diese Woche – da war ich lieber vorsichtig und hab mich in eine Ecke verzogen, bis es wieder besser wurde."
+    " Schlechte Laune bei {name} diese Woche – da war ich lieber vorsichtig und hab mich in eine Ecke verzogen, bis es wieder besser wurde.",
+    " War keine leichte Woche für {name}s Laune – da verzieh ich mich lieber zu Jürgen auf den Schoß, bis die Stimmung wieder steigt.",
+    " Bei {name}s mauer Stimmung diese Woche hab ich mich rar gemacht – ein ruhiges Eckchen war mir lieber als zu viel Nähe.",
+    " Diese Woche lieber Abstand bei {name}: Wenn die Laune kippt, bin ich schneller bei Jürgen, als man gucken kann.",
+    " Wenn {name} so angespannt ist wie diese Woche, mach ich mich leise davon – ab in die Ecke oder zu Jürgen aufs Sofa.",
+    " Bei der trüben Laune von {name} diese Woche hab ich's vorgezogen, mich unsichtbar zu machen und zu warten, bis es wieder passt."
   ],
   jurgen: [
     " Diese Woche durft ich wieder oft auf {name}s Schoß relaxen – das liebe ich, seit ich denken kann. Und überreden lässt sich {name} sowieso am leichtesten von allen.",
     " {name} und ich, das war diese Woche wieder viel Schoß-Entspannung. Und ehrlich: Leckerlis bekomm ich bei {name} am leichtesten.",
     " Auf {name}s Schoß ausruhen ist und bleibt mein Lieblingsprogramm – diese Woche gleich mehrmals. Und überreden lässt sich {name} fast immer.",
     " {name} ist diese Woche wieder mein Lieblings-Ruheplatz gewesen – Schoß-Kuscheln pur. Und ein Hundeblick reicht bei {name} meistens schon für ein Leckerli.",
-    " Mit {name} kuschel ich am liebsten auf dem Schoß – diese Woche wieder ausgiebig genutzt. Und betteln lohnt sich bei {name} besonders gut."
-  ],
-  natalie: [
-    " Diese Woche war ich bei {name} mal wieder bestens versorgt – niemand achtet so genau drauf, dass mir nichts fehlt. Und das Essen von {name} ist einfach das beste.",
-    " Bei {name} fehlt mir nie was, diese Woche genauso wenig wie sonst. Und gegessen wird bei {name} sowieso am besten.",
-    " {name} hat diese Woche wieder ein Auge auf alles gehabt, damit mir nichts fehlt – und gekocht hat {name} natürlich auch am besten.",
-    " Verlässlich wie immer: {name} hat diese Woche dafür gesorgt, dass mir wirklich nichts fehlt. Und das beste Essen gab's obendrauf.",
-    " Mit {name} bin ich diese Woche rundum versorgt gewesen – niemand passt so gut auf, und gekocht wird bei {name} am allerbesten."
+    " Mit {name} kuschel ich am liebsten auf dem Schoß – diese Woche wieder ausgiebig genutzt. Und betteln lohnt sich bei {name} besonders gut.",
+    " {name}s Schoß war auch diese Woche mein Stammplatz zum Dösen – schon immer mein Liebstes. Und ein Leckerli ist da schnell erbettelt.",
+    " Diese Woche durft ich wieder lang auf {name}s Schoß relaxen. Und mal ehrlich: Niemanden wickel ich so leicht um die Pfote wie {name}.",
+    " Ausruhen auf {name}s Schoß – das schönste Programm der Woche, und das schon als Welpe. Überreden geht bei {name} nebenbei am leichtesten.",
+    " {name} und der Schoß, das gehört für mich zusammen – diese Woche ausgiebig genossen. Und betteln klappt bei {name} besonders gut.",
+    " Mit {name} hab ich diese Woche wieder herrlich auf dem Schoß entspannt. Ein Hundeblick, und schon rückt {name} ein Häppchen raus."
   ]
 };
 
