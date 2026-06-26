@@ -2874,33 +2874,103 @@ const KOLUMNE_TEXTE = {
   ]
 };
 
+// Namens-Normalisierung für robuste Vergleiche (Umlaute raus, klein, getrimmt).
+function normName(name) {
+  return (name || "").trim().toLowerCase()
+    .replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ß/g, "ss");
+}
+
 // Billes absolute Lieblinge: gewinnt eine von ihnen, flippt Bille komplett aus –
 // am meisten Spielen, die ganz besonderen Leckerlis. Dieser Sonder-Pool ersetzt
 // an Gewinn-Tagen (perfekt/serie/knapp/tagessieg) die normale Kolumne, sobald
 // eine Lieblingsmenschin ganz oben steht.
-const KOLUMNE_LIEBLINGE = ["mama", "foxy", "foxi"];
 const KOLUMNE_GEWINN_KATEGORIEN = ["perfekt", "serie", "tagessiegKnapp", "tagessieg"];
-const KOLUMNE_LIEBLING = [
-  "{name} gewinnt – und das ist ja meine absolute Lieblingsmenschin! Mit niemandem spiel ich so gern und so lang Ball. So ein Sieg verdient die guten Leckerlis, die ganz besonderen, ihr wisst schon welche.",
-  "Tagessieg für {name}! 🥰 Bei niemandem werd ich so hibbelig vor Freude. Ich apportier den Ball heut nur für {name} – und hoffe natürlich auf die Extra-Wurst, die es bei Lieblingen einfach gibt.",
-  "{name} ganz oben – mein Herz! Ich klebe sowieso den ganzen Tag an {name}, aber heute erst recht. Jetzt bitte: kuscheln, Ball werfen und das gute Leckerli aus der oberen Schublade.",
-  "Sieg für {name}, meinen Schatz! Mit {name} spiel ich am allerliebsten und am längsten – heute apportier ich, bis mir die Pfoten qualmen. Und danach gibt's hoffentlich Lachs vom Feinsten.",
-  "{name} gewinnt den Tag! Genau richtig, denn {name} gehört zu meinen zwei Allerliebsten. Da wird heut extra lang gespielt und ganz besonders fein gefuttert – so muss ein Siegestag sein.",
-  "Mein Liebling {name} ist vorn! Ich flipp fast aus vor Freude und schnapp schon mal den Quietscheball – mit {name} wird der heut bestimmt hundertmal geworfen. Belohnung für uns beide: das gute Zeug.",
-  "{name} holt sich den Sieg – und {name} ist halt mein Mensch. Niemand krault besser, niemand wirft schöner. Heut gibt's bestimmt die Sonntags-Leckerlis, auch wenn gar nicht Sonntag ist.",
-  "Tagessieg für {name}! 💛 Bei meinen Lieblingen feier ich doppelt so wild. Erst eine Extra-Runde Ball mit {name}, dann ab auf den Schoß – und ein ganz besonderes Häppchen wär jetzt die Krönung.",
-  "{name} gewinnt – mein Lieblingsmensch ganz oben! Da wedelt der Stummelschwanz auf Stufe zehn. Mit {name} spiel ich heut am meisten, kuschel am längsten und bettel am erfolgreichsten. Lachs olé!",
-  "Sieg für {name}, und {name} ist mein Ein und Alles! Heute weich ich {name} nicht von der Seite, apportier jeden Ball und hoff inständig auf die guten Leckerlis. Lieblinge kriegen die schließlich immer."
-];
-function istKolumnenLiebling(name) {
-  return KOLUMNE_LIEBLINGE.includes((name || "").trim().toLowerCase());
+function lieblingKey(name) {
+  const n = normName(name);
+  if (n === "mama") return "mama";
+  if (n === "foxy" || n === "foxi") return "foxy";
+  return null;
 }
-function kolumneFuer(kategorie, name, seed, liebling) {
-  if (liebling && KOLUMNE_GEWINN_KATEGORIEN.includes(kategorie)) {
-    return KOLUMNE_LIEBLING[seed % KOLUMNE_LIEBLING.length].replace(/\{name\}/g, name || "der heutige Sieger");
+const KOLUMNE_LIEBLING = {
+  mama: [
+    "{name} gewinnt – und das ist ja meine absolute Lieblingsmenschin! Mit niemandem spiel ich so gern und so lang Ball. So ein Sieg verdient die guten Leckerlis, die ganz besonderen, ihr wisst schon welche.",
+    "Tagessieg für {name}! 🥰 Bei niemandem werd ich so hibbelig vor Freude. Ich apportier den Ball heut nur für {name} – und hoffe natürlich auf die Extra-Wurst, die es bei Lieblingen einfach gibt.",
+    "{name} ganz oben – mein Herz! Ich klebe sowieso den ganzen Tag an {name}, aber heute erst recht. Jetzt bitte: kuscheln, Ball werfen und das gute Leckerli aus der oberen Schublade.",
+    "Sieg für {name}, meinen Schatz! Mit {name} spiel ich am allerliebsten und am längsten – heute apportier ich, bis mir die Pfoten qualmen. Und danach gibt's hoffentlich Lachs vom Feinsten.",
+    "{name} gewinnt den Tag! Genau richtig, denn {name} gehört zu meinen zwei Allerliebsten. Da wird heut extra lang gespielt und ganz besonders fein gefuttert – so muss ein Siegestag sein.",
+    "Mein Liebling {name} ist vorn! Ich flipp fast aus vor Freude und schnapp schon mal den Quietscheball – mit {name} wird der heut bestimmt hundertmal geworfen. Belohnung für uns beide: das gute Zeug.",
+    "{name} holt sich den Sieg – und {name} ist halt mein Mensch. Niemand krault besser, niemand wirft schöner. Heut gibt's bestimmt die Sonntags-Leckerlis, auch wenn gar nicht Sonntag ist.",
+    "Tagessieg für {name}! 💛 Bei meinen Lieblingen feier ich doppelt so wild. Erst eine Extra-Runde Ball mit {name}, dann ab auf den Schoß – und ein ganz besonderes Häppchen wär jetzt die Krönung.",
+    "{name} gewinnt – mein Lieblingsmensch ganz oben! Da wedelt der Stummelschwanz auf Stufe zehn. Mit {name} spiel ich heut am meisten, kuschel am längsten und bettel am erfolgreichsten. Lachs olé!",
+    "Sieg für {name}, und {name} ist mein Ein und Alles! Heute weich ich {name} nicht von der Seite, apportier jeden Ball und hoff inständig auf die guten Leckerlis. Lieblinge kriegen die schließlich immer."
+  ],
+  foxy: [
+    "{name} gewinnt den Tag – und {name} ist sowieso eine meiner Allerliebsten! Seit {name} mir die Angst vor dem Fahrstuhl genommen hat, fahr ich freiwillig und ganz ohne Zittern. Heute flipp ich aus wie am ersten Tag – nur ohne die kleine Pfütze von früher.",
+    "Sieg für {name}! Bei {name} darf ich zwar nicht ins Bett, aber das stört die Liebe überhaupt nicht. Heute gibt's bestimmt wieder Leckerlis, und ich freu mich wie verrückt – diesmal trocken, versprochen.",
+    "{name} ganz oben – mein Schatz! Früher hatte ich Panik vor dem Fahrstuhl, bis {name} mir gezeigt hat, dass da nichts Schlimmes passiert. Jetzt fahr ich freiwillig mit, und heute feiern wir den Tagessieg extra laut.",
+    "Tagessieg für {name}! 🥰 Kein Bett für mich bei {name}, aber dafür jede Menge Leckerlis bei jedem Besuch. Ich flipp aus wie am allerersten Tag – das hat sich all die Jahre nicht geändert.",
+    "{name} gewinnt – und ich freu mich fast so wild wie beim allerersten Besuch! Damals bin ich vor Freude noch ein bisschen ausgelaufen, heute reicht das Schwanzwedeln. Dafür gibt's hoffentlich extra Leckerlis.",
+    "Mein Liebling {name} ist vorn! Ohne {name} würde ich heute noch jeden Fahrstuhl verweigern – jetzt fahr ich freiwillig mit, ganz ohne Angst. Der Sieg ruft nach Extra-Leckerlis und ganz viel Trubel.",
+    "{name} holt sich den Tagessieg – und bei {name} gibt's bei jedem Besuch Leckerlis, das weiß ich genau. Ins Bett darf ich zwar nicht, aber das verzeih ich sofort, schließlich liebe ich {name} trotzdem.",
+    "Sieg für {name}! Seit {name} mir die Fahrstuhl-Angst genommen hat, ist nichts mehr wie früher – ich steig heute mutig ein und freu mich auf jeden Besuch genauso wild wie am ersten Tag.",
+    "{name} gewinnt den Tag, und ich flipp aus wie immer, wenn {name} da ist – nur eben ohne das Pippi-Malheur von früher. Bett gibt's für mich zwar keins, aber Leckerlis garantiert.",
+    "Tagessieg für {name}! 💛 Egal ob Fahrstuhl, Bett oder Besuch – mit {name} ist einfach alles gut. Früher war ich vor Aufregung kaum zu bremsen, heute zeig ich die Freude etwas trockener, aber genauso laut."
+  ]
+};
+
+// Persönliche Beziehungen zu einzelnen Mitspielern (nicht Lieblinge, aber mit
+// eigenen kleinen Eigenheiten) – wird an Gewinn-Tagen zusätzlich an die normale
+// Kolumne angehängt, wenn der Tagessieger einer dieser Menschen ist.
+function bezKey(name) {
+  const n = normName(name);
+  if (n === "jacob") return "jacob";
+  if (n === "helene") return "helene";
+  if (n === "jurgen") return "jurgen";
+  if (n === "natalie") return "natalie";
+  return null;
+}
+const BILLE_BEZIEHUNG_SIEG = {
+  jacob: [
+    " Übrigens: {name} und ich sind die zwei Kleinsten der Familie – kein Wunder, dass wir beide am liebsten Ball spielen.",
+    " Ach, und {name} ist ja mein kleiner Mitstreiter – wir beide sind die Kleinsten hier, und Ball spielen mögen wir beide am allerliebsten.",
+    " {name} und ich, die zwei Kleinsten im Haus – da versteht man sich beim Ballspielen einfach blind.",
+    " Unter uns: {name} und ich sind beide die Kleinsten – und beide würden wir den ganzen Tag nur Ball spielen, wenn man uns ließe.",
+    " Schön, dass {name} gewinnt – schließlich sind wir beide die Kleinsten der Familie und lieben nichts mehr als eine gute Runde Ball."
+  ],
+  helene: [
+    " Und weil {name} heute bester Laune ist: Da kuschel ich am liebsten ganz dicht, sitz auf dem Schoß beim Fernsehen und lass mich von {name} mit der Hand füttern – herrlich.",
+    " Bei guter Laune ist {name} sowieso unschlagbar zum Kuscheln – am liebsten sitz ich dann auf dem Schoß vor dem Fernseher und lass mir das Futter von Hand geben.",
+    " {name} in guter Laune heißt für mich: ganz viel Kuscheln, ein Plätzchen auf dem Schoß beim Fernsehabend und Futter direkt aus der Hand.",
+    " Heute ist {name} bestens gelaunt – genau dann kuschel ich am meisten, sitz auf dem Schoß und lass mich verwöhnt füttern.",
+    " Wenn {name} gute Laune hat wie heute, gibt's für mich Kuscheln satt, einen Platz auf dem Schoß und Häppchen direkt von der Hand."
+  ],
+  jurgen: [
+    " Apropos {name}: Da ruh ich am liebsten auf dem Schoß und relaxe – das mochte ich schon immer. Und ganz nebenbei: {name} ist auch am leichtesten zu überreden, wenn's um Leckerlis geht.",
+    " Bei {name} leg ich mich am liebsten auf den Schoß und entspann mich total – schon immer mein Lieblingsplatz. Und überreden lässt sich {name} sowieso am leichtesten.",
+    " {name} und ich, das ist Schoß-Relaxen auf höchstem Niveau – das liebe ich, seit ich denken kann. Und ein bisschen betteln reicht bei {name} meistens schon.",
+    " Mit {name} kuschel ich gern auf dem Schoß und ruh mich aus – das war schon immer so. Und ehrlich, ein Hundeblick reicht bei {name}, um fast alles zu bekommen.",
+    " Bei {name} ist Entspannen auf dem Schoß Pflichtprogramm. Und wenn ich ehrlich bin: Leckerlis bekomm ich bei {name} am leichtesten von allen."
+  ],
+  natalie: [
+    " Und bei {name} weiß ich: Da fehlt mir nie was. {name} hat als Einzige wirklich immer ein Auge drauf, dass alles passt – und kocht obendrein das beste Essen.",
+    " Bei {name} bin ich immer bestens versorgt – niemand achtet so genau darauf, dass mir nichts fehlt. Und das Essen von {name} ist sowieso unschlagbar.",
+    " {name} ist die Einzige, bei der ich mir nie Sorgen mach – es fehlt nie was, und gegessen wird bei {name} am besten.",
+    " Verlässlich wie immer: {name} sorgt dafür, dass mir wirklich nichts fehlt. Und das beste Essen gibt's bei {name} obendrauf.",
+    " Mit {name} bin ich rundum versorgt – da achtet niemand so gut auf mich, und gekocht wird bei {name} am allerbesten."
+  ]
+};
+function kolumneFuer(kategorie, name, seed, liebKey, bezKeyVal) {
+  if (liebKey && KOLUMNE_GEWINN_KATEGORIEN.includes(kategorie)) {
+    const pool = KOLUMNE_LIEBLING[liebKey];
+    return pool[seed % pool.length].replace(/\{name\}/g, name || "der heutige Sieger");
   }
   const liste = KOLUMNE_TEXTE[kategorie] || KOLUMNE_TEXTE.tagessieg;
-  return liste[seed % liste.length].replace(/\{name\}/g, name || "der heutige Sieger");
+  let text = liste[seed % liste.length].replace(/\{name\}/g, name || "der heutige Sieger");
+  if (bezKeyVal && KOLUMNE_GEWINN_KATEGORIEN.includes(kategorie)) {
+    const bezListe = BILLE_BEZIEHUNG_SIEG[bezKeyVal];
+    text += bezListe[seed % bezListe.length].replace(/\{name\}/g, name || "der heutige Sieger");
+  }
+  return text;
 }
 
 // Pressekonferenz: ein erfundener O-Ton des Tagessiegers, passend zum Tipp-Stil
@@ -3164,16 +3234,70 @@ const WOCHE_BILLE_KOMMENTAR = {
 
 // Billes Wochenkommentar für ihre absoluten Lieblinge (Mama/Foxy) – unabhängig
 // von der Kategorie, denn die Zuneigung gilt unabhängig vom Wochenergebnis.
-const WOCHE_BILLE_LIEBLING = [
-  "{name} – meine absolute Lieblingsmenschin der Woche! Egal wie die Punkte liefen, mit niemandem kuschel ich lieber. Die besten Leckerlis bitte hier hin.",
-  "Diese Woche war wieder eine Woche mit {name} – und das ist für mich sowieso immer die beste Woche. Extra Ball, extra Schmusen, extra gute Häppchen.",
-  "{name} ist und bleibt mein Herzensmensch, egal was die Tabelle sagt. Diese Woche gab's wieder besonders viel Spielzeit zusammen.",
-  "Wie auch immer die Woche für {name} lief – für mich ist und bleibt {name} die Nummer eins. Da ist die Extra-Wurst aus der oberen Schublade einfach Pflicht.",
-  "Mit {name} ist jede Woche eine gute Woche. Ich klebe sowieso am meisten an dieser Seite – diese Woche ganz besonders.",
-  "{name}, mein Lieblingsmensch! Diese Woche durfte ich wieder am längsten mitspielen und am meisten kuscheln. Bestes Wochenprogramm überhaupt.",
-  "Egal ob Topform oder Flaute – {name} bleibt mein absoluter Favorit. Da gibt's diese Woche eine Extra-Portion Zuneigung von mir.",
-  "{name} und ich – das beste Team der Woche, ganz unabhängig von den Punkten. Lachs und Kuscheln stehen jedenfalls schon bereit."
-];
+const WOCHE_BILLE_LIEBLING = {
+  mama: [
+    "{name} – meine absolute Lieblingsmenschin der Woche! Egal wie die Punkte liefen, mit niemandem kuschel ich lieber. Die besten Leckerlis bitte hier hin.",
+    "Diese Woche war wieder eine Woche mit {name} – und das ist für mich sowieso immer die beste Woche. Extra Ball, extra Schmusen, extra gute Häppchen.",
+    "{name} ist und bleibt mein Herzensmensch, egal was die Tabelle sagt. Diese Woche gab's wieder besonders viel Spielzeit zusammen.",
+    "Wie auch immer die Woche für {name} lief – für mich ist und bleibt {name} die Nummer eins. Da ist die Extra-Wurst aus der oberen Schublade einfach Pflicht.",
+    "Mit {name} ist jede Woche eine gute Woche. Ich klebe sowieso am meisten an dieser Seite – diese Woche ganz besonders.",
+    "{name}, mein Lieblingsmensch! Diese Woche durfte ich wieder am längsten mitspielen und am meisten kuscheln. Bestes Wochenprogramm überhaupt.",
+    "Egal ob Topform oder Flaute – {name} bleibt mein absoluter Favorit. Da gibt's diese Woche eine Extra-Portion Zuneigung von mir.",
+    "{name} und ich – das beste Team der Woche, ganz unabhängig von den Punkten. Lachs und Kuscheln stehen jedenfalls schon bereit."
+  ],
+  foxy: [
+    "{name} – diese Woche wieder meine Lieblingsmenschin! Seit {name} mir die Fahrstuhl-Angst genommen hat, fahr ich freiwillig mit, ganz ohne Zittern. Und bei jedem Besuch gibt's Leckerlis – ich flipp aus wie am ersten Tag.",
+    "Diese Woche war wieder eine Woche mit {name} im Kopf – Bett gibt's für mich bei {name} zwar keins, aber dafür jede Menge Liebe und Leckerlis bei jedem Besuch.",
+    "{name} ist und bleibt mein Herzensmensch. Früher hatte ich Panik vor Fahrstühlen, bis {name} mir gezeigt hat, dass da nichts Schlimmes passiert – jetzt fahr ich freiwillig mit.",
+    "Egal wie die Woche lief – bei {name} flipp ich immer noch aus wie am allerersten Tag, nur ohne die kleine Pfütze von früher. Klassiker eben.",
+    "Mit {name} ist jede Woche eine gute Woche. Ins Bett darf ich zwar nicht, aber das stört die Liebe überhaupt nicht – Hauptsache, es gibt Leckerlis bei jedem Besuch.",
+    "{name}, meine Lieblingsmenschin! Ohne {name} würde ich wohl heute noch jeden Fahrstuhl verweigern – jetzt steig ich mutig ein, ganz ohne Angst.",
+    "Diese Woche wieder: {name} kommt, und ich flipp aus wie verrückt – nur eben kontrollierter als früher, ohne das Pippi-Malheur von damals.",
+    "{name} und ich – das beste Team, ganz unabhängig von der Tabelle. Fahrstuhl, Besuch, Leckerlis: mit {name} passt einfach alles."
+  ]
+};
+
+// Persönliche Beziehungen für die Sonntagsausgabe – zusätzlich zur Kategorie-
+// Geschichte, wenn über alle Mitspieler geschrieben wird. Helenes Laune richtet
+// sich nach ihrer Wochenkategorie (gute Wochen = gute Laune, Pechwochen/
+// Schwankungen = schlechte Laune).
+const BILLE_BEZIEHUNG_WOCHE = {
+  jacob: [
+    " Wir beide, {name} und ich, sind ja die Kleinsten im Haus – und Ball spielen ist und bleibt unser gemeinsames Lieblingsspiel, Woche für Woche.",
+    " {name} und ich, die zwei Kleinsten der Familie – kein Wunder, dass wir uns beim Ballspielen so gut verstehen.",
+    " Diese Woche wieder viel Ball gespielt mit {name} – als die beiden Kleinsten hier verstehen wir uns da einfach blind.",
+    " {name} ist mein kleiner Mitstreiter – beide die Kleinsten, beide am liebsten mit dem Ball unterwegs.",
+    " Egal wie die Woche lief: {name} und ich sind die Kleinsten im Haus, und Ball spielen verbindet uns immer."
+  ],
+  helene_gut: [
+    " {name} hatte diese Woche gute Laune – und da gab's für mich besonders viel Kuscheln, einen Platz auf dem Schoß beim Fernsehen und Futter von Hand.",
+    " Bei guter Laune ist {name} unschlagbar – ganz viel Kuscheln, Schoß-Platz vor dem Fernseher und Häppchen direkt aus der Hand.",
+    " Diese Woche war {name} bester Stimmung, und das heißt für mich: kuscheln, Schoß und Handfütterung satt.",
+    " Wenn {name} so gut gelaunt ist wie diese Woche, sitz ich am liebsten auf dem Schoß und lass mich verwöhnen.",
+    " Gute Laune bei {name} diese Woche – perfekt für mich, denn dann gibt's Kuscheln, Fernsehabende auf dem Schoß und Futter von Hand."
+  ],
+  helene_schlecht: [
+    " {name} war diese Woche nicht so gut gelaunt – da bin ich lieber schnell zu Jürgen aufs Sofa oder hab mich in einer ruhigen Ecke versteckt.",
+    " Bei schlechter Laune mach ich mich bei {name} lieber rar – ab zu Jürgen oder in mein stilles Eckchen, bis sich die Stimmung wieder hebt.",
+    " Diese Woche war's bei {name} mal nicht so entspannt – dann flüchte ich lieber schnell, am liebsten zu Jürgen oder in eine ruhige Ecke.",
+    " Wenn {name} schlecht gelaunt ist wie diese Woche, halt ich mich lieber zurück und such mir ein ruhiges Plätzchen.",
+    " Schlechte Laune bei {name} diese Woche – da war ich lieber vorsichtig und hab mich in eine Ecke verzogen, bis es wieder besser wurde."
+  ],
+  jurgen: [
+    " Diese Woche durft ich wieder oft auf {name}s Schoß relaxen – das liebe ich, seit ich denken kann. Und überreden lässt sich {name} sowieso am leichtesten von allen.",
+    " {name} und ich, das war diese Woche wieder viel Schoß-Entspannung. Und ehrlich: Leckerlis bekomm ich bei {name} am leichtesten.",
+    " Auf {name}s Schoß ausruhen ist und bleibt mein Lieblingsprogramm – diese Woche gleich mehrmals. Und überreden lässt sich {name} fast immer.",
+    " {name} ist diese Woche wieder mein Lieblings-Ruheplatz gewesen – Schoß-Kuscheln pur. Und ein Hundeblick reicht bei {name} meistens schon für ein Leckerli.",
+    " Mit {name} kuschel ich am liebsten auf dem Schoß – diese Woche wieder ausgiebig genutzt. Und betteln lohnt sich bei {name} besonders gut."
+  ],
+  natalie: [
+    " Diese Woche war ich bei {name} mal wieder bestens versorgt – niemand achtet so genau drauf, dass mir nichts fehlt. Und das Essen von {name} ist einfach das beste.",
+    " Bei {name} fehlt mir nie was, diese Woche genauso wenig wie sonst. Und gegessen wird bei {name} sowieso am besten.",
+    " {name} hat diese Woche wieder ein Auge auf alles gehabt, damit mir nichts fehlt – und gekocht hat {name} natürlich auch am besten.",
+    " Verlässlich wie immer: {name} hat diese Woche dafür gesorgt, dass mir wirklich nichts fehlt. Und das beste Essen gab's obendrauf.",
+    " Mit {name} bin ich diese Woche rundum versorgt gewesen – niemand passt so gut auf, und gekocht wird bei {name} am allerbesten."
+  ]
+};
 
 function renderSchlagzeile(ergebnis) {
   const c = document.getElementById("schlagzeileBox");
@@ -3271,19 +3395,23 @@ function renderSchlagzeile(ergebnis) {
   let kolumneHtml = "";
   const tagSeed = Math.floor(ergebnis.datum.getTime() / 86400000);
   let gewinnerName = "";
-  let gewinnerIstLiebling = false;
+  let gewinnerLiebKey = null;
+  let gewinnerBezKey = null;
   if (details && details.spielerDetails) {
     const sieger = details.spielerDetails.filter(s => s.rang === 1 && s.punkte > 0);
     if (sieger.length) {
       // Steht eine von Billes Lieblingen (Mama/Foxy) unter den Tagessiegern,
-      // bekommt sie den Namen – und Bille die Extra-Liebling-Kolumne.
-      const lieb = sieger.find(s => istKolumnenLiebling(s.name));
+      // bekommt sie den Namen – und Bille die Extra-Liebling-Kolumne. Sonst
+      // bekommt ein Mitspieler mit eigener Beziehung (Jacob/Helene/Jürgen/
+      // Natalie) die Extra-Zeile an die normale Kolumne angehängt.
+      const lieb = sieger.find(s => lieblingKey(s.name));
       const top = lieb || sieger[0];
       gewinnerName = `${esc(top.avatar)} ${esc(top.name)}`;
-      gewinnerIstLiebling = !!lieb;
+      gewinnerLiebKey = lieb ? lieblingKey(lieb.name) : null;
+      gewinnerBezKey = lieb ? null : bezKey(top.name);
     }
   }
-  const kolText = kolumneFuer(ergebnis.kategorie, gewinnerName, tagSeed, gewinnerIstLiebling);
+  const kolText = kolumneFuer(ergebnis.kategorie, gewinnerName, tagSeed, gewinnerLiebKey, gewinnerBezKey);
   if (kolText) {
     kolumneHtml = `<div class="rundschau-section">Die Kolumne</div>
       <div class="rundschau-kolumne">
@@ -3329,8 +3457,22 @@ function renderSchlagzeile(ergebnis) {
       const vals = { name: `${esc(s.avatar)} ${esc(s.name)}`, punkte: s.punkte, p4: s.p4, p2: s.p2, p0: s.p0, getippt: s.getippt, bester: s.bester };
       const geschichteListe = WOCHE_GESCHICHTE[kategorie];
       const geschichte = schlagzeileVorlage(geschichteListe[seed % geschichteListe.length], vals);
-      const kommentarListe = istKolumnenLiebling(s.name) ? WOCHE_BILLE_LIEBLING : WOCHE_BILLE_KOMMENTAR[kategorie];
-      const kommentar = schlagzeileVorlage(kommentarListe[seed % kommentarListe.length], vals);
+      const liebKey = lieblingKey(s.name);
+      let kommentar;
+      if (liebKey) {
+        const lieblingListe = WOCHE_BILLE_LIEBLING[liebKey];
+        kommentar = schlagzeileVorlage(lieblingListe[seed % lieblingListe.length], vals);
+      } else {
+        const kommentarListe = WOCHE_BILLE_KOMMENTAR[kategorie];
+        kommentar = schlagzeileVorlage(kommentarListe[seed % kommentarListe.length], vals);
+        const bk = bezKey(s.name);
+        if (bk) {
+          const bezListe = bk === "helene"
+            ? (["topform", "scharfschuetze", "joker", "solide"].includes(kategorie) ? BILLE_BEZIEHUNG_WOCHE.helene_gut : BILLE_BEZIEHUNG_WOCHE.helene_schlecht)
+            : BILLE_BEZIEHUNG_WOCHE[bk];
+          kommentar += schlagzeileVorlage(bezListe[seed % bezListe.length], vals);
+        }
+      }
       return `<div class="wr-portraet">
         <div class="wrp-kopf">${esc(s.avatar)} ${esc(s.name)} — ${s.punkte}&thinsp;P</div>
         <div class="wrp-text">${geschichte}</div>
