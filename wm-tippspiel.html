@@ -3000,6 +3000,59 @@ function kolumneFuer(kategorie, name, seed, liebKey, bezKeyVal) {
   return text;
 }
 
+// Geteilter Tagessieg: teilen sich mehrere Tipper den Sieg, würdigt Bille ALLE
+// gemeinsam ({namen}) und hängt für jeden Sieger mit besonderer Beziehung noch
+// ihre persönliche Zeile an (Liebling-Anhang bzw. BILLE_BEZIEHUNG_SIEG).
+const KOLUMNE_GETEILT = [
+  "Gleich mehrere ganz oben heute: {namen} teilen sich den Tagessieg! Da wedel ich gleich für alle auf einmal – und hoff, dass für jeden ein Leckerli abfällt.",
+  "Was für ein Tag – {namen} machen den Sieg unter sich aus! Ich komm mit dem Freudentanz kaum hinterher, aber für so viele Sieger leg ich mich gern ins Zeug.",
+  "Heute kein Einzelkämpfer: {namen} stehen zusammen ganz oben. Ich apportier den Ball reihum für alle – ein geteilter Sieg ist schließlich doppelte Freude.",
+  "Tagessieg zu mehreren! {namen} haben heute gemeinsam die Nase vorn. Mein Stummelschwanz läuft auf Hochtouren, das reicht locker für die ganze Runde.",
+  "{namen} teilen sich heute den Spitzenplatz – da feier ich eben mit allen gleichzeitig. Ein Ball, viele Sieger, und ich mittendrin im Freudentaumel.",
+  "Geteilte Freude bei mir heute: {namen} sind zusammen Tagessieger! Ich kuschel der Reihe nach durch und hoff, dass die Leckerli-Dose für alle reicht.",
+  "Heute gibt's nicht den einen Sieger, sondern gleich mehrere: {namen}! Ich weiß gar nicht, wen ich zuerst abschlecken soll – also einfach alle.",
+  "Spitzenplatz zu teilen: {namen} liegen heute gleichauf vorn. Für mich heißt das doppelt und dreifach wedeln – und reihum eine Extra-Streicheleinheit.",
+  "Mehrere Sieger, ein glücklicher Hund: {namen} machen den Tag unter sich aus. Ich renn vor Freude einmal durchs ganze Wohnzimmer, für jeden eine Runde.",
+  "{namen} ganz oben – und zwar alle zusammen! So ein geteilter Tagessieg ist mir der liebste, da darf ich nämlich bei jedem einzeln jubeln."
+];
+const BILLE_LIEBLING_ANHANG = {
+  mama: [
+    " Und dass meine {name} mit dabei ist, macht's heut besonders schön – für meine Liebste flipp ich natürlich gleich nochmal extra aus.",
+    " Dass {name} mitgewinnt, freut mich am allermeisten – schließlich ist {name} meine absolute Herzensmenschin, bei der mir's an nichts fehlt.",
+    " Besonders schön: {name} ist mit dabei! Für meine Liebste gibt's von mir die längste Kuschelrunde und den treuesten Blick.",
+    " Und meine {name} mittendrin – herrlich! Bei {name} bin ich sowieso am liebsten, da wird heut extra gefeiert.",
+    " Dass {name} mit ganz oben steht, ist das Sahnehäubchen – meine Liebste, bei der's immer das beste Essen gibt."
+  ],
+  foxy: [
+    " Und dass {name} mit dabei ist, freut mich riesig – meine liebe {name}, die mir die Fahrstuhl-Angst genommen hat, flipp ich für die natürlich besonders aus.",
+    " Besonders schön: {name} ist mit oben! Bei {name} gibt's bei jedem Besuch Leckerlis, da jubel ich gleich doppelt so wild.",
+    " Dass {name} mitgewinnt, ist das Tüpfelchen obendrauf – schlafen darf ich in ihrem Bett zwar nicht, aber lieb hab ich {name} trotzdem über alles.",
+    " Und meine {name} mittendrin – da dreh ich frei wie am ersten Tag, nur eben trocken inzwischen.",
+    " Dass {name} mit ganz oben steht, freut mich extra – für die fahr ich sogar freiwillig Fahrstuhl, ganz ohne Angst."
+  ]
+};
+function kolumneGeteilt(sieger, seed) {
+  const namen = sieger.map(s => `${esc(s.avatar)} ${esc(s.name)}`);
+  const namenStr = namen.length <= 1 ? (namen[0] || "die heutigen Sieger")
+    : namen.slice(0, -1).join(", ") + " und " + namen[namen.length - 1];
+  let text = KOLUMNE_GETEILT[seed % KOLUMNE_GETEILT.length].replace(/\{namen\}/g, namenStr);
+  sieger.forEach((s, i) => {
+    const nm = `${esc(s.avatar)} ${esc(s.name)}`;
+    const lk = lieblingKey(s.name);
+    if (lk) {
+      const pool = BILLE_LIEBLING_ANHANG[lk];
+      text += pool[(seed + i) % pool.length].replace(/\{name\}/g, nm);
+      return;
+    }
+    const bk = bezKey(s.name);
+    if (bk) {
+      const pool = BILLE_BEZIEHUNG_SIEG[bk];
+      text += pool[(seed + i) % pool.length].replace(/\{name\}/g, nm);
+    }
+  });
+  return text;
+}
+
 // Pressekonferenz: ein erfundener O-Ton des Tagessiegers, passend zum Tipp-Stil
 // aus dem "Im Rampenlicht"-Profil (Joker-Coup, laufende Serie, Scharfschütze
 // oder solide Tendenz) – erscheint daher nur an Tagen mit klarem Einzelsieger.
@@ -3450,24 +3503,29 @@ function renderSchlagzeile(ergebnis) {
   // Abschnitt: Die Kolumne (wiederkehrende fiktive Stimme mit Tageskommentar)
   let kolumneHtml = "";
   const tagSeed = Math.floor(ergebnis.datum.getTime() / 86400000);
-  let gewinnerName = "";
-  let gewinnerLiebKey = null;
-  let gewinnerBezKey = null;
-  if (details && details.spielerDetails) {
-    const sieger = details.spielerDetails.filter(s => s.rang === 1 && s.punkte > 0);
+  const sieger = (details && details.spielerDetails)
+    ? details.spielerDetails.filter(s => s.rang === 1 && s.punkte > 0) : [];
+  let kolText;
+  if (sieger.length >= 2 && KOLUMNE_GEWINN_KATEGORIEN.includes(ergebnis.kategorie)) {
+    // Mehrere Tagessieger: Bille würdigt ALLE gemeinsam und hängt für jeden
+    // mit eigener Beziehung/Liebling-Status noch die persönliche Zeile an.
+    kolText = kolumneGeteilt(sieger, tagSeed);
+  } else {
+    // Einzelsieger: Steht eine von Billes Lieblingen (Mama/Foxy) oben, bekommt
+    // sie den Namen und die Extra-Liebling-Kolumne. Sonst bekommt ein Mitspieler
+    // mit eigener Beziehung (Jacob/Helene/Jürgen) die Extra-Zeile angehängt.
+    let gewinnerName = "";
+    let gewinnerLiebKey = null;
+    let gewinnerBezKey = null;
     if (sieger.length) {
-      // Steht eine von Billes Lieblingen (Mama/Foxy) unter den Tagessiegern,
-      // bekommt sie den Namen – und Bille die Extra-Liebling-Kolumne. Sonst
-      // bekommt ein Mitspieler mit eigener Beziehung (Jacob/Helene/Jürgen/
-      // Natalie) die Extra-Zeile an die normale Kolumne angehängt.
       const lieb = sieger.find(s => lieblingKey(s.name));
       const top = lieb || sieger[0];
       gewinnerName = `${esc(top.avatar)} ${esc(top.name)}`;
       gewinnerLiebKey = lieb ? lieblingKey(lieb.name) : null;
       gewinnerBezKey = lieb ? null : bezKey(top.name);
     }
+    kolText = kolumneFuer(ergebnis.kategorie, gewinnerName, tagSeed, gewinnerLiebKey, gewinnerBezKey);
   }
-  const kolText = kolumneFuer(ergebnis.kategorie, gewinnerName, tagSeed, gewinnerLiebKey, gewinnerBezKey);
   if (kolText) {
     kolumneHtml = `<div class="rundschau-section">Die Kolumne</div>
       <div class="rundschau-kolumne">
