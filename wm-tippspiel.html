@@ -3040,45 +3040,77 @@ const BILLE_GETEILT_ALLG = [
   " Und {name} ganz vorn mit dabei – sauber getippt, alle Achtung von mir.",
   " {name} darf natürlich genauso feiern – ein zufriedenes Wuff von mir."
 ];
-// Kurzfassungen je Sieger – bei drei oder mehr Tagessiegern, damit die Kolumne
-// jeden würdigt, ohne ausufernd zu werden.
+// Kurzfassungen je Sieger – bei drei oder mehr Tagessiegern. Knapp, aber jede
+// bringt die ganz eigene Eigenheit der Person mit ein (Ball, Schoß, Fahrstuhl,
+// Füttern, bestes Essen ...), damit es lebendig statt schematisch wird.
 const BILLE_KURZ_SIEG = {
   mama: [
-    " für meine Liebste {name} flipp ich gleich extra aus",
-    " und {name} versorgt mich sowieso immer am besten",
-    " bei {name} bin ich am liebsten von allen",
-    " meine {name} kriegt die längste Kuschelrunde"
+    "für meine Liebste {name} flipp ich gleich doppelt aus",
+    "bei {name} fehlt mir eh nie was, die kriegt den treuesten Blick",
+    "{name} kocht das beste Essen, da bettel ich heut besonders charmant",
+    "meiner {name} weich ich keinen Schritt von der Seite",
+    "für {name} gibt's die längste Kuschelrunde, sie ist nun mal mein Herz",
+    "{name} hat als Einzige immer ein Auge auf mich, die feier ich extra",
+    "bei {name} mach ich's mir stolz auf dem Schoß bequem, meine Nummer eins",
+    "und meine {name} bekommt das größte Schwanzwedeln von allen"
   ],
   foxy: [
-    " {name} hat mir mal die Fahrstuhl-Angst genommen, die feier ich besonders",
-    " bei {name} gibt's bei jedem Besuch Leckerlis",
-    " für {name} flipp ich aus wie am ersten Tag",
-    " {name} hab ich über alles lieb, auch ohne Bettplatz"
+    "für {name} fahr ich heut sogar freiwillig Fahrstuhl, ganz ohne Angst",
+    "bei {name} gibt's bei jedem Besuch Leckerlis, da dreh ich frei",
+    "für {name} flipp ich aus wie am ersten Tag, nur eben trocken inzwischen",
+    "{name} hab ich über alles lieb, auch ganz ohne Bettplatz",
+    "kommt {name} zu Besuch, jubel ich lauter als für alle anderen",
+    "für meine {name} wedel ich mir fast den Stummel ab",
+    "{name} hat mir die Fahrstuhl-Angst genommen, das vergess ich ihr nie",
+    "und bei {name} freu ich mich aufs nächste Leckerli wie verrückt"
   ],
   jacob: [
-    " {name} und ich, die zwei Kleinsten, lieben den Ball am meisten",
-    " mit {name} spiel ich am liebsten Ball",
-    " {name} ist mein kleiner Ball-Kumpel",
-    " {name} und ich Kleinsten halten zusammen"
+    "{name} und ich, die zwei Kleinsten, jagen am liebsten zusammen den Ball",
+    "mit {name} würd ich den ganzen Tag nur Ball spielen",
+    "{name} ist mein kleiner Ball-Kumpel, wir Kleinsten halten zusammen",
+    "für {name} schnapp ich gleich den Quietscheball",
+    "{name} und ich sind aus demselben Holz: klein und ballverrückt",
+    "bei {name} ist Apportieren reine Ehrensache",
+    "{name}, mein Mitstreiter am Ball, darf heut zuerst werfen",
+    "und mit {name} flitz ich gleich dem nächsten Ball hinterher"
   ],
   helene: [
-    " bei {name} kuschel ich am liebsten auf dem Schoß",
-    " von {name} lass ich mich am liebsten aus der Hand füttern",
-    " mit {name} ist Sofa-Kuscheln das Schönste",
-    " bei {name} sitz ich beim Fernsehen am liebsten auf dem Schoß"
+    "bei {name} kuschel ich am liebsten ganz dicht auf dem Schoß",
+    "von {name} lass ich mich am liebsten aus der Hand füttern",
+    "mit {name} ist Sofa-Kuscheln beim Fernsehen das Schönste",
+    "bei guter Laune ist {name} mein allerliebster Schmuseplatz",
+    "für {name} mach ich den treuesten Augenaufschlag, dann gibt's Häppchen",
+    "bei {name} rück ich ganz nah ran, wenn die Stimmung passt",
+    "{name} verwöhnt mich mit Futter direkt von der Hand, herrlich",
+    "und auf {name}s Schoß beim Fernsehabend lieg ich am liebsten"
   ],
   jurgen: [
-    " auf {name}s Schoß relax ich am allerliebsten",
-    " {name} kann ich am leichtesten um ein Leckerli betteln",
-    " bei {name} ist der Schoß mein Lieblingsplatz",
-    " {name} wickel ich am leichtesten um die Pfote"
+    "auf {name}s Schoß relax ich am allerliebsten",
+    "{name} wickel ich am leichtesten um die Pfote",
+    "bei {name} reicht ein Hundeblick fürs Leckerli",
+    "{name}s Schoß ist mein Stammplatz zum Dösen",
+    "{name} lässt sich am einfachsten überreden, das nutz ich heut",
+    "bei {name} bettel ich nebenbei am erfolgreichsten",
+    "für {name} spiel ich den müden Hund, dann gibt's was Feines",
+    "und auf {name}s Schoß ist Entspannen Pflichtprogramm"
   ]
 };
 const BILLE_KURZ_ALLG = [
-  " {name} hat auch klasse getippt",
-  " und {name} war heut richtig stark",
-  " {name} gehört genauso aufs Treppchen",
-  " auch {name} hat sich's verdient"
+  "{name} hat heut auch klasse getippt, ein Extra-Wuff dafür",
+  "{name} gehört genauso aufs Treppchen",
+  "auch {name} hat sich's redlich verdient",
+  "{name} bekommt von mir ein anerkennendes Schwanzwedeln",
+  "und {name} war heut richtig stark",
+  "{name} darf natürlich kräftig mitfeiern"
+];
+// Abwechslungsreiche Einleitungen für die Sieger-Runde bei drei oder mehr.
+const KOLUMNE_GETEILT_RUNDE = [
+  " Also mach ich heut die große Runde:",
+  " Und ich kümmer mich der Reihe nach um jeden:",
+  " Für jeden von ihnen hab ich was übrig:",
+  " Da geh ich einmal reihum:",
+  " Und so verteil ich meine Hundeliebe:",
+  " Jeder kriegt sein eigenes Extra von mir:"
 ];
 function kolumneGeteilt(sieger, seed) {
   const namen = sieger.map(s => `${esc(s.avatar)} ${esc(s.name)}`);
@@ -3086,16 +3118,21 @@ function kolumneGeteilt(sieger, seed) {
     : namen.slice(0, -1).join(", ") + " und " + namen[namen.length - 1];
   let text = KOLUMNE_GETEILT[seed % KOLUMNE_GETEILT.length].replace(/\{namen\}/g, namenStr);
   const kurz = sieger.length >= 3;
-  // Bei drei oder mehr Siegern eine knappe, gereihte Würdigung statt vieler Sätze.
+  // Bei drei oder mehr Siegern: eine flüssige Runde mit je einer charaktervollen
+  // Kurz-Würdigung pro Person, mit Komma und abschließendem "und" verbunden.
   if (kurz) {
     const teile = sieger.map((s, i) => {
       const nm = `${esc(s.avatar)} ${esc(s.name)}`;
       const lk = lieblingKey(s.name);
       const bk = bezKey(s.name);
       const pool = (lk && BILLE_KURZ_SIEG[lk]) || (bk && BILLE_KURZ_SIEG[bk]) || BILLE_KURZ_ALLG;
-      return pool[(seed + i) % pool.length].replace(/\{name\}/g, nm).trim();
+      // Führendes "und" entfernen – die Verbindung setzen wir beim Zusammenbau.
+      return pool[(seed + i) % pool.length].replace(/\{name\}/g, nm).trim().replace(/^und\s+/i, "");
     });
-    text += " Und auf jeden geh ich kurz ein: " + teile.join("; ") + ".";
+    const runde = KOLUMNE_GETEILT_RUNDE[seed % KOLUMNE_GETEILT_RUNDE.length];
+    const verbunden = teile.length <= 1 ? teile[0]
+      : teile.slice(0, -1).join(", ") + " und " + teile[teile.length - 1];
+    text += runde + " " + verbunden + ".";
     return text;
   }
   // Zwei Sieger: für jeden die ausführliche persönliche Zeile.
