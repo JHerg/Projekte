@@ -3598,8 +3598,17 @@ function renderSchlagzeile(ergebnis) {
   const tagSeed = Math.floor(ergebnis.datum.getTime() / 86400000);
   const sieger = (details && details.spielerDetails)
     ? details.spielerDetails.filter(s => s.rang === 1 && s.punkte > 0) : [];
+  // Billes Kolumne dreht sich um den TAGESSIEGER. Die Schlagzeile kann aber eine
+  // Nicht-Gewinn-Kategorie tragen (z. B. "niete", wenn jemand alles getippt und
+  // 0 Punkte geholt hat – das schlägt prioritätsmäßig den Tagessieg). Gibt es
+  // trotzdem einen echten Tagessieger, kommentiert Bille IHN als Gewinn – sonst
+  // bliebe die persönliche Beziehungs-Zeile (Helene/Jürgen/...) aus.
+  let kolKategorie = ergebnis.kategorie;
+  if (sieger.length && !KOLUMNE_GEWINN_KATEGORIEN.includes(kolKategorie)) {
+    kolKategorie = "tagessieg";
+  }
   let kolText;
-  if (sieger.length >= 2 && KOLUMNE_GEWINN_KATEGORIEN.includes(ergebnis.kategorie)) {
+  if (sieger.length >= 2 && KOLUMNE_GEWINN_KATEGORIEN.includes(kolKategorie)) {
     // Mehrere Tagessieger: Bille würdigt ALLE gemeinsam und hängt für jeden
     // mit eigener Beziehung/Liebling-Status noch die persönliche Zeile an.
     kolText = kolumneGeteilt(sieger, tagSeed);
@@ -3617,7 +3626,7 @@ function renderSchlagzeile(ergebnis) {
       gewinnerLiebKey = lieb ? lieblingKey(lieb.name) : null;
       gewinnerBezKey = lieb ? null : bezKey(top.name);
     }
-    kolText = kolumneFuer(ergebnis.kategorie, gewinnerName, tagSeed, gewinnerLiebKey, gewinnerBezKey);
+    kolText = kolumneFuer(kolKategorie, gewinnerName, tagSeed, gewinnerLiebKey, gewinnerBezKey);
   }
   if (kolText) {
     kolumneHtml = `<div class="rundschau-section">Die Kolumne</div>
