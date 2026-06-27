@@ -2885,10 +2885,17 @@ function normName(name) {
 // an Gewinn-Tagen (perfekt/serie/knapp/tagessieg) die normale Kolumne, sobald
 // eine Lieblingsmenschin ganz oben steht.
 const KOLUMNE_GEWINN_KATEGORIEN = ["perfekt", "serie", "tagessiegKnapp", "tagessieg"];
-function lieblingKey(name) {
+// Namens-Matching: greift bei exakter Übereinstimmung ODER wenn der Name mit
+// einem Alias + Leerzeichen beginnt (z. B. "Oma Helga" -> "oma", "Jürgen K." ->
+// "jurgen"). So bleiben die persönlichen Charakter-Bezüge auch bei kleinen
+// Namensvarianten erhalten, ohne Fehltreffer (z. B. "Roman" matcht "oma" nicht).
+function nameMatcht(name, aliases) {
   const n = normName(name);
-  if (n === "mama" || n === "natalie") return "mama";
-  if (n === "foxy" || n === "foxi") return "foxy";
+  return aliases.some(a => n === a || n.startsWith(a + " "));
+}
+function lieblingKey(name) {
+  if (nameMatcht(name, ["mama", "natalie"])) return "mama";
+  if (nameMatcht(name, ["foxy", "foxi", "oma"])) return "foxy";
   return null;
 }
 const KOLUMNE_LIEBLING = {
@@ -2942,10 +2949,9 @@ const KOLUMNE_LIEBLING = {
 // eigenen kleinen Eigenheiten) – wird an Gewinn-Tagen zusätzlich an die normale
 // Kolumne angehängt, wenn der Tagessieger einer dieser Menschen ist.
 function bezKey(name) {
-  const n = normName(name);
-  if (n === "jacob") return "jacob";
-  if (n === "helene") return "helene";
-  if (n === "jurgen") return "jurgen";
+  if (nameMatcht(name, ["jacob"])) return "jacob";
+  if (nameMatcht(name, ["helene"])) return "helene";
+  if (nameMatcht(name, ["jurgen"])) return "jurgen";
   return null;
 }
 const BILLE_BEZIEHUNG_SIEG = {
