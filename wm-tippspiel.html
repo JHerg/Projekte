@@ -2885,13 +2885,14 @@ function normName(name) {
 // an Gewinn-Tagen (perfekt/serie/knapp/tagessieg) die normale Kolumne, sobald
 // eine Lieblingsmenschin ganz oben steht.
 const KOLUMNE_GEWINN_KATEGORIEN = ["perfekt", "serie", "tagessiegKnapp", "tagessieg"];
-// Namens-Matching: greift bei exakter Übereinstimmung ODER wenn der Name mit
-// einem Alias + Leerzeichen beginnt (z. B. "Oma Helga" -> "oma", "Jürgen K." ->
-// "jurgen"). So bleiben die persönlichen Charakter-Bezüge auch bei kleinen
-// Namensvarianten erhalten, ohne Fehltreffer (z. B. "Roman" matcht "oma" nicht).
+// Namens-Matching: zerlegt den Namen in Wort-Bausteine (alles außer Buchstaben
+// trennt – also Emojis wie "✨", Leerzeichen, Satzzeichen) und prüft, ob einer
+// davon GENAU der Alias ist. So werden auch verzierte Namen erkannt
+// ("✨Helene✨" -> helene, "Der sehr coole Jacob" -> jacob, "Oma Helga" -> oma),
+// aber ganze Wörter wie "Thomas"/"Roman" matchen NICHT den Alias "oma".
 function nameMatcht(name, aliases) {
-  const n = normName(name);
-  return aliases.some(a => n === a || n.startsWith(a + " "));
+  const tokens = normName(name).split(/[^a-z]+/).filter(Boolean);
+  return aliases.some(a => tokens.includes(a));
 }
 function lieblingKey(name) {
   if (nameMatcht(name, ["mama", "natalie"])) return "mama";
