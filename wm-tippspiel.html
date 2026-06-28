@@ -592,6 +592,14 @@
   .ko-hinweis { font-size: .74rem; color: #8a6d00; background: #fff8e1; border-radius: 6px;
                 padding: 5px 8px; margin-top: 8px; text-align: center; line-height: 1.45; }
   body.dark .ko-hinweis { color: #e0c060; background: #3a3320; }
+  .ko-sieger-wahl { margin-top: 8px; padding: 8px 10px; border: 2px solid var(--gruen, #2e7d32);
+                    border-radius: 8px; background: #eef9ef; }
+  .ko-sieger-wahl label { display: block; font-size: .8rem; font-weight: 600; margin-bottom: 5px; }
+  .ko-sieger-wahl label small { display: block; font-weight: 400; color: #777; font-size: .72rem; margin-top: 2px; }
+  .ko-sieger-wahl select { width: 100%; }
+  .ko-sieger-warn { font-size: .74rem; color: #c0392b; margin-top: 5px; font-weight: 600; }
+  body.dark .ko-sieger-wahl { background: #1f2e20; border-color: #3f6f43; }
+  body.dark .ko-sieger-warn { color: #ff8a7a; }
   body.dark .ko-ovr-row { border-bottom-color: #333; }
   body.dark .ko-ovr-dritt { background: #3a3320; }
   body.dark .ko-ovr-kopf { color: #aaa; }
@@ -1723,10 +1731,30 @@ function scoreFeldHTML(spiel) {
 
 // Dynamischer Anzeige-Teil (Endstand + Tipp-Übersicht) – getrennt von den
 // Eingabefeldern, damit er gefahrlos einzeln neu gerendert werden kann.
+// Sieger-Wahl bei K.-o.-Remis (nach 90 Min. unentschieden): der Spielleiter legt
+// fest, wer per Verlängerung ODER Elfmeterschießen weiterkommt. Nur Admin, nur
+// K.-o., nur bei Gleichstand. Sitzt im dynamischen Teil, damit es direkt nach
+// der Ergebnis-Eingabe automatisch erscheint.
+function koSiegerWahlHTML(spiel) {
+  const istKo = !spiel.phase.startsWith("Gruppe") && spiel.phase !== "Gruppenphase";
+  const remis = spiel.gespielt && spiel.e1 === spiel.e2;
+  if (!(istKo && remis)) return "";
+  return `<div class="ko-sieger-wahl nur-admin">
+      <label>⚖️ Unentschieden nach 90 Min. – wer kommt weiter?
+        <small>(per Verlängerung oder Elfmeterschießen; nur für den Aufstieg, zählt nicht für die Tipp-Punkte)</small></label>
+      <select onchange="koSiegerSetzen('${spiel.id}', this.value)">
+        <option value="">– bitte Sieger wählen –</option>
+        <option value="${esc(spiel.t1)}" ${spiel.sieger===spiel.t1?'selected':''}>${flaggeVon(spiel.t1)} ${esc(spiel.t1)}</option>
+        <option value="${esc(spiel.t2)}" ${spiel.sieger===spiel.t2?'selected':''}>${flaggeVon(spiel.t2)} ${esc(spiel.t2)}</option>
+      </select>
+      ${spiel.sieger ? "" : '<div class="ko-sieger-warn">⚠️ Noch kein Sieger gewählt – die nächste Runde lässt sich erst erzeugen, wenn hier ein Team steht.</div>'}
+    </div>`;
+}
 function spielDynamischHTML(spiel) {
   let html = spiel.gespielt
     ? `<div class="ergebnis-echt">🏁 Endergebnis nach 90 Min.${spiel.sieger?` · weiter: ${flaggeVon(spiel.sieger)} ${esc(spiel.sieger)} (n.V./n.E.)`:''}</div>`
     : "";
+  html += koSiegerWahlHTML(spiel);
   // Tipps aller Mitspieler erst ab Anpfiff zeigen (vorher geheim, damit
   // niemand abschreiben kann). Vor dem Ergebnis ohne Punkte, danach mit.
   if (tippsOffen(spiel) && state.spieler.length) {
@@ -1879,18 +1907,6 @@ function renderSpiele() {
            onclick="jokerUmschalten('${spiel.id}')">${jokerAktiv?'⭐ Joker aktiv (×2)':'⭐ Als Joker setzen'}</button>`
       : "";
 
-    // Sieger-Auswahl bei Unentschieden in K.-o.-Spielen (für Auflösung nötig)
-    const remis = spiel.gespielt && spiel.e1 === spiel.e2;
-    const siegerWahl = (istKo && remis) ? `
-        <div style="margin-top:8px" class="nur-admin">
-          <label>Sieger bei Gleichstand – per Verlängerung oder Elfmeterschießen <small>(nur für den Bracket-Aufstieg – zählt nicht für die Tipp-Punkte)</small></label>
-          <select onchange="koSiegerSetzen('${spiel.id}', this.value)">
-            <option value="">– bitte wählen –</option>
-            <option value="${esc(spiel.t1)}" ${spiel.sieger===spiel.t1?'selected':''}>${esc(spiel.t1)}</option>
-            <option value="${esc(spiel.t2)}" ${spiel.sieger===spiel.t2?'selected':''}>${esc(spiel.t2)}</option>
-          </select>
-        </div>` : "";
-
     return `
     <div class="spiel ${spiel.gespielt?'gespielt':''}" data-id="${spiel.id}">
       <div class="spiel-kopf">
@@ -1914,7 +1930,6 @@ function renderSpiele() {
           <input type="number" min="0" inputmode="numeric" value="${spiel.e2??''}" placeholder="-"
             onchange="ergebnisSpeichern('${spiel.id}','e2',this.value)">
         </div>
-        ${siegerWahl}
         <button class="klein ${spiel.gesperrt?'gold':'sekundaer'}" style="margin-top:8px"
           onclick="sperreUmschalten('${spiel.id}')">
           ${spiel.gesperrt?'🔓 Tipps wieder freigeben':'🔒 Tipps für dieses Spiel sperren'}</button>
@@ -5621,7 +5636,7 @@ function koRundeErzeugen() {
   const aktuelle = state.spiele.filter(s => s.koRunde === maxR).sort((a,b) => a.koIndex - b.koIndex);
   if (state.spiele.some(s => s.koRunde === maxR+1)) { toast("Die nächste Runde existiert bereits."); return; }
   if (!aktuelle.every(koSieger)) {
-    toast("Erst alle Spiele dieser Runde entscheiden (bei Remis Sieger n.E. wählen)! ⚽");
+    toast("Erst alle Spiele dieser Runde entscheiden – bei Gleichstand den Sieger (Verlängerung/Elfmeter) wählen! ⚽");
     return;
   }
   const sieger = aktuelle.map(koSieger);
