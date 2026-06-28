@@ -1725,7 +1725,7 @@ function scoreFeldHTML(spiel) {
 // Eingabefeldern, damit er gefahrlos einzeln neu gerendert werden kann.
 function spielDynamischHTML(spiel) {
   let html = spiel.gespielt
-    ? `<div class="ergebnis-echt">🏁 Endergebnis${spiel.sieger?` · Sieger: ${flaggeVon(spiel.sieger)} ${esc(spiel.sieger)} (n.E.)`:''}</div>`
+    ? `<div class="ergebnis-echt">🏁 Endergebnis nach 90 Min.${spiel.sieger?` · weiter: ${flaggeVon(spiel.sieger)} ${esc(spiel.sieger)} (n.V./n.E.)`:''}</div>`
     : "";
   // Tipps aller Mitspieler erst ab Anpfiff zeigen (vorher geheim, damit
   // niemand abschreiben kann). Vor dem Ergebnis ohne Punkte, danach mit.
@@ -1883,7 +1883,7 @@ function renderSpiele() {
     const remis = spiel.gespielt && spiel.e1 === spiel.e2;
     const siegerWahl = (istKo && remis) ? `
         <div style="margin-top:8px" class="nur-admin">
-          <label>Sieger nach Elfmeterschießen <small>(nur für den Bracket-Aufstieg – zählt nicht für die Tipp-Punkte)</small></label>
+          <label>Sieger bei Gleichstand – per Verlängerung oder Elfmeterschießen <small>(nur für den Bracket-Aufstieg – zählt nicht für die Tipp-Punkte)</small></label>
           <select onchange="koSiegerSetzen('${spiel.id}', this.value)">
             <option value="">– bitte wählen –</option>
             <option value="${esc(spiel.t1)}" ${spiel.sieger===spiel.t1?'selected':''}>${esc(spiel.t1)}</option>
