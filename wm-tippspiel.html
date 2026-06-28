@@ -589,6 +589,9 @@
   .ko-ovr-teams { display: flex; align-items: center; gap: 6px; }
   .ko-ovr-teams select { flex: 1; min-width: 0; }
   .ko-ovr-vs { color: #999; font-weight: 700; }
+  .ko-hinweis { font-size: .74rem; color: #8a6d00; background: #fff8e1; border-radius: 6px;
+                padding: 5px 8px; margin-top: 8px; text-align: center; line-height: 1.45; }
+  body.dark .ko-hinweis { color: #e0c060; background: #3a3320; }
   body.dark .ko-ovr-row { border-bottom-color: #333; }
   body.dark .ko-ovr-dritt { background: #3a3320; }
   body.dark .ko-ovr-kopf { color: #aaa; }
@@ -1880,7 +1883,7 @@ function renderSpiele() {
     const remis = spiel.gespielt && spiel.e1 === spiel.e2;
     const siegerWahl = (istKo && remis) ? `
         <div style="margin-top:8px" class="nur-admin">
-          <label>Sieger nach Elfmeterschießen</label>
+          <label>Sieger nach Elfmeterschießen <small>(nur für den Bracket-Aufstieg – zählt nicht für die Tipp-Punkte)</small></label>
           <select onchange="koSiegerSetzen('${spiel.id}', this.value)">
             <option value="">– bitte wählen –</option>
             <option value="${esc(spiel.t1)}" ${spiel.sieger===spiel.t1?'selected':''}>${esc(spiel.t1)}</option>
@@ -1899,6 +1902,7 @@ function renderSpiele() {
         ${scoreFeldHTML(spiel)}
         <div class="team"><span class="flagge">${flaggeVon(spiel.t2)}</span>${esc(spiel.t2)}</div>
       </div>
+      ${istKo ? `<div class="ko-hinweis">🏁 K.-o.-Wertung <b>nach 90 Minuten</b> – Verlängerung & Elfmeterschießen zählen <b>nicht</b> für die Tipp-Punkte. Unentschieden tippen ist erlaubt.</div>` : ''}
       ${tippGesperrt && sp && !spiel.gespielt ? `<div class="info-zeile" style="text-align:center">🔒 ${spiel.gesperrt ? 'Vom Spielleiter gesperrt' : '⏱️ Anpfiff erfolgt – Tippabgabe geschlossen'}</div>` : ''}
       <div style="text-align:center">${jokerBtn}</div>
       <details class="ergebnis-details nur-admin" style="margin-top:8px">
