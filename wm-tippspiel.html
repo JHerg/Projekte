@@ -3798,9 +3798,12 @@ function renderSchlagzeile(ergebnis) {
   // Abschnitt: Operation Tabellensturz – tägliche Spaß-Rubrik direkt unter Billes
   // Ballorakel. Zielt augenzwinkernd auf den/die aktuelle(n) Tabellenführer.
   let sturzHtml = "";
-  if (gf && gf.fuehrende && gf.fuehrende.length) {
-    sturzHtml = sturzRubrikHTML(namenListe(gf.fuehrende), tagSeed);
-  }
+  try {
+    if (gf && gf.fuehrende && gf.fuehrende.length) {
+      const sturzSeed = Math.floor(ergebnis.datum.getTime() / 86400000);
+      sturzHtml = sturzRubrikHTML(namenListe(gf.fuehrende), sturzSeed);
+    }
+  } catch (e) { console.error("Sturz-Rubrik:", e); }
 
   // Abschnitt: Vorschau auf die kommende K.-o.-Runde (Begegnungen + Favoriten).
   let vorschauHtml = "";
