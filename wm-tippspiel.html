@@ -413,6 +413,19 @@
   .rundschau-award .ra-emoji { font-size: 1.25rem; line-height: 1.3; }
   .rundschau-award .ra-txt { flex: 1; line-height: 1.4; font-family: -apple-system, Segoe UI, sans-serif; }
   .rundschau-award .ra-txt b { font-family: Georgia, "Times New Roman", serif; }
+  /* Operation Tabellensturz: tägliche Spaß-Rubrik gegen den Führenden */
+  .rundschau-sturz {
+    margin: 6px 14px 4px; padding: 8px 12px; text-align: left;
+    background: #fff4f4; border-left: 3px solid #e57373; border-radius: 0 6px 6px 0;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+  .rundschau-sturz .rs-intro { font-size: .86rem; line-height: 1.5; color: #333; margin-bottom: 6px; }
+  .rundschau-sturz .rs-ideen { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; }
+  .rundschau-sturz .rs-ideen li { font-size: .85rem; line-height: 1.45; color: #333; }
+  .rundschau-sturz .rs-fuss { font-size: .72rem; color: #999; margin-top: 7px; font-style: italic; }
+  body.dark .rundschau-sturz { background: #2e2422; border-left-color: #c9615c; }
+  body.dark .rundschau-sturz .rs-intro, body.dark .rundschau-sturz .rs-ideen li { color: #e0d6d2; }
+  body.dark .rundschau-sturz .rs-fuss { color: #9a8f8a; }
   /* Kolumne: wiederkehrende fiktive Stimme mit Running-Gag-Signatur */
   .rundschau-kolumne {
     display: flex; gap: 10px; align-items: flex-start;
@@ -2339,7 +2352,13 @@ const SCHLAGZEILEN = {
     "🪙 KOPF ODER ZAHL? {name} entscheidet den Spieltag minimal für sich – {punkte} Punkte! 🤞",
     "⚖️ WAAGE KIPPT ZU {name}: denkbar knapper Tagessieg mit {punkte} Punkten! 😅",
     "🏎️ ZIELGERADE! {name} setzt sich um eine Nasenlänge durch – {punkte} Punkte! 🏁",
-    "😰 ZITTERPARTIE! {name} rettet den Tagessieg ins Ziel – {punkte} Punkte! 🙏"
+    "😰 ZITTERPARTIE! {name} rettet den Tagessieg ins Ziel – {punkte} Punkte! 🙏",
+    "🧵 AM SEIDENEN FADEN: {name} rettet den Tagessieg mit {punkte} Punkten! ✂️",
+    "🕯️ AUF DEN LETZTEN DRÜCKER: {name} gewinnt knapp mit {punkte} Punkten! ⏳",
+    "🪝 HAKEN DRAN: {name} angelt sich den Tag hauchdünn – {punkte} Punkte! 🎣",
+    "🥁 BIS ZUM SCHLUSSAKKORD: {name} siegt knapp mit {punkte} Punkten! 🎼",
+    "🚦 GRÜN AUF DER ZIELGERADEN: {name} setzt sich minimal durch – {punkte} Punkte! 🏎️",
+    "🫧 HAUCHDÜNN: {name} holt den Tag mit {punkte} Punkten – fast nichts dazwischen! ✨"
   ],
   tagessieg: [
     "🏅 TAGESSIEGER {name}! Mit {punkte} Punkten lässt die Familie heute hinter sich! 🎉",
@@ -2357,7 +2376,15 @@ const SCHLAGZEILEN = {
     "🎺 TUSCH FÜR {name}! Tagessieg eingefahren – {punkte} Punkte! 🎉",
     "🌞 SONNENSEITE für {name}: heute lief alles, {punkte} Punkte und Platz 1 am Tag! 😎",
     "🏆 TAGESKRONE für {name}! {punkte} Punkte – heute der Beste der Familie! 👑",
-    "🔝 GANZ OBEN AM TAG: {name} mit {punkte} Punkten – stark getippt! 💪"
+    "🔝 GANZ OBEN AM TAG: {name} mit {punkte} Punkten – stark getippt! 💪",
+    "🎪 MANEGE FREI für {name}! {punkte} Punkte – die Show des Tages! 🤹",
+    "🧭 KURS GEHALTEN: {name} steuert mit {punkte} Punkten sicher zum Tagessieg! ⛵",
+    "🎸 ROCKSTAR DES TAGES: {name} rockt {punkte} Punkte und Platz 1! 🤘",
+    "🏹 VOLL INS SCHWARZE: {name} trifft {punkte} Punkte und den Tagessieg! 🎯",
+    "🧗 GANZ NACH OBEN: {name} klettert mit {punkte} Punkten auf den Tagesthron! 👑",
+    "🎬 UND … ACTION! {name} dreht den perfekten Tag mit {punkte} Punkten! 🎥",
+    "🛎️ SERVICE PERFEKT: {name} liefert {punkte} Punkte und den Tagessieg ab! 🍽️",
+    "🍀 GLÜCKSGRIFF {name}! {punkte} Punkte – heute lief's rund! 🎯"
   ],
   niete: [
     "😱 KATASTROPHE! {name} geht heute komplett LEER aus – 0 Punkte! Morgen wird alles besser. 🫣",
@@ -2854,7 +2881,13 @@ const KOLUMNE_TEXTE = {
     "{name} macht den perfekten Spieltag! Sowas feiert man im Rudel – am besten mit einer Runde Leberwurst für alle. Und mit 'alle' meine ich natürlich in erster Linie mich.",
     "Ein fehlerfreier Tag, {name}! Ich hab dir die ganze Zeit vom Schoß aus die Daumen gedrückt – also, so gut das mit Pfoten eben geht. Trainerhonorar bitte in Lachs.",
     "Das Ballorakel hat gesprochen und {name} hat geliefert: alles richtig! Ich bin so stolz, dass ich glatt mein Nachmittagsnickerchen verschoben hab. Und das will bei mir wirklich was heißen.",
-    "{name} räumt restlos alles ab! Ich konnte vor Freude kaum stillhalten – dabei bin ich sonst Weltmeisterin im Stillhalten, sobald es Richtung Sofa und Decke geht. Jetzt aber: Belohnung. Für uns beide."
+    "{name} räumt restlos alles ab! Ich konnte vor Freude kaum stillhalten – dabei bin ich sonst Weltmeisterin im Stillhalten, sobald es Richtung Sofa und Decke geht. Jetzt aber: Belohnung. Für uns beide.",
+    "Fehlerfrei, {name}! Ich hab als Ballorakel natürlich alles vorausgeahnt – und als Hund vorsichtshalber schon mal die Leckerli-Schublade im Auge behalten. Nur zur Sicherheit.",
+    "{name} macht das Maximum klar! So einen Tag gibt's seltener als ein freiwillig geteiltes Wurstbrot. Ich verneige mich – und halte die Schnauze rein zufällig in Snack-Richtung.",
+    "Alles getroffen, {name}! Ich bin vor Stolz drei Zentimeter gewachsen – gut, bei meiner Größe merkt das keiner, aber gefühlt bin ich jetzt ein Wolf.",
+    "Ein perfekter Tag, {name}! Ich hab sogar meinen Quietscheball liegen lassen, um zu applaudieren. Und Ball liegen lassen ist bei mir quasi ein Ehrenorden.",
+    "{name} tippt makellos! Das ruft nach einem Festmahl – ich hätte da Vorschläge, alle beginnen mit 'Leber' und enden mit 'wurst'.",
+    "Volle Punktzahl, {name}! Ich als Orakel sag: hab ich gerochen. Ich als Hund sag: Ich riech grad was noch Besseres, nämlich hoffentlich meine Belohnung."
   ],
   serie: [
     "{name} gewinnt schon wieder! Das ist so zuverlässig wie mein Mittagsschlaf – einmal angefangen, hört's nicht mehr auf. Davor zieh ich die Schlappohren.",
@@ -2866,7 +2899,13 @@ const KOLUMNE_TEXTE = {
     "Die {name}-Serie hält an. Ich find Routinen super: aufstehen, fressen, Schoß, schlafen, Ball, schlafen. Funktioniert bei mir, funktioniert bei {name}.",
     "{name} bleibt oben dran. Als Ballorakel sage ich: Das hört so schnell nicht auf – ungefähr so wenig wie mein Hunger. Und mein Hunger ist legendär.",
     "Noch ein Tag, noch ein Sieg für {name}. Ich wedel mir hier langsam den Stummelschwanz wund. Vielleicht gibt's für die Dauerleistung ja mal Lachs? Für mich, meine ich.",
-    "{name} gewinnt einfach weiter. Hibbelig wie ich bin, kann ich vor Freude kaum auf dem Sofa liegen bleiben – und das passiert mir wirklich selten."
+    "{name} gewinnt einfach weiter. Hibbelig wie ich bin, kann ich vor Freude kaum auf dem Sofa liegen bleiben – und das passiert mir wirklich selten.",
+    "Schon wieder {name}! Diese Serie ist zäher als mein Lieblingskauknochen – und der hält ewig, das kann ich bezeugen.",
+    "{name} gewinnt und gewinnt. Ich als Ballorakel würd ja gern was Spannenderes vorhersagen, aber ehrlich: Ich setz einfach weiter auf {name}. Und auf Wurst.",
+    "Der {name}-Lauf reißt nicht ab. Ich kenn das Gefühl – einmal am Betteln, hör ich auch nicht mehr auf. Wir sind uns ähnlich, {name} und ich.",
+    "Noch ein Sieg für {name}. Langsam sollte sich das Rudel was einfallen lassen … vielleicht liest ja jemand meine neue Lieblingsrubrik da unten. 😏",
+    "{name} bleibt oben. So konstant bin sonst nur ich beim Nachmittagsschlaf – und der ist mir heilig, das weiß die ganze Familie.",
+    "Wieder {name}! Ich wedel schon gar nicht mehr voll, ich spar Kraft fürs nächste Mal. Ein Dauer-Sieger verdient trotzdem Applaus. Und ich Lachs."
   ],
   tagessiegKnapp: [
     "Ganz knapp gewinnt {name}! So spannend war's, dass ich vor Aufregung den Quietscheball hab fallen lassen. Und ich lasse NIE den Ball fallen.",
@@ -2878,7 +2917,13 @@ const KOLUMNE_TEXTE = {
     "Knapper geht's kaum, {name}. Ich hab vor lauter Mitfiebern glatt vergessen zu betteln – und das ist mir, ehrlich, noch nie passiert.",
     "{name} mit dem Last-Minute-Sieg. Mein Ballorakel-Tipp wäre anders ausgefallen, aber gut – Hauptsache, das Rudel jubelt und es fällt was Essbares ab.",
     "So eng, {name}! Ich klebe vor Aufregung noch fester an deinem Bein als sonst. Und ich klebe wirklich schon ziemlich fest, fragt die Familie.",
-    "{name} gewinnt auf den letzten Drücker. Bei dem Herzklopfen brauch ich jetzt Trost-Kuscheln. Und Lachs. In genau der Reihenfolge. Oder andersrum, egal."
+    "{name} gewinnt auf den letzten Drücker. Bei dem Herzklopfen brauch ich jetzt Trost-Kuscheln. Und Lachs. In genau der Reihenfolge. Oder andersrum, egal.",
+    "Um Haaresbreite, {name}! Ich hab vor Spannung an der Sofakante geknabbert – tut mir leid, das war reine Nervosität.",
+    "Hauchzart gewonnen, {name}. Mein Hundeherz macht sowas nicht gern mit; ich brauch jetzt ein Leckerli, quasi auf Rezept.",
+    "{name} zittert sich zum Sieg. Ich hab vorsichtshalber unterm Tisch mitgefiebert – von dort sieht man außerdem am besten, ob was runterfällt.",
+    "So knapp! {name}, du raubst mir den Schlaf – und meinen Schlaf raubt mir sonst wirklich nichts, fragt die Familie.",
+    "Millimeter-Sieg für {name}. Ich apportier jetzt symbolisch gar nichts, ich bin zu aufgewühlt. Ein Trost-Happen würde die Fassung wiederherstellen.",
+    "{name} rettet's ins Ziel. Puh! Ich leg mich flach auf den Rücken und lass mir den Bauch kraulen – Nervenberuhigung auf Hundeart."
   ],
   tagessieg: [
     "Sieg für {name}! Ich hab den ganzen Spieltag brav danebengelegen und moralisch unterstützt. Trainerhonorar? Ich hätte da was: Wurst. Und danach kuscheln. Sofort.",
@@ -2890,7 +2935,13 @@ const KOLUMNE_TEXTE = {
     "{name} ist heute vorn. Das Rudel ist glücklich, also bin ich's auch. Glückliche Stimmung macht nämlich erfahrungsgemäß großzügig beim Verteilen von Leckerlis.",
     "Tagessieg für {name}! Ich apportiere jetzt symbolisch den Pokal – also meinen Quietscheball – und leg ihn dir vor die Füße. Eine kleine Wurst als Finderlohn?",
     "{name} gewinnt, das Rudel jubelt, ich wedel mit. Am schönsten wär's jetzt: alle zusammen aufs Sofa, ich in die Mitte, und irgendwer hat hoffentlich Käse dabei.",
-    "Sauberer Sieg, {name}. Als Ballorakel nicke ich anerkennend. Als Hund frag ich: Reicht mein anerkennendes Nicken für ein Stück Leberwurst? Bitte?"
+    "Sauberer Sieg, {name}. Als Ballorakel nicke ich anerkennend. Als Hund frag ich: Reicht mein anerkennendes Nicken für ein Stück Leberwurst? Bitte?",
+    "Tagessieg, {name}! Ich hab's vom Sofa aus mit einem stolzen Gähnen quittiert – bei mir ist das die höchste Auszeichnung, gleich nach dem Wedeln.",
+    "{name} vorn! Ich häng mich sofort an deine Fersen, falls Siege hungrig machen und was abfällt. Reine Fürsorge, versteht sich.",
+    "Sauber, {name}! Als Ballorakel nick ich weise, als Hund schiel ich zur Küche. Beides gleichzeitig – ich bin multitaskingfähig.",
+    "Heute {name}! Ich schlag vor, wir feiern im Rudel – ich übernehme den Part des glücklich wedelnden Maskottchens. Bezahlung: Wurst.",
+    "{name} holt den Tag. Ich apportier dir meinen Ball als Ehrenpokal – bitte behalt ihn aber nicht, ich will ihn gleich wiederhaben.",
+    "Klasse getippt, {name}! Ich bin so zufrieden, ich könnte glatt einschlafen – und das ist bei mir das größte Kompliment überhaupt."
   ],
   niete: [
     "Null Punkte für {name}? Komm her, leg dich zu mir, wir sind jetzt kurz traurig zusammen. Und dann essen wir was – hilft immer. Mir zumindest.",
@@ -2902,7 +2953,13 @@ const KOLUMNE_TEXTE = {
     "{name} geht heute leer aus. Ich auch, was mein Betteln angeht – wir sind also im selben Korb. Lass uns gemeinsam jammern, am besten auf dem Sofa, ganz eng aneinander.",
     "Null Punkte für {name}. Halb so wild. Ich leg meine Schnauze auf dein Knie, du kraulst mich, und die Welt ist wieder in Ordnung. Ein Häppchen Lachs schadet aber auch nicht.",
     "Heute mal nix, {name}. Bei mir gilt die Regel: Wenn der Tag schlecht ist, helfen Fressen und Kuscheln. Funktioniert zuverlässig. Sollen wir?",
-    "{name} ohne Punkte – Kopf hoch! Ich bin trotzdem dein größter Fan und kleb wie immer an dir. Spätestens nach einer Streicheleinheit (und einer Wurst) ist alles wieder gut."
+    "{name} ohne Punkte – Kopf hoch! Ich bin trotzdem dein größter Fan und kleb wie immer an dir. Spätestens nach einer Streicheleinheit (und einer Wurst) ist alles wieder gut.",
+    "Null für {name}? Ach komm. Ich hab auch schon mal drei Stunden das falsche Loch bewacht. Passiert den Besten. Kuscheln hilft – ich fang schon mal an.",
+    "Heut nix, {name}. Weißt du was? Ich hol dir meinen Quietscheball. Der macht immer gute Laune – und wenn nicht, dann wenigstens Krach.",
+    "{name} ohne Punkte. Halb so wild – morgen riecht die Welt wieder besser. Bis dahin: Schoß frei machen, ich komme.",
+    "Keine Treffer, {name}. Ich setz mich einfach auf deine Füße, dann kann der Tag nicht mehr weg. So mach ich das immer, funktioniert zuverlässig.",
+    "Null Punkte, {name}? Dann sind wir heute Team Trübsal – ich bring die Kuscheldecke, du bringst die gute Laune zurück. Deal?",
+    "Heute daneben, {name}. Aber ehrlich: Ein Tag ohne Punkte ist immer noch ein Tag mit Hund. Und das ist ja wohl das Wichtigste."
   ],
   ruhetag: [
     "Heute hat keiner was geholt. Endlich mal Ruhe im Rudel – perfektes Wetter für ein ausgiebiges Nickerchen mitten zwischen euch auf dem Sofa.",
@@ -2914,9 +2971,87 @@ const KOLUMNE_TEXTE = {
     "Heute null für alle. Ich find ja: kein schlechter Tag ist ein Tag, an dem man viel schlafen und betteln kann. Und davon hatte ich heute reichlich.",
     "Ruhetag im Rudel. Niemand aufgeregt, niemand laut – herrlich. Ich roll mich jetzt in eurer Mitte zusammen und mach, was ich am besten kann: schlummern.",
     "Heute gab's nichts zu holen. Macht nichts, dann gibt's eben extra Kuschelzeit. Ich halt schon mal den besten Platz auf dem Sofa warm. Wurst nehm ich trotzdem, falls wer fragt.",
-    "Kein Punkt für niemanden. Demokratisch verteilte Ruhe, sozusagen. Perfekt für ein Hundeleben wie meins: fressen, kuscheln, schlafen – und das Ballorakel macht auch mal Pause."
+    "Kein Punkt für niemanden. Demokratisch verteilte Ruhe, sozusagen. Perfekt für ein Hundeleben wie meins: fressen, kuscheln, schlafen – und das Ballorakel macht auch mal Pause.",
+    "Alle bei null heute – herrlich unaufgeregt. Ich schlag ein kollektives Rudel-Nickerchen vor. Ich fang schon mal an, aus reiner Vorbildfunktion.",
+    "Keiner punktet. Tja. Dann kümmern wir uns eben um die wirklich wichtigen Dinge: Sofa, Decke und die Frage, wo die nächste Wurst herkommt.",
+    "Nullrunde für alle. Ich als Ballorakel sage: heute mal Pause vom Hellsehen. Ich als Hund sage: passt, dann pennen wir eben alle zusammen.",
+    "Niemand trifft heute. Wunderbar ruhig. Ich verteil mich jetzt quer über zwei Schöße und mach den Tag zu meinem Lieblingstag.",
+    "Kein Punkt weit und breit. Gut, dann übernehme ich die Unterhaltung: Ich bring den Ball, ihr werft, ich bring den Ball, ihr werft. Endlosschleife – mein Spezialgebiet.",
+    "Heute null für alle – so fair war die Tabelle selten. Ich feier die Gerechtigkeit mit einem ausgiebigen Bäuchlein-Kraul-Termin. Freiwillige vor!"
   ]
 };
+
+// ---- Tägliche Spaß-Rubrik "Operation Tabellensturz" ----
+// Augenzwinkernde, garantiert harmlose Ideen, wie die Meute den aktuellen
+// Tabellenführer vom Thron kippt (Ablenkung, Fehlinfos, Bille als Komplizin …).
+// Nutzt die Familien-Konstellation: Bille, Oma Foxy, Jürgen (leicht zu
+// überreden), Helenes Launen, Jacob (der Kleinste), Natalies Kochkünste.
+const STURZ_TITEL = [
+  "🎯 Operation Tabellensturz",
+  "🕵️ Der geheime Sturz-Plan",
+  "💣 Anschlag auf die Tabellenspitze",
+  "🎭 Die große Thron-Verschwörung",
+  "🪤 Fallen für den Spitzenreiter",
+  "🚨 Sturz-Alarm im Rudel",
+  "♟️ Schachmatt für die Nummer 1",
+  "🧨 Wie kippen wir die Krone?"
+];
+const STURZ_IDEEN = [
+  "Ladet {name} zu einem Drei-Gänge-Menü von Natalie ein – mit vollem Bauch schläft man auf dem Sofa ein und verpennt die Tippabgabe. 🍝😴",
+  "Streut das Gerücht, die Anstoßzeiten seien um zwei Stunden verschoben – {name} tippt dann seelenruhig … zu spät. ⏰🤥",
+  "Setzt Bille auf {name}s Schoß. Aufstehen zwecklos, Handy unerreichbar, Tippen unmöglich. 🐶🛋️",
+  "Behauptet felsenfest, Deutschland spiele heute gar nicht – vor lauter Verwirrung lässt {name} das halbe Formular leer. 🇩🇪❓",
+  "Ein hartnäckiger 'Magen-Darm' geht um … und trifft rein zufällig immer den Führenden. Gute Besserung schon mal, {name}! 🤢🚽",
+  "Versteckt {name}s Handy zwischen den Sofakissen. Kein Handy, keine App, kein Tipp. 📱🛋️",
+  "Verwickelt {name} in eine endlose Diskussion über die Abseitsregel – bis der Tippschluss längst durch ist. 🗣️🏁",
+  "Dreht heimlich {name}s Uhr eine Stunde vor. Wer glaubt, es sei eh zu spät, tippt gar nicht erst. 🕐😏",
+  "Lockt {name} mit einem 'dringenden' Gassi-Gang mit Bille aus dem Haus – exakt zur Tipp-Deadline. 🦮🚪",
+  "Schickt {name} kurz vor Anpfiff eine 9-Minuten-Sprachnachricht. Zuhören oder Tippen – nicht beides. 🎙️😵",
+  "Stellt Jürgens Fernseher auf die falsche Partie – {name} tippt begeistert das komplett falsche Spiel. 📺🤦",
+  "Bittet {name} 'ganz kurz' beim Tisch decken zu helfen. 'Ganz kurz' dauert bekanntlich bis nach Tippschluss. 🍽️⏳",
+  "Sät Zweifel: 'Meinst du wirklich, die gewinnen?' – Panik-Umtippen führt zuverlässig ins Verderben. 😬🔄",
+  "Organisiert einen spontanen Familien-Videocall genau zur Tippzeit. Auflegen wirkt unhöflich, dranbleiben kostet den Tipp. 📞😅",
+  "Lobt {name} den ganzen Tag, bis er selbstsicher und schludrig wird. Übermut tippt daneben. 😎📉",
+  "Lasst Bille {name}s Lieblingssocke verstecken. Die Suche dauert erfahrungsgemäß genau bis zum Anpfiff. 🧦🐾",
+  "Fragt {name} nach dem 'geheimen Tipp-Trick' und hört stundenlang begeistert zu – reden statt tippen. 🤓🕰️",
+  "Verbreitet, ein Spiel falle wegen Regen aus. {name} spart sich den Tipp – und ärgert sich später schwarz. 🌧️❌",
+  "Bringt Helene in schlechte Laune neben {name}: Bille flüchtet zu Jürgen, die Stimmung kippt, die Konzentration auch. 😾💫",
+  "Nutzt Jürgen – er ist am leichtesten zu überreden, {name} in ein Nickerchen zu quatschen. Schlafende tippen nicht. 😴🛋️",
+  "Fahrt mit {name} Fahrstuhl und 'vergesst' auszusteigen. Bille fährt heute mutig mit – {name} unfreiwillig auch. 🛗😆",
+  "Bombardiert {name} mit Katzenvideos. Wer einmal scrollt, scrollt bis nach Tippschluss. 🐱📲",
+  "Behauptet, der Joker sei heute doppelt so viel wert – {name} verpulvert ihn panisch am falschen Spiel. 🃏💥",
+  "Ladet {name} zum 'kurzen' Kartenspiel. Wer verliert, will Revanche – und plötzlich ist Tippschluss. 🃏⏰",
+  "Lasst Jacob und Bille um {name} herumtoben. Zwischen den zwei Kleinsten kommt niemand zum Tippen. 🐕🧒",
+  "Serviert {name} Omas berüchtigten Kräutertee 'gegen die Nerven' – wirkt garantiert einschläfernd. 🍵😴",
+  "Flüstert {name} einen 'todsicheren Geheimtipp' zu, der natürlich völliger Unsinn ist. Vertrauen ist gut, Punkteverlust ist besser. 🤫📉",
+  "Erzählt {name}, die Tabelle werde heute zurückgesetzt – 'lohnt sich eh nicht zu tippen'. Fataler Irrtum. 🔄🙃",
+  "Plant einen Familienausflug ohne Handyempfang – natürlich rein zufällig über die komplette Tippzeit. 🏞️📵",
+  "Fragt {name} zehn Minuten vor Schluss: 'Hast du überhaupt schon getippt?' – und dann: 'Ach, egal.' Verunsicherung pur. 😬🤔",
+  "Kocht so verführerisch, dass {name} lieber in der Küche steht als am Handy. Natalies Essen schlägt jeden Tippgeist. 🍲😋",
+  "Startet eine Grundsatzdebatte, ob Bille oder Foxy der bessere Hund ist. {name} vergisst darüber Raum und Zeit. 🐶🏆",
+  "Gebt {name} den Rat: 'Tipp bloß nicht zu früh, die Aufstellungen kommen erst spät!' – und dann kommt gar nichts mehr. ⏳🤐",
+  "Versprecht {name} das letzte Stück Kuchen – aber erst NACH Anpfiff. Wer wartet, tippt nicht rechtzeitig. 🍰😈",
+  "Schickt Bille mit dem Hundeblick zu {name}: einmal seufzen, und schon wird lieber Ball gespielt als getippt. 🥺🎾",
+  "Legt {name} nahe, 'aus Fairness' heute mal ganz auf den Joker zu verzichten. Konkurrenz muss man ja nicht unterstützen. 🃏😇"
+];
+// Baut die Sturz-Rubrik: zwei wechselnde Ideen pro Tag, adressiert an den/die
+// aktuelle(n) Tabellenführer.
+function sturzRubrikHTML(zielName, seed) {
+  if (!zielName) return "";
+  const titel = STURZ_TITEL[seed % STURZ_TITEL.length];
+  const n = STURZ_IDEEN.length;
+  const i1 = ((seed % n) + n) % n;
+  let i2 = (((seed * 7 + 3) % n) + n) % n;
+  if (i2 === i1) i2 = (i2 + 1) % n;
+  const ideen = [STURZ_IDEEN[i1], STURZ_IDEEN[i2]]
+    .map(t => `<li>${t.replace(/\{name\}/g, zielName)}</li>`).join("");
+  return `<div class="rundschau-section">${titel}</div>
+    <div class="rundschau-sturz">
+      <div class="rs-intro">Liebe Meute, heute gilt es <b>${zielName}</b> vom Thron zu kippen. Ein paar (garantiert harmlose 😇) Ideen:</div>
+      <ul class="rs-ideen">${ideen}</ul>
+      <div class="rs-fuss">⚠️ Alles nur Spaß – bitte niemanden wirklich vergiften, aussperren oder im Fahrstuhl vergessen. 🐾</div>
+    </div>`;
+}
 
 // Namens-Normalisierung für robuste Vergleiche (Umlaute raus, klein, getrimmt).
 function normName(name) {
@@ -3600,6 +3735,13 @@ function renderSchlagzeile(ergebnis) {
       <div class="rundschau-fuehrung">${satz}</div>`;
   }
 
+  // Abschnitt: Operation Tabellensturz – tägliche Spaß-Rubrik direkt unter Billes
+  // Ballorakel. Zielt augenzwinkernd auf den/die aktuelle(n) Tabellenführer.
+  let sturzHtml = "";
+  if (gf && gf.fuehrende && gf.fuehrende.length) {
+    sturzHtml = sturzRubrikHTML(namenListe(gf.fuehrende), tagSeed);
+  }
+
   // Abschnitt: Tipper-Tabelle
   let tabelleHtml = "";
   if (details && details.spielerDetails && details.spielerDetails.length) {
@@ -3771,6 +3913,7 @@ function renderSchlagzeile(ergebnis) {
       ${awardsHtml}
       ${presseHtml}
       ${kolumneHtml}
+      ${sturzHtml}
       ${wocheHtml}
       ${fuehrungHtml}
       ${zitatHtml}
