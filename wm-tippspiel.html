@@ -445,6 +445,17 @@
   body.dark .rundschau-vorschau .vs-liste li { border-bottom-color: #33465a; }
   body.dark .rundschau-vorschau .vs-meta { color: #9fb3c8; }
   body.dark .rundschau-vorschau .vs-fuss { color: #8a94a0; }
+  /* Aus der Tierwelt: tägliche liebevolle Cocker-Spaniel-Hommage */
+  .rundschau-tierwelt {
+    margin: 6px 14px 4px; padding: 8px 12px; text-align: left;
+    background: #f4f0e8; border-left: 3px solid #a1795a; border-radius: 0 6px 6px 0;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+  .rundschau-tierwelt .tw-titel { font-weight: 700; color: #8a5a3a; font-size: .9rem; margin-bottom: 4px; }
+  .rundschau-tierwelt .tw-text { font-size: .86rem; line-height: 1.55; color: #3a3330; }
+  body.dark .rundschau-tierwelt { background: #2a2620; border-left-color: #b08863; }
+  body.dark .rundschau-tierwelt .tw-titel { color: #d0a074; }
+  body.dark .rundschau-tierwelt .tw-text { color: #ddd4cc; }
   /* Kolumne: wiederkehrende fiktive Stimme mit Running-Gag-Signatur */
   .rundschau-kolumne {
     display: flex; gap: 10px; align-items: flex-start;
@@ -3113,6 +3124,47 @@ function vorschauRubrikHTML() {
     </div>`;
 }
 
+// ---- Tägliche Rubrik "Aus der Tierwelt" ----
+// Eine liebevolle Hommage an den Cocker Spaniel (und damit an Bille): jeden Tag
+// ein kleiner, warmherziger Bericht über eine Besonderheit der Rasse.
+// (Recherche: Rassefakten, Geschichte, "Merry Cocker", Lady aus Susi & Strolch,
+//  Spürhund Tangle, Sperry-Bootsschuhe u. v. m.)
+const TIERWELT_BERICHTE = [
+  { titel: "Der ewig wedelnde „Merry Cocker“", text: "Kaum eine Hunderasse trägt ihren Spitznamen so zu Recht wie der Cocker Spaniel: In England nennt man ihn liebevoll den „Merry Cocker“, den fröhlichen Cocker. Sein Stummelschwänzchen wedelt praktisch ununterbrochen – vom Aufwachen bis zum Einschlafen. Diese Rasse ist ein wandelndes Gute-Laune-Paket, das seine Freude über jede Kleinigkeit mit dem ganzen Körper zeigt. Wer je einem wedelnden Cocker begegnet ist, weiß: Schlechte Laune hat gegen so viel Lebensfreude keine Chance." },
+  { titel: "Woher der Name kommt", text: "Der Name „Cocker“ klingt hübsch, hat aber einen jagdlichen Ursprung: Die Rasse wurde einst gezüchtet, um Waldschnepfen – auf Englisch „woodcock“ – aus dem Unterholz aufzuscheuchen. Aus „woodcock“ wurde kurz der „Cocker“. Im Jahr 1892 erkannte der englische Kennel Club den Cocker Spaniel offiziell als eigene Rasse an, getrennt vom größeren Springer Spaniel. So wurde aus dem fleißigen Jagdhelfer über die Jahrzehnte einer der beliebtesten Familienhunde der Welt." },
+  { titel: "Diese Schlappohren!", text: "Die langen, seidig befederten Schlappohren sind das Markenzeichen jedes Cocker Spaniels. Früher fingen sie beim Stöbern im dichten Gestrüpp die Witterung ein – heute sind sie vor allem zum Verlieben. Weil sie so tief hängen, landen sie gern mal im Futternapf oder in der Wasserschüssel, weshalb sie regelmäßig geputzt werden wollen. Aber Hand aufs Herz: Ein Cocker ohne diese wippenden Ohren wäre einfach kein Cocker." },
+  { titel: "Der Blick, der alles bekommt", text: "Cocker Spaniels haben große, dunkle Kulleraugen mit einem sanften, fast schmelzenden Ausdruck. Dieser berühmte „Cocker-Blick“ hat schon so manches Herz – und so manches Leckerli – erobert. Kein Wunder, dass die Rasse als Meisterin darin gilt, ihre Menschen um die Pfote zu wickeln. Wer diesem treuen Augenaufschlag widerstehen kann, hat vermutlich noch nie einen Cocker Spaniel kennengelernt." },
+  { titel: "Ein Fell in allen Farben", text: "Beim Cocker Spaniel gibt es eine erstaunliche Farbvielfalt: von Schwarz über Leberbraun, Rot und Goldblond bis hin zu vielen Mischungen. Besonders schön sind die „Roan“-Muster mit fein gesprenkeltem Fell sowie die dreifarbigen Tricolors. Dazu kommt das seidige, leicht gewellte Haar mit den typischen Fransen an Ohren, Bauch und Beinen. Egal welche Farbe – gepflegt glänzt so ein Cockerfell wie poliertes Kastanienholz." },
+  { titel: "Die feine Spürnase", text: "Unter der niedlichen Hülle steckt ein hochkonzentrierter Jagdhund mit ausgezeichneter Nase. Cocker Spaniels lieben es zu stöbern, Spuren zu verfolgen und mit der Schnauze am Boden die ganze Welt zu erkunden. Diese Leidenschaft macht sie draußen unermüdlich – eine spannende Fährte kann für einen Cocker das Größte sein. Wer einen Cocker hat, hat also immer einen kleinen Detektiv auf vier Pfoten dabei." },
+  { titel: "Filmstar auf vier Pfoten", text: "Auch Hollywood konnte dem Charme der Cocker Spaniels nicht widerstehen: Die elegante „Lady“ aus dem Disney-Klassiker „Susi und Strolch“ ist eine Cocker-Spaniel-Hündin. Ihr seidiges Fell und der vornehme, sanfte Ausdruck machten sie zur perfekten Wahl für die feine, verschmuste Filmheldin. Millionen Menschen verliebten sich durch sie in die Rasse. Und ehrlich – jeder Cocker trägt ein bisschen von Ladys Anmut in sich." },
+  { titel: "Der Held mit der guten Nase", text: "Dass die Cocker-Nase mehr kann als Leckerlis aufspüren, bewies ein Cocker Spaniel namens „Tangle“: In einer Studie erschnüffelte er Krebserkrankungen mit erstaunlicher Treffsicherheit. Anfangs lag seine Erfolgsquote bei rund 56 Prozent, mit weiterem Training stieg sie sogar auf etwa 80 Prozent. Cocker Spaniels beweisen damit, dass in den fröhlichen Stöberhunden echte Spürnasen-Talente stecken. Aus einem verschmusten Familienhund kann so ganz nebenbei ein kleiner Lebensretter werden." },
+  { titel: "Bootsschuhe dank Cocker", text: "Eine der schönsten Cocker-Geschichten führt zu den berühmten Bootsschuhen: Paul Sperry beobachtete einst, wie sein Cocker Spaniel „Prince“ mühelos über glattes Eis lief, ohne auszurutschen. Neugierig sah er sich die Pfoten des Hundes an und entdeckte feine, wellenförmige Rillen, die für Halt sorgten. Nach diesem Vorbild entwarf Sperry die rutschfeste Sohle der ersten Bootsschuhe. So verdankt die Modewelt einem Cocker Spaniel einen echten Klassiker." },
+  { titel: "Menschenhund durch und durch", text: "Cocker Spaniels sind durch und durch auf ihre Menschen bezogen – sie wollen einfach überall dabei sein. Am liebsten kleben sie wie ein kleiner Schatten an der Seite ihrer Lieblingsperson, von Zimmer zu Zimmer. Alleinsein mögen sie gar nicht; ihr Glück ist die Nähe zur Familie. Diese anhängliche, herzliche Art macht sie zu treuen Begleitern, die jeden Tag ein bisschen wärmer machen." },
+  { titel: "Klein, aber sportlich", text: "Auch wenn er handlich und kompakt ist – der Cocker Spaniel ist ein echtes Energiebündel. Draußen ist er kaum zu bremsen: rennen, springen, apportieren, stöbern, am liebsten alles auf einmal. Ein geworfener Ball kann für ihn zum schönsten Spielzeug der Welt werden. Nach so viel Auslauf aber gibt es nichts Schöneres als ein Nickerchen ganz nah bei der Familie." },
+  { titel: "Schlau und charmant", text: "Cocker Spaniels sind ausgesprochen intelligent und lernen mit Begeisterung – vorausgesetzt, die Sache macht Spaß. Genau diese Cleverness nutzen sie aber auch, um ihre Menschen geschickt um den Finger zu wickeln. Ein bittender Blick hier, ein Pfötchen dort – und schon fällt das Extra-Leckerli. Man erzieht also nicht nur den Cocker; ein bisschen erzieht der Cocker auch einen selbst." },
+  { titel: "Kuschelweltmeister", text: "Wenn es eine olympische Disziplin im Schmusen gäbe, der Cocker Spaniel hätte Gold sicher. Kaum eine Rasse genießt Körpernähe so sehr – am liebsten mitten auf dem Schoß oder eng an die Familie gekuschelt. Diese verschmuste Zärtlichkeit gehört fest zum Wesen des Cockers. Ein Abend auf dem Sofa wird mit so einem warmen Fellknäuel gleich doppelt gemütlich." },
+  { titel: "Ein liebenswerter Dickkopf", text: "So freundlich und anhänglich der Cocker Spaniel auch ist – ein kleiner Sturkopf steckt in ihm. Manchmal hat er eben seine eigenen Ideen und stellt die Ohren auf Durchzug, wenn ihm etwas nicht passt. Das gehört zu seinem selbstbewussten, humorvollen Charakter einfach dazu. Mit Geduld, Liebe und ein bisschen Humor wird aus diesem Eigensinn nur noch mehr Persönlichkeit." },
+  { titel: "Wasserratten mit Fransen", text: "Die Spaniels gehören zu den Stöber- und Apportierhunden, und viele Cocker lieben das Wasser über alles. Ein Bach, eine Pfütze, der Gartenschlauch – kaum etwas ist so verlockend wie eine ordentliche Runde Planschen. Diese Freude am Nassen steckt tief in ihrer jagdlichen Herkunft. Zurück bleibt am Ende oft ein glücklich-durchnässter Cocker mit tropfenden Ohren und breitem Grinsen." },
+  { titel: "Uralte Spaniel-Geschichte", text: "Die Spaniels zählen zu den ältesten Jagdhundtypen überhaupt und begleiten die Menschen schon seit vielen Jahrhunderten. Schon ihr Name deutet auf eine Herkunft aus dem Süden hin – vermutlich aus dem alten Hispanien, also Spanien. Über die Zeit entstanden aus der großen Spaniel-Familie viele Rassen, darunter unser fröhlicher Cocker. In ihm steckt also ein Stück echte Hundegeschichte, verpackt in ein wedelndes, liebevolles Fellbündel." },
+  { titel: "Apportieren im Blut", text: "Das Apportieren liegt dem Cocker Spaniel im Blut – etwas zu bringen und wiederzubringen ist für ihn pures Glück. Ein Ball, ein Stöckchen, ein Quietschespielzeug: Kaum geworfen, flitzt der Cocker schon los und bringt es stolz zurück. Am liebsten wiederholt er dieses Spiel, bis den Menschen der Arm lahm wird. Für so einen kleinen Apportierprofi ist ein Wurfspiel das schönste Geschenk des Tages." },
+  { titel: "Das Gute-Laune-Paket", text: "Fröhlich, lebenslustig und für jeden Spaß zu haben – der Cocker Spaniel ist ein wandelndes Gute-Laune-Paket. Seine ansteckende Begeisterung macht selbst graue Tage ein bisschen heller. Ob beim Spielen, beim Spaziergang oder beim Betteln um ein Häppchen: Der Cocker ist mit ganzem Herzen dabei. Diese unbändige Lebensfreude ist wohl das schönste Geschenk, das er seiner Familie jeden Tag aufs Neue macht." },
+  { titel: "Treue bis in die Pfotenspitzen", text: "Ist ein Cocker Spaniel einmal in sein Rudel verliebt, dann mit Haut und Fell. Er bindet sich eng an seine Menschen und bleibt ihnen treu bis in die Pfotenspitzen. Diese tiefe Verbundenheit spürt man in jedem Blick, jedem Wedeln, jedem freudigen Begrüßungstanz an der Tür. Ein treuerer, herzlicherer Freund als ein Cocker ist schwer zu finden." },
+  { titel: "Immer mittendrin", text: "Ein Cocker Spaniel möchte nichts verpassen – er ist am liebsten mittendrin statt nur dabei. Wird gekocht, sitzt er in der Küche; läuft der Fernseher, liegt er auf dem Sofa; wird gepackt, kontrolliert er den Koffer. Diese neugierige Anhänglichkeit macht ihn zum echten Familienmitglied auf vier Pfoten. Mit einem Cocker im Haus ist man einfach nie allein." },
+  { titel: "Der Charmeur beim Betteln", text: "Kein Hund bettelt so charmant wie ein Cocker Spaniel. Mit großen Augen, schräg gelegtem Kopf und wedelndem Schwänzchen bringt er selbst hartgesottene Menschen zum Schmelzen. Sein Appetit ist dabei durchaus legendär – ein Cocker sagt zu einem Leckerli selten nein. Man sollte diesem Bettel-Blick mit Vorsicht (und einem Lächeln) begegnen, denn er gewinnt fast immer." },
+  { titel: "Sanftmut auf vier Pfoten", text: "Der Cocker Spaniel gilt als besonders sanfter und geduldiger Familienhund. Sein gutmütiges Wesen macht ihn zu einem wunderbaren Begleiter, auch für Kinder und im lebhaften Familienalltag. Er nimmt vieles gelassen und begegnet seinen Menschen mit viel Herzenswärme. Diese liebevolle Sanftmut ist einer der Gründe, warum die Rasse seit Generationen so geliebt wird." },
+  { titel: "Nie zu müde für ein Spiel", text: "Egal ob Welpe oder Senior – der Cocker Spaniel behält zeitlebens sein verspieltes Herz. Für eine Runde Ball, ein Versteckspiel oder eine wilde Toberei ist er fast immer zu haben. Diese jugendliche Spielfreude hält ihn munter und steckt die ganze Familie an. Mit einem Cocker wird es zu Hause garantiert nie langweilig." },
+  { titel: "Ein Herz auf vier Pfoten", text: "Am Ende lässt sich der Cocker Spaniel mit einem einzigen Wort beschreiben: herzlich. Er schenkt seine Liebe bedingungslos, freut sich über die kleinen Dinge und macht jeden Tag ein bisschen schöner. Ob beim Kuscheln, Spielen oder einfach nur beim Dabeisein – dieser kleine Wirbelwind ist reine Zuneigung auf vier Pfoten. Wer einen Cocker hat, hat einen treuen, fröhlichen Freund fürs Leben gefunden." }
+];
+function tierweltRubrikHTML(seed) {
+  const n = TIERWELT_BERICHTE.length;
+  const b = TIERWELT_BERICHTE[(((seed % n) + n) % n)];
+  return `<div class="rundschau-section">🐾 Aus der Tierwelt</div>
+    <div class="rundschau-tierwelt">
+      <div class="tw-titel">🐶 ${b.titel}</div>
+      <div class="tw-text">${b.text}</div>
+    </div>`;
+}
+
 // Namens-Normalisierung für robuste Vergleiche (Umlaute raus, klein, getrimmt).
 function normName(name) {
   return (name || "").trim().toLowerCase()
@@ -3805,6 +3857,13 @@ function renderSchlagzeile(ergebnis) {
     }
   } catch (e) { console.error("Sturz-Rubrik:", e); }
 
+  // Abschnitt: Aus der Tierwelt – tägliche liebevolle Cocker-Spaniel-Hommage.
+  let tierweltHtml = "";
+  try {
+    const twSeed = Math.floor(ergebnis.datum.getTime() / 86400000);
+    tierweltHtml = tierweltRubrikHTML(twSeed);
+  } catch (e) { console.error("Tierwelt-Rubrik:", e); }
+
   // Abschnitt: Vorschau auf die kommende K.-o.-Runde (Begegnungen + Favoriten).
   let vorschauHtml = "";
   try { vorschauHtml = vorschauRubrikHTML(); } catch (e) { console.error("Vorschau:", e); }
@@ -3981,6 +4040,7 @@ function renderSchlagzeile(ergebnis) {
       ${presseHtml}
       ${kolumneHtml}
       ${sturzHtml}
+      ${tierweltHtml}
       ${wocheHtml}
       ${fuehrungHtml}
       ${vorschauHtml}
