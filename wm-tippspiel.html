@@ -426,6 +426,25 @@
   body.dark .rundschau-sturz { background: #2e2422; border-left-color: #c9615c; }
   body.dark .rundschau-sturz .rs-intro, body.dark .rundschau-sturz .rs-ideen li { color: #e0d6d2; }
   body.dark .rundschau-sturz .rs-fuss { color: #9a8f8a; }
+  /* Vorschau auf die kommende K.-o.-Runde */
+  .rundschau-vorschau {
+    margin: 6px 14px 4px; padding: 8px 12px; text-align: left;
+    background: #eef4fb; border-left: 3px solid #5b8fc9; border-radius: 0 6px 6px 0;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+  .rundschau-vorschau .vs-intro { font-size: .86rem; line-height: 1.5; color: #333; margin-bottom: 6px; }
+  .rundschau-vorschau .vs-liste { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .rundschau-vorschau .vs-liste li { border-bottom: 1px dashed #cdd8e6; padding-bottom: 7px; }
+  .rundschau-vorschau .vs-liste li:last-child { border-bottom: none; padding-bottom: 0; }
+  .rundschau-vorschau .vs-paar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .9rem; }
+  .rundschau-vorschau .vs-x { color: #999; font-style: italic; font-size: .8rem; }
+  .rundschau-vorschau .vs-meta { font-size: .78rem; color: #566; margin-top: 2px; font-family: -apple-system, Segoe UI, sans-serif; }
+  .rundschau-vorschau .vs-fuss { font-size: .72rem; color: #999; margin-top: 7px; font-style: italic; }
+  body.dark .rundschau-vorschau { background: #1e2833; border-left-color: #5b8fc9; }
+  body.dark .rundschau-vorschau .vs-intro { color: #dbe5f0; }
+  body.dark .rundschau-vorschau .vs-liste li { border-bottom-color: #33465a; }
+  body.dark .rundschau-vorschau .vs-meta { color: #9fb3c8; }
+  body.dark .rundschau-vorschau .vs-fuss { color: #8a94a0; }
   /* Kolumne: wiederkehrende fiktive Stimme mit Running-Gag-Signatur */
   .rundschau-kolumne {
     display: flex; gap: 10px; align-items: flex-start;
@@ -3053,6 +3072,47 @@ function sturzRubrikHTML(zielName, seed) {
     </div>`;
 }
 
+// ---- Vorschau auf die kommende K.-o.-Runde ----
+// Ungefähre FIFA-Weltranglisten-Position (Stand Juni 2026) für die 48 WM-2026-
+// Teilnehmer – dient nur der Favoriten-Einschätzung in der Rundenvorschau.
+// Kleinere Zahl = stärker. Quelle: FIFA/Coca-Cola Men's World Ranking.
+const TEAM_RANK = {
+  "Argentinien":1, "Spanien":2, "Frankreich":3, "England":4, "Portugal":5, "Brasilien":6,
+  "Niederlande":7, "Belgien":8, "Kroatien":9, "Deutschland":10, "Marokko":12, "Kolumbien":13,
+  "Mexiko":14, "Uruguay":15, "USA":16, "Senegal":17, "Japan":18, "Iran":19, "Schweiz":20,
+  "Österreich":22, "Südkorea":23, "Australien":24, "Ecuador":25, "Türkei":26, "Norwegen":28,
+  "Kanada":30, "Panama":31, "Ägypten":33, "Katar":36, "Elfenbeinküste":40, "Schweden":41,
+  "Tschechien":42, "Algerien":43, "Schottland":44, "Paraguay":45, "Tunesien":46, "DR Kongo":55,
+  "Usbekistan":57, "Irak":58, "Saudi-Arabien":60, "Südafrika":62, "Jordanien":64, "Kap Verde":70,
+  "Ghana":73, "Bosnien-Herzegowina":74, "Curaçao":82, "Neuseeland":89, "Haiti":90
+};
+// Baut die Vorschau der nächsten noch offenen K.-o.-Runde (Begegnungen + Favorit
+// nach Weltrangliste). Vor der K.-o.-Phase bzw. wenn alles gespielt ist: leer.
+function vorschauRubrikHTML() {
+  const ko = state.spiele.filter(s => s.koRunde);
+  if (!ko.length) return "";
+  const offen = ko.filter(s => !s.gespielt);
+  if (!offen.length) return "";
+  const runde = Math.min(...offen.map(s => s.koRunde));
+  const spiele = ko.filter(s => s.koRunde === runde && !s.gespielt).sort((a, b) => a.koIndex - b.koIndex);
+  if (!spiele.length) return "";
+  const zeilen = spiele.map(s => {
+    const r1 = TEAM_RANK[s.t1] ?? 99, r2 = TEAM_RANK[s.t2] ?? 99;
+    const diff = Math.abs(r1 - r2);
+    let fav;
+    if (diff <= 3) fav = "🤝 Augenhöhe – ein offenes Duell";
+    else { const ft = r1 < r2 ? s.t1 : s.t2; fav = `⭐ Favorit: ${flaggeVon(ft)} ${esc(ft)}`; }
+    return `<li><div class="vs-paar"><b>${flaggeVon(s.t1)} ${esc(s.t1)}</b><span class="vs-x">vs</span><b>${flaggeVon(s.t2)} ${esc(s.t2)}</b></div>
+      <div class="vs-meta">Weltrangliste #${r1} gegen #${r2} · ${fav}</div></li>`;
+  }).join("");
+  return `<div class="rundschau-section">🔮 Vorschau · ${esc(spiele[0].phase)}</div>
+    <div class="rundschau-vorschau">
+      <div class="vs-intro">Das steht als Nächstes an – die Begegnungen der kommenden Runde:</div>
+      <ul class="vs-liste">${zeilen}</ul>
+      <div class="vs-fuss">Favorit nach FIFA-Weltrangliste (Stand Juni 2026) – aber für Überraschungen ist der Fußball ja immer gut. ⚽</div>
+    </div>`;
+}
+
 // Namens-Normalisierung für robuste Vergleiche (Umlaute raus, klein, getrimmt).
 function normName(name) {
   return (name || "").trim().toLowerCase()
@@ -3742,6 +3802,10 @@ function renderSchlagzeile(ergebnis) {
     sturzHtml = sturzRubrikHTML(namenListe(gf.fuehrende), tagSeed);
   }
 
+  // Abschnitt: Vorschau auf die kommende K.-o.-Runde (Begegnungen + Favoriten).
+  let vorschauHtml = "";
+  try { vorschauHtml = vorschauRubrikHTML(); } catch (e) { console.error("Vorschau:", e); }
+
   // Abschnitt: Tipper-Tabelle
   let tabelleHtml = "";
   if (details && details.spielerDetails && details.spielerDetails.length) {
@@ -3916,6 +3980,7 @@ function renderSchlagzeile(ergebnis) {
       ${sturzHtml}
       ${wocheHtml}
       ${fuehrungHtml}
+      ${vorschauHtml}
       ${zitatHtml}
       <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Rundschau teilen</button>
     </div>`;
