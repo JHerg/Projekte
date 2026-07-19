@@ -557,6 +557,33 @@
   body.dark .finalausgabe .fa-t-name { color: #e6ddd0; }
   body.dark .finalausgabe .fa-t-titel { color: #c9a86a; }
   body.dark .finalausgabe .fa-t-pts { color: #f0d68a; }
+  /* Turnier-Zeitstrahl */
+  .finalausgabe .fa-zeitstrahl { position: relative; margin: 6px 0 2px; padding-left: 26px; }
+  .finalausgabe .fa-zeitstrahl::before { content: ""; position: absolute; left: 11px; top: 4px; bottom: 4px; width: 2px; background: #e0b34c; }
+  .finalausgabe .fa-zs-item { position: relative; padding: 4px 0 10px; }
+  .finalausgabe .fa-zs-dot { position: absolute; left: -26px; top: 0; width: 24px; height: 24px; border-radius: 50%;
+    background: #fffdf7; border: 2px solid #e0b34c; display: flex; align-items: center; justify-content: center; font-size: .8rem; }
+  .finalausgabe .fa-zs-body { font-size: .84rem; line-height: 1.45; color: #333; }
+  .finalausgabe .fa-zs-datum { display: block; font-size: .68rem; font-weight: 700; color: #a07a2a; letter-spacing: .3px; text-transform: uppercase; }
+  body.dark .finalausgabe .fa-zeitstrahl::before { background: #7a5f28; }
+  body.dark .finalausgabe .fa-zs-dot { background: #241f14; border-color: #7a5f28; }
+  body.dark .finalausgabe .fa-zs-body { color: #e6ddd0; }
+  body.dark .finalausgabe .fa-zs-datum { color: #c9a86a; }
+  /* Mini-Urkunden */
+  .finalausgabe .fa-uk-hint { font-size: .76rem; color: #8a6d3b; margin: 2px 0 6px; }
+  .finalausgabe .fa-urkunden { display: flex; flex-direction: column; gap: 5px; }
+  .finalausgabe .uk-details { border: 1px solid #ecd9a6; border-radius: 8px; background: #fffdf7; overflow: hidden; }
+  .finalausgabe .uk-details summary { cursor: pointer; padding: 8px 10px; font-weight: 600; color: #8a5a10; font-size: .85rem; list-style: none; }
+  .finalausgabe .uk-details summary::-webkit-details-marker { display: none; }
+  .finalausgabe .uk-details summary::before { content: "▸ "; color: #b8860b; }
+  .finalausgabe .uk-details[open] summary::before { content: "▾ "; }
+  .finalausgabe .uk-host { padding: 0 10px; }
+  .finalausgabe .uk-img { display: block; width: 100%; max-width: 360px; margin: 4px auto 8px; border: 1px solid #e0b34c; border-radius: 6px; }
+  .finalausgabe .uk-btns { display: flex; gap: 8px; padding: 0 10px 10px; }
+  .finalausgabe .uk-btns button { flex: 1; }
+  body.dark .finalausgabe .fa-uk-hint { color: #c9a86a; }
+  body.dark .finalausgabe .uk-details { background: #241f14; border-color: #4a3e22; }
+  body.dark .finalausgabe .uk-details summary { color: #f0d68a; }
   /* Kolumne: wiederkehrende fiktive Stimme mit Running-Gag-Signatur */
   .rundschau-kolumne {
     display: flex; gap: 10px; align-items: flex-start;
@@ -3594,6 +3621,30 @@ function finalausgabeHTML() {
   }).join("");
   const abschlussHtml = `<table class="fa-tabelle"><tbody>${tabelleZeilen}</tbody></table>`;
 
+  // Turnier-Zeitstrahl (Meilensteine des Turniers)
+  const alleD = state.spiele.map(x => parseSpielDatum(x)).filter(Boolean).sort((x, y) => x - y);
+  const koD = state.spiele.filter(x => x.koRunde).map(x => parseSpielDatum(x)).filter(Boolean).sort((x, y) => x - y);
+  const finaleG = state.spiele.find(x => x.phase === "Finale");
+  const finaleD = finaleG ? parseSpielDatum(finaleG) : null;
+  const meilensteine = [
+    { i: "📅", d: alleD[0] || null, t: "Anpfiff der WM 2026 – 48 Teams, das Rudel fiebert los." },
+    a.ersterFuehrerId ? { i: "👑", d: null, t: `Erster Spitzenreiter: <b>${nm(sp(a.ersterFuehrerId))}</b> setzt sich an die Tabellenspitze.` } : null,
+    a.besterTag.spielerId ? { i: "🚀", d: a.besterTag.datum, t: `Rekordtag: <b>${nm(sp(a.besterTag.spielerId))}</b> sammelt ${a.besterTag.punkte} Punkte an einem einzigen Tag.` } : null,
+    koD.length ? { i: "🏟️", d: koD[0], t: "Die K.-o.-Phase beginnt – ab jetzt zählt jeder Tipp doppelt vor Spannung." } : null,
+    (finaleD || a.weltmeister) ? { i: "🏆", d: finaleD, t: a.weltmeister ? `Das große Finale: <b>${flaggeVon(a.weltmeister)} ${esc(a.weltmeister)}</b> wird Weltmeister 2026.` : "Das große Finale steigt." } : null,
+    { i: "🎖️", d: null, t: `Krönung: <b>${championName}</b> wird Tippkönig${champs.length > 1 ? "e" : ":in"} der Familie.` }
+  ].filter(Boolean);
+  const zeitstrahlHtml = meilensteine.map(m =>
+    `<div class="fa-zs-item"><div class="fa-zs-dot">${m.i}</div><div class="fa-zs-body">${m.d ? `<span class="fa-zs-datum">${datumTxt(m.d)}</span>` : ""}${m.t}</div></div>`).join("");
+
+  // Mini-Urkunden (ausklappen · drucken · teilen)
+  const urkundenHtml = a.spieler.map(s => `<details class="uk-details" ontoggle="if(this.open)urkundeRender('${s.id}')">
+      <summary>🎖️ Urkunde für ${nm(s)}</summary>
+      <div class="uk-host" id="uk-host-${s.id}"></div>
+      <div class="uk-btns"><button class="klein sekundaer" onclick="urkundeDrucken('${s.id}')">🖨️ Drucken</button>
+        <button class="klein sekundaer" onclick="urkundeTeilen('${s.id}')">📤 Teilen</button></div>
+    </details>`).join("");
+
   return `<div class="finalausgabe">
     ${kopfHtml}
     <div class="fa-masthead">🏆 GROSSE FINALAUSGABE</div>
@@ -3608,6 +3659,8 @@ function finalausgabeHTML() {
     <div class="fa-section">📖 Der Turnierverlauf</div>
     <div class="fa-fliess">${wegHtml}</div>
     ${kurveHtml}
+    <div class="fa-section">🗓️ Der Turnier-Zeitstrahl</div>
+    <div class="fa-zeitstrahl">${zeitstrahlHtml}</div>
     ${ehrungenSection}
     <div class="fa-section">🏆 Rekorde des Turniers</div>
     <ul class="fa-rekorde">${rekorde}</ul>
@@ -3617,6 +3670,9 @@ function finalausgabeHTML() {
     <div class="fa-portraets">${portraets}</div>
     <div class="fa-section">🏁 Die Abschlusstabelle</div>
     ${abschlussHtml}
+    <div class="fa-section">🎖️ Urkunden für alle</div>
+    <div class="fa-uk-hint">Zum Ausklappen antippen – dann ausdrucken 🖨️ oder per WhatsApp teilen 📤:</div>
+    <div class="fa-urkunden">${urkundenHtml}</div>
     <div class="fa-section">🤝 Der Zusammenhalt</div>
     <div class="fa-fliess">${zusammenhaltText}</div>
     <div class="fa-section">🥄 Rote Laterne &amp; Ausklang</div>
@@ -3627,6 +3683,93 @@ function finalausgabeHTML() {
   </div>`;
 }
 function hashCodeSafe(s) { return (typeof hashCode === "function") ? hashCode(s) : 0; }
+
+// ---- Mini-Urkunden für jeden (ausklappen · drucken · teilen) ----
+const URKUNDE_SPRUCH = {
+  champion: ["für herausragende Tippkunst und den Gewinn des großen Familien-Pokals.", "für einen souveränen Triumph und die Krone des WM-Tippspiels 2026."],
+  podium: ["für eine glänzende Leistung und einen hochverdienten Podestplatz.", "für starke Tipps und einen Platz ganz weit oben auf dem Treppchen."],
+  scharfschuetze: ["für ein außergewöhnliches Gespür und viele exakte Ergebnisse.", "für Treffsicherheit am Tippzettel, die ihresgleichen sucht."],
+  solide: ["für verlässliche Tipps und beständigen Einsatz über das ganze Turnier.", "für eine grundsolide WM voller Herzblut und guter Laune."],
+  laterne: ["für unerschütterlichen Einsatz, gute Laune und den Mut, bis zum Schluss dabei zu sein.", "für das größte Kämpferherz und ganz viel Turnierfreude."]
+};
+function _ukWrap(g, text, x, y, maxW, lh) {
+  const words = (text || "").split(" "); let line = "", yy = y;
+  words.forEach(w => {
+    const test = line ? line + " " + w : w;
+    if (g.measureText(test).width > maxW && line) { g.fillText(line, x, yy); line = w; yy += lh; }
+    else line = test;
+  });
+  if (line) g.fillText(line, x, yy);
+  return yy;
+}
+function urkundeCanvas(spielerId) {
+  let a; try { a = turnierAuswertung(); } catch (e) { return null; }
+  if (!a) return null;
+  const s = a.spieler.find(x => x.id === spielerId); if (!s) return null;
+  const titel = (typeof titelFuer === "function") ? titelFuer(s.rang, a.maxRang, a.stand.length, s.id) : "";
+  const medal = s.rang === 1 ? "🥇" : s.rang === 2 ? "🥈" : s.rang === 3 ? "🥉" : "🎖️";
+  const pool = URKUNDE_SPRUCH[s.kategorie] || URKUNDE_SPRUCH.solide;
+  const spruch = pool[hashCodeSafe(s.id) % pool.length];
+  let heute = ""; try { heute = new Date().toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" }); } catch (e) {}
+
+  const W = 820, H = 1160, cx = W / 2;
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const g = c.getContext("2d");
+  g.fillStyle = "#fdf8ec"; g.fillRect(0, 0, W, H);
+  g.strokeStyle = "#c9a227"; g.lineWidth = 10; g.strokeRect(24, 24, W - 48, H - 48);
+  g.strokeStyle = "#e0b34c"; g.lineWidth = 3; g.strokeRect(42, 42, W - 84, H - 84);
+  g.textAlign = "center";
+  g.fillStyle = "#b8860b"; g.font = "bold 28px Georgia"; g.fillText("🏆  LADRIÈRE RUNDSCHAU  🏆", cx, 112);
+  g.fillStyle = "#7a5a10"; g.font = "bold 76px Georgia"; g.fillText("URKUNDE", cx, 208);
+  g.fillStyle = "#8a6d3b"; g.font = "italic 26px Georgia"; g.fillText("Familien-WM-Tippspiel 2026", cx, 252);
+  g.strokeStyle = "#e0b34c"; g.lineWidth = 2; g.beginPath(); g.moveTo(170, 288); g.lineTo(W - 170, 288); g.stroke();
+  g.fillStyle = "#555"; g.font = "24px Georgia"; g.fillText("Diese Urkunde wird feierlich verliehen an", cx, 344);
+  g.font = "90px Georgia"; g.fillText(s.avatar || "", cx, 452);
+  g.fillStyle = "#333"; g.font = "bold 52px Georgia"; g.fillText(s.name || "", cx, 528);
+  g.fillStyle = "#8a5a10"; g.font = "bold 34px Georgia"; g.fillText(`${medal}  Platz ${s.rang} von ${a.stand.length}`, cx, 596);
+  if (titel) { g.fillStyle = "#a07a2a"; g.font = "italic 30px Georgia"; g.fillText(`„${titel}“`, cx, 646); }
+  g.fillStyle = "#333"; g.font = "30px Georgia"; g.fillText(`${s.punkte} Punkte · ${s.treffer} Volltreffer`, cx, 702);
+  if (s.besterTag && s.besterTag.punkte > 0) g.fillText(`Bester Tag: ${s.besterTag.punkte} Punkte`, cx, 748);
+  g.fillStyle = "#555"; g.font = "italic 28px Georgia"; _ukWrap(g, spruch, cx, 826, W - 200, 40);
+  g.fillStyle = "#8a6d3b"; g.font = "24px Georgia"; g.fillText(heute, cx, H - 150);
+  g.font = "italic 26px Georgia"; g.fillText("Chefredakteurin: Bille  🐾", cx, H - 100);
+  g.font = "64px Georgia"; g.fillText("🎖️", cx, H - 168);
+  return c;
+}
+function urkundeRender(id) {
+  const host = document.getElementById("uk-host-" + id);
+  if (!host || host.dataset.done) return;
+  const c = urkundeCanvas(id); if (!c) return;
+  host.innerHTML = `<img class="uk-img" alt="Urkunde" src="${c.toDataURL("image/png")}">`;
+  host.dataset.done = "1";
+}
+function urkundeDrucken(id) {
+  const c = urkundeCanvas(id); if (!c) { toast("Urkunde gerade nicht verfügbar."); return; }
+  const url = c.toDataURL("image/png");
+  const w = window.open("", "_blank");
+  if (!w) { toast("Bitte Pop-ups erlauben, dann klappt das Drucken. 🖨️"); return; }
+  w.document.write(`<!doctype html><html><head><title>Urkunde</title><style>@page{margin:10mm}html,body{margin:0;padding:0}img{width:100%;height:auto;display:block}</style></head><body><img src="${url}" onload="window.focus();setTimeout(function(){window.print();},150);"></body></html>`);
+  w.document.close();
+}
+async function urkundeTeilen(id) {
+  const c = urkundeCanvas(id); if (!c) { toast("Urkunde gerade nicht verfügbar."); return; }
+  try {
+    const blob = await new Promise(res => c.toBlob(res, "image/png"));
+    if (!blob) throw new Error("kein Bild");
+    const nameSafe = ((state.spieler.find(p => p.id === id) || {}).name || "urkunde").replace(/[^\wäöüÄÖÜß-]+/g, "_");
+    const dateiname = `urkunde-${nameSafe}.png`;
+    const file = new File([blob], dateiname, { type: "image/png" });
+    const text = "🎖️ Urkunde – Familien-WM-Tippspiel 2026";
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Urkunde", text });
+    } else {
+      const u = URL.createObjectURL(blob);
+      const a2 = document.createElement("a"); a2.href = u; a2.download = dateiname; a2.click();
+      URL.revokeObjectURL(u);
+      toast("📥 Urkunde gespeichert – jetzt per WhatsApp o. Ä. anhängen! 📎");
+    }
+  } catch (err) { if (err.name !== "AbortError") toast("😕 Teilen hat nicht geklappt – versuch's nochmal."); }
+}
 
 // Namens-Normalisierung für robuste Vergleiche (Umlaute raus, klein, getrimmt).
 function normName(name) {
