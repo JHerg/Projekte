@@ -3297,6 +3297,14 @@ function turnierAuswertung() {
   });
   const fuehrungsKoenigId = Object.keys(fuehrungsTage).sort((a, b) => fuehrungsTage[b] - fuehrungsTage[a])[0];
 
+  // Längste Führung AM STÜCK (aufeinanderfolgende Spieltage an Platz 1)
+  const fSerie = {}, fSerieBest = {}; state.spieler.forEach(p => { fSerie[p.id] = 0; fSerieBest[p.id] = 0; });
+  verlauf.forEach(v => state.spieler.forEach(p => {
+    if (v.fuehrer.includes(p.id)) { fSerie[p.id]++; fSerieBest[p.id] = Math.max(fSerieBest[p.id], fSerie[p.id]); }
+    else fSerie[p.id] = 0;
+  }));
+  const laengsteFuehrungId = Object.keys(fSerieBest).sort((a, b) => fSerieBest[b] - fSerieBest[a])[0];
+
   // Bester Einzeltag, längste Tagessieg-Serie, Tagessiege & Null-Tage je Spieler
   let besterTag = { punkte: -1, spielerId: null, datum: null };
   const streak = {}, bestSerie = {}, tagessiege = {}, nullTage = {};
@@ -3343,7 +3351,8 @@ function turnierAuswertung() {
   }));
 
   return { stand, podium, letzte, maxRang, weltmeister, vize, dritter, wechsel,
-           fuehrungsKoenigId, fuehrungsTage, besterTag, serienKoenigId, bestSerie, meisteTreffer,
+           fuehrungsKoenigId, fuehrungsTage, fSerieBest, laengsteFuehrungId,
+           besterTag, serienKoenigId, bestSerie, meisteTreffer,
            tagessiege, nullTage, jokerBonus, bonusRichtig, ersterFuehrerId,
            spieler, bonus, tage: matrix.length };
 }
@@ -3392,6 +3401,7 @@ function finalausgabeHTML() {
   // Ehrungen & Sonderpreise
   const bestOf = (obj, min) => { let id = null, w = -Infinity; Object.keys(obj).forEach(k => { if (obj[k] > w) { w = obj[k]; id = k; } }); return (id !== null && w >= min) ? { id, wert: w } : null; };
   const ehr = [];
+  if (a.laengsteFuehrungId && a.fSerieBest[a.laengsteFuehrungId] >= 2) ehr.push(`👑 <b>Der Dauer-Regent</b> – ${nm(sp(a.laengsteFuehrungId))} (${a.fSerieBest[a.laengsteFuehrungId]} Spieltage am Stück an Platz 1)`);
   if (a.meisteTreffer && a.meisteTreffer.treffer >= 1) ehr.push(`🎯 <b>Der Scharfschütze</b> – ${nm(a.meisteTreffer)} (${a.meisteTreffer.treffer} Volltreffer)`);
   const sammler = bestOf(a.tagessiege, 1); if (sammler) ehr.push(`🏅 <b>Der Tagessieg-Sammler</b> – ${nm(sp(sammler.id))} (${sammler.wert} Tagessiege)`);
   const jk = bestOf(a.jokerBonus, 1); if (jk) ehr.push(`🃏 <b>Der Joker-König</b> – ${nm(sp(jk.id))} (Joker brachte +${jk.wert} Extra-Punkte)`);
