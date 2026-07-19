@@ -513,6 +513,50 @@
   body.dark .finalausgabe .fa-p-kopf { color: #d0a074; }
   body.dark .finalausgabe .fa-bille { background: #2c2622; border-left-color: #a1887f; }
   body.dark .finalausgabe .fa-bille-text { color: #ddd; }
+  /* Zeitungs-Titelkopf */
+  .finalausgabe .fa-zeitungskopf { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;
+    font-family: -apple-system, Segoe UI, sans-serif; font-size: .64rem; font-weight: 700; letter-spacing: .5px;
+    text-transform: uppercase; color: #a07a2a; border-bottom: 2px solid #e0b34c; padding-bottom: 5px; margin-bottom: 6px; }
+  body.dark .finalausgabe .fa-zeitungskopf { color: #c9a86a; border-bottom-color: #7a5f28; }
+  /* Comic-Siegerbild */
+  .finalausgabe .fa-comic { margin: 4px 0 6px; }
+  .finalausgabe .fa-comic-svg { display: block; max-width: 340px; margin: 0 auto; border-radius: 10px; }
+  .finalausgabe .fa-comic-rays { transform-origin: 160px 96px; animation: faSpin 40s linear infinite; }
+  @keyframes faSpin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .finalausgabe .fa-comic-rays { animation: none; } }
+  .finalausgabe .fa-comic-banner { text-align: center; font-family: Georgia, serif; font-weight: 700; font-size: .95rem;
+    color: #7a5a10; margin-top: 4px; }
+  body.dark .finalausgabe .fa-comic-banner { color: #f0d68a; }
+  /* Stat-Kacheln */
+  .finalausgabe .fa-kacheln { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
+  .finalausgabe .fa-kachel { background: #fffdf7; border: 1px solid #ecd9a6; border-radius: 8px; padding: 7px 4px; text-align: center; }
+  .finalausgabe .fa-k-emoji { font-size: 1.1rem; }
+  .finalausgabe .fa-k-zahl { font-family: Georgia, serif; font-weight: 700; font-size: 1.15rem; color: #8a5a10; line-height: 1.1; }
+  .finalausgabe .fa-k-label { font-size: .62rem; color: #888; font-family: -apple-system, Segoe UI, sans-serif; line-height: 1.2; }
+  body.dark .finalausgabe .fa-kachel { background: #241f14; border-color: #4a3e22; }
+  body.dark .finalausgabe .fa-k-zahl { color: #f0d68a; }
+  body.dark .finalausgabe .fa-k-label { color: #aaa; }
+  /* Sieger-Punktekurve */
+  .finalausgabe .fa-kurve { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: .8rem; color: #8a6d3b; }
+  .finalausgabe .fa-kurve svg { flex: 1; height: 34px; }
+  body.dark .finalausgabe .fa-kurve { color: #c9a86a; }
+  /* Stimmen zum Finale */
+  .finalausgabe .fa-stimme { font-size: .85rem; line-height: 1.5; color: #333; margin: 4px 0; padding-left: 10px; border-left: 2px solid #e0b34c; }
+  .finalausgabe .fa-stimme b { display: block; color: #8a5a10; font-size: .8rem; margin-bottom: 2px; }
+  .finalausgabe .fa-rolle { font-weight: 400; font-style: italic; color: #999; font-size: .72rem; }
+  body.dark .finalausgabe .fa-stimme { color: #e6ddd0; }
+  body.dark .finalausgabe .fa-stimme b { color: #f0d68a; }
+  /* Abschlusstabelle */
+  .finalausgabe .fa-tabelle { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .finalausgabe .fa-tabelle td { padding: 5px 4px; border-bottom: 1px solid #ecd9a6; font-size: .86rem; vertical-align: middle; }
+  .finalausgabe .fa-t-rang { width: 30px; text-align: center; font-size: 1rem; }
+  .finalausgabe .fa-t-name { font-weight: 600; color: #333; }
+  .finalausgabe .fa-t-titel { font-weight: 400; font-size: .68rem; color: #a07a2a; font-style: italic; }
+  .finalausgabe .fa-t-pts { text-align: right; font-family: Georgia, serif; font-weight: 700; color: #8a5a10; width: 44px; }
+  body.dark .finalausgabe .fa-tabelle td { border-bottom-color: #4a3e22; }
+  body.dark .finalausgabe .fa-t-name { color: #e6ddd0; }
+  body.dark .finalausgabe .fa-t-titel { color: #c9a86a; }
+  body.dark .finalausgabe .fa-t-pts { color: #f0d68a; }
   /* Kolumne: wiederkehrende fiktive Stimme mit Running-Gag-Signatur */
   .rundschau-kolumne {
     display: flex; gap: 10px; align-items: flex-start;
@@ -3325,6 +3369,12 @@ function turnierAuswertung() {
   const serienKoenigId = Object.keys(bestSerie).sort((a, b) => bestSerie[b] - bestSerie[a])[0];
   const meisteTreffer = stand.slice().sort((a, b) => b.treffer - a.treffer)[0];
 
+  // Punktekurve des Champions (kumuliert über die Spieltage) + Gesamtzahlen
+  const championId = stand[0].id;
+  let cumC = 0; const championVerlauf = matrix.map(tag => { cumC += (tag.punkte[championId] ?? 0); return cumC; });
+  const gesamtTipps = stand.reduce((n, s) => n + (s.getippt || 0), 0);
+  const gesamtVolltreffer = stand.reduce((n, s) => n + (s.treffer || 0), 0);
+
   // Joker-Bilanz (welcher Joker brachte die meisten Extra-Punkte) + Bonus-Treffer
   const jokerBonus = {}, bonusRichtig = {};
   state.spieler.forEach(p => { jokerBonus[p.id] = 0; bonusRichtig[p.id] = 0; });
@@ -3354,8 +3404,65 @@ function turnierAuswertung() {
            fuehrungsKoenigId, fuehrungsTage, fSerieBest, laengsteFuehrungId,
            besterTag, serienKoenigId, bestSerie, meisteTreffer,
            tagessiege, nullTage, jokerBonus, bonusRichtig, ersterFuehrerId,
+           championVerlauf, gesamtTipps, gesamtVolltreffer,
            spieler, bonus, tage: matrix.length };
 }
+// Nachgestelltes "Siegerfoto" als Comic: der Champion steht mit Pokal auf dem
+// Podest, Konfetti fliegt, Bille jubelt daneben. Der Avatar wird das Gesicht.
+function comicSiegerSVG(avatar) {
+  const konf = ["#e53935", "#fbc02d", "#43a047", "#1e88e5", "#8e24aa", "#fb8c00", "#ec407a"];
+  const konfPos = [[18,22],[55,14],[100,28],[150,10],[205,24],[250,16],[295,30],[35,58],[280,64],[14,100],[302,104],[70,44],[238,50],[125,40]];
+  const konfetti = konfPos.map((c, i) =>
+    `<rect x="${c[0]}" y="${c[1]}" width="6" height="9" rx="1.5" transform="rotate(${(i*53)%360} ${c[0]+3} ${c[1]+4})" fill="${konf[i%konf.length]}"/>`).join("");
+  let strahlen = "";
+  for (let i = 0; i < 12; i++) {
+    const a = i * 30 * Math.PI / 180, x = 160 + Math.cos(a) * 130, y = 96 + Math.sin(a) * 130;
+    const a2 = (i * 30 + 6) * Math.PI / 180, x2 = 160 + Math.cos(a2) * 130, y2 = 96 + Math.sin(a2) * 130;
+    strahlen += `<polygon points="160,96 ${x.toFixed(0)},${y.toFixed(0)} ${x2.toFixed(0)},${y2.toFixed(0)}" fill="#ffe9a8" opacity="0.5"/>`;
+  }
+  return `<svg class="fa-comic-svg" viewBox="0 0 320 210" width="100%" role="img" aria-label="Siegerbild">
+    <defs>
+      <linearGradient id="faSky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#cfe8ff"/><stop offset="1" stop-color="#fff7e6"/>
+      </linearGradient>
+    </defs>
+    <rect x="0" y="0" width="320" height="210" rx="10" fill="url(#faSky)"/>
+    <g class="fa-comic-rays">${strahlen}</g>
+    ${konfetti}
+    <!-- Podest -->
+    <rect x="118" y="168" width="84" height="42" rx="4" fill="#e0b34c"/>
+    <rect x="118" y="168" width="84" height="9" fill="#f0c96a"/>
+    <text x="160" y="200" text-anchor="middle" font-size="22" font-weight="900" fill="#8a5a10">1</text>
+    <!-- Beine -->
+    <rect x="149" y="150" width="10" height="22" rx="4" fill="#39435a"/>
+    <rect x="161" y="150" width="10" height="22" rx="4" fill="#39435a"/>
+    <!-- Körper / Trikot -->
+    <rect x="140" y="112" width="40" height="46" rx="12" fill="#d32f2f"/>
+    <!-- Arme hoch zum Pokal -->
+    <line x1="147" y1="120" x2="150" y2="70" stroke="#f0b98a" stroke-width="9" stroke-linecap="round"/>
+    <line x1="173" y1="120" x2="170" y2="70" stroke="#f0b98a" stroke-width="9" stroke-linecap="round"/>
+    <!-- Pokal in den Händen -->
+    <text x="160" y="62" text-anchor="middle" font-size="34">🏆</text>
+    <!-- Kopf mit Avatar-Gesicht -->
+    <circle cx="160" cy="98" r="22" fill="#ffe0b2" stroke="#e0b34c" stroke-width="2"/>
+    <text x="160" y="99" text-anchor="middle" dominant-baseline="central" font-size="30">${esc(avatar || "🏆")}</text>
+    <!-- Bille jubelt -->
+    <text x="214" y="204" text-anchor="middle" font-size="30">🐶</text>
+    <text x="242" y="184" text-anchor="middle" font-size="14">🎉</text>
+    <text x="78" y="188" text-anchor="middle" font-size="16">🎊</text>
+  </svg>`;
+}
+const FINAL_STIMMEN_CHAMPION = [
+  "„Ganz ehrlich? Ich hab einfach jeden Abend mein Bauchgefühl tippen lassen – und Bille hat zugestimmt. Diese Trophäe teile ich mit dem ganzen Rudel.“",
+  "„Der Titel bedeutet mir alles. Ich danke meiner Familie, meinem Sofa und ganz besonders dem Hund, der mich nie angezweifelt hat.“",
+  "„Ich wusste seit dem ersten Spieltag, dass da was geht. Jetzt steht der Pokal bei mir – und morgen wird trotzdem ganz normal Ball geworfen.“",
+  "„Champion der Familie – das klingt schon gut, oder? Ich bleib aber bescheiden: Beim nächsten Turnier fangen wir alle wieder bei null an.“"
+];
+const FINAL_STIMMEN_LATERNE = [
+  "„Jemand muss die Laterne ja tragen – und ich mach das mit Stolz und einem Lächeln. Nächstes Jahr dreh ich den Spieß um, versprochen!“",
+  "„Getippt hab ich mit dem Herzen, nur die Ergebnisse waren anderer Meinung. Aber Spaß hatten wir alle – und darum geht's ja.“",
+  "„Rote Laterne? Ich nenn's ‚Publikumsliebling von hinten‘. Die kleine Aufgabe erledige ich mit Humor – und Bille hilft beim Tischdecken sicher nicht.“"
+];
 function finalausgabeHTML() {
   let a; try { a = turnierAuswertung(); } catch (e) { console.error("Finalauswertung:", e); return ""; }
   if (!a) return "";
@@ -3449,21 +3556,67 @@ function finalausgabeHTML() {
   }
   const ehrungenSection = ehrungenHtml ? `<div class="fa-section">🏅 Ehrungen &amp; Sonderpreise</div><ul class="fa-rekorde">${ehrungenHtml}</ul>` : "";
 
+  // Comic-Siegerbild (nachgestelltes "Foto" mit Pokal)
+  const comicHtml = `<div class="fa-comic">${comicSiegerSVG(a.stand[0].avatar)}<div class="fa-comic-banner">${championName} — Weltmeister:in der Tippkunst 🏆</div></div>`;
+
+  // Zeitungs-Titelkopf
+  let titelDatum = "";
+  try { titelDatum = new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); } catch (e) {}
+  const kopfHtml = `<div class="fa-zeitungskopf"><span>SONDERAUSGABE</span><span>${esc(titelDatum)}</span><span>Preis: 1&nbsp;Leberwurst 🌭</span></div>`;
+
+  // Stat-Kacheln
+  const kacheln = [
+    ["📅", a.tage, "Spieltage"],
+    ["🎯", a.gesamtVolltreffer, "Volltreffer gesamt"],
+    ["✍️", a.gesamtTipps, "Tipps abgegeben"],
+    ["🔄", a.wechsel, "Führungswechsel"],
+    ["🚀", Math.max(0, a.besterTag.punkte), "Beste Tagespunktzahl"],
+    ["👑", a.stand[0].punkte, "Punkte des Champions"]
+  ].map(k => `<div class="fa-kachel"><div class="fa-k-emoji">${k[0]}</div><div class="fa-k-zahl">${k[1]}</div><div class="fa-k-label">${k[2]}</div></div>`).join("");
+
+  // Sieger-Punktekurve
+  let kurveHtml = "";
+  if (a.championVerlauf && a.championVerlauf.length >= 2 && typeof sparklineSvg === "function") {
+    kurveHtml = `<div class="fa-kurve"><span>📈 Punktekurve des Champions</span>${sparklineSvg(a.championVerlauf, "#b8860b")}</div>`;
+  }
+
+  // Stimmen zum Finale
+  const stimmeChamp = FINAL_STIMMEN_CHAMPION[seed % FINAL_STIMMEN_CHAMPION.length];
+  const stimmeLat = FINAL_STIMMEN_LATERNE[seed % FINAL_STIMMEN_LATERNE.length];
+  const stimmenHtml = `<div class="fa-stimme"><b>🎤 ${championName} <span class="fa-rolle">Champion</span></b>${stimmeChamp}</div>
+    <div class="fa-stimme"><b>🎤 ${laterneName} <span class="fa-rolle">Rote Laterne</span></b>${stimmeLat}</div>`;
+
+  // Abschlusstabelle (kompletter Endstand mit Medaillen + Titeln)
+  const tabelleZeilen = a.stand.map(s => {
+    const med = medaillen[s.rang - 1] || `${s.rang}.`;
+    const titel = (typeof titelFuer === "function") ? titelFuer(s.rang, a.maxRang, a.stand.length, s.id) : "";
+    return `<tr><td class="fa-t-rang">${med}</td><td class="fa-t-name">${nm(s)}${titel ? `<div class="fa-t-titel">${esc(titel)}</div>` : ""}</td><td class="fa-t-pts">${s.punkte}</td></tr>`;
+  }).join("");
+  const abschlussHtml = `<table class="fa-tabelle"><tbody>${tabelleZeilen}</tbody></table>`;
+
   return `<div class="finalausgabe">
+    ${kopfHtml}
     <div class="fa-masthead">🏆 GROSSE FINALAUSGABE</div>
     <div class="fa-untertitel">Die WM 2026 im großen Rückblick</div>
+    ${comicHtml}
     ${heroHtml}
     ${wmHtml}
+    <div class="fa-section">📊 Das Turnier in Zahlen</div>
+    <div class="fa-kacheln">${kacheln}</div>
     <div class="fa-section">👑 Der Champion</div>
     <div class="fa-champion">${championText}</div>
-    <ul class="fa-podium">${podiumHtml}</ul>
     <div class="fa-section">📖 Der Turnierverlauf</div>
     <div class="fa-fliess">${wegHtml}</div>
+    ${kurveHtml}
     ${ehrungenSection}
-    <div class="fa-section">🔢 Zahlen &amp; Rekorde</div>
+    <div class="fa-section">🏆 Rekorde des Turniers</div>
     <ul class="fa-rekorde">${rekorde}</ul>
+    <div class="fa-section">🎤 Stimmen zum Finale</div>
+    ${stimmenHtml}
     <div class="fa-section">👥 Jede:r im Rückblick</div>
     <div class="fa-portraets">${portraets}</div>
+    <div class="fa-section">🏁 Die Abschlusstabelle</div>
+    ${abschlussHtml}
     <div class="fa-section">🤝 Der Zusammenhalt</div>
     <div class="fa-fliess">${zusammenhaltText}</div>
     <div class="fa-section">🥄 Rote Laterne &amp; Ausklang</div>
