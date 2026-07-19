@@ -469,6 +469,16 @@
     text-transform: uppercase;
   }
   .finalausgabe .fa-untertitel { text-align: center; font-style: italic; color: #8a6d3b; font-size: .85rem; margin-bottom: 8px; }
+  .finalausgabe .fa-hero { text-align: center; margin: 4px 0 10px; padding: 10px 8px 12px;
+    background: radial-gradient(ellipse at top, #fff3cf 0%, #fff9ec 70%); border-radius: 10px; border: 1px dashed #e0b34c; }
+  .finalausgabe .fa-trophy { font-size: 3rem; line-height: 1; filter: drop-shadow(0 2px 3px rgba(184,134,11,.4)); }
+  .finalausgabe .fa-hero-title { font-family: -apple-system, Segoe UI, sans-serif; font-weight: 900; letter-spacing: 2px; font-size: .72rem; color: #b8860b; margin-top: 4px; }
+  .finalausgabe .fa-hero-name { font-family: Georgia, serif; font-weight: 700; font-size: 1.35rem; color: #7a5a10; margin: 2px 0; }
+  .finalausgabe .fa-hero-sub { font-size: .82rem; color: #8a6d3b; }
+  body.dark .finalausgabe .fa-hero { background: radial-gradient(ellipse at top, #3a301a 0%, #2a2216 70%); border-color: #7a5f28; }
+  body.dark .finalausgabe .fa-hero-title { color: #e0c060; }
+  body.dark .finalausgabe .fa-hero-name { color: #f0d68a; }
+  body.dark .finalausgabe .fa-hero-sub { color: #c9a86a; }
   .finalausgabe .fa-wm { text-align: center; font-size: .9rem; margin: 4px 0 8px; color: #333; }
   .finalausgabe .fa-section {
     font-family: -apple-system, Segoe UI, sans-serif;
@@ -3217,7 +3227,12 @@ function tierweltRubrikHTML(seed) {
 // ausführlicher Rückblick auf das ganze Tippspiel.
 function turnierVorbei() {
   const f = state.spiele.find(s => s.phase === "Finale");
-  return !!(f && f.gespielt);
+  // Finale muss gespielt UND der Sieger bestimmt sein (bei Remis nach 90 Min.
+  // erst, wenn der Verlängerungs-/Elfmeter-Sieger ausgewählt wurde).
+  if (!f || !f.gespielt || !koSieger(f)) return false;
+  // Zusätzlich müssen ALLE Bonusfragen aufgelöst sein (Lösung gesetzt).
+  if (state.bonusFragen.some(b => !b.loesung)) return false;
+  return true;
 }
 const BILLE_SCHLUSSWORT = [
   "So, das war sie also – die ganze WM. Ich hab jeden Tippabend vom Sofa aus begleitet, treu gewedelt und garantiert kein einziges herunterfallendes Leckerli verpasst. Ihr habt gefiebert, gejubelt und geflucht, und ich war mittendrin im schönsten Rudel der Welt. Danke, dass ich als euer Ballorakel dabei sein durfte – und jetzt, ganz ehrlich: Wer wirft mir zur Feier den Ball? 🎾",
@@ -3282,16 +3297,19 @@ function turnierAuswertung() {
   });
   const fuehrungsKoenigId = Object.keys(fuehrungsTage).sort((a, b) => fuehrungsTage[b] - fuehrungsTage[a])[0];
 
-  // Bester Einzeltag + längste Tagessieg-Serie
+  // Bester Einzeltag, längste Tagessieg-Serie, Tagessiege & Null-Tage je Spieler
   let besterTag = { punkte: -1, spielerId: null, datum: null };
-  const streak = {}, bestSerie = {}; state.spieler.forEach(p => { streak[p.id] = 0; bestSerie[p.id] = 0; });
+  const streak = {}, bestSerie = {}, tagessiege = {}, nullTage = {};
+  state.spieler.forEach(p => { streak[p.id] = 0; bestSerie[p.id] = 0; tagessiege[p.id] = 0; nullTage[p.id] = 0; });
   matrix.forEach(tag => {
     const werte = state.spieler.map(p => ({ id: p.id, pts: tag.punkte[p.id] }));
     const max = Math.max(0, ...werte.map(w => w.pts ?? 0));
     const sieger = max > 0 ? werte.filter(w => (w.pts ?? 0) === max).map(w => w.id) : [];
+    if (sieger.length === 1) tagessiege[sieger[0]]++;
     state.spieler.forEach(p => {
       const pts = tag.punkte[p.id];
       if (pts !== null && pts > besterTag.punkte) besterTag = { punkte: pts, spielerId: p.id, datum: tag.datum };
+      if (pts === 0) nullTage[p.id]++;
       if (sieger.length === 1 && sieger[0] === p.id) { streak[p.id]++; bestSerie[p.id] = Math.max(bestSerie[p.id], streak[p.id]); }
       else streak[p.id] = 0;
     });
@@ -3299,12 +3317,23 @@ function turnierAuswertung() {
   const serienKoenigId = Object.keys(bestSerie).sort((a, b) => bestSerie[b] - bestSerie[a])[0];
   const meisteTreffer = stand.slice().sort((a, b) => b.treffer - a.treffer)[0];
 
+  // Joker-Bilanz (welcher Joker brachte die meisten Extra-Punkte) + Bonus-Treffer
+  const jokerBonus = {}, bonusRichtig = {};
+  state.spieler.forEach(p => { jokerBonus[p.id] = 0; bonusRichtig[p.id] = 0; });
+  state.spieler.forEach(p => {
+    const jid = state.joker?.[p.id];
+    if (jid) { const js = state.spiele.find(x => x.id === jid); if (js && js.gespielt) jokerBonus[p.id] = punkteFuer(state.tipps[p.id]?.[js.id], js) ?? 0; }
+  });
+  state.bonusFragen.filter(b => b.loesung).forEach(b => state.spieler.forEach(p => { if (state.bonusTipps[p.id]?.[b.id] === b.loesung) bonusRichtig[p.id]++; }));
+  const ersterFuehrerId = (verlauf.find(v => v.fuehrer.length) || {}).fuehrer?.[0] || null;
+
   // Per-Spieler-Rückblick
   const spieler = stand.map(s => {
     let bTag = { punkte: -1, datum: null };
     matrix.forEach(tag => { const pts = tag.punkte[s.id]; if (pts !== null && pts > bTag.punkte) bTag = { punkte: pts, datum: tag.datum }; });
     return { id: s.id, name: s.name, avatar: s.avatar, punkte: s.punkte, treffer: s.treffer,
-             rang: s.rang, besterTag: bTag, kategorie: finalPortraetKategorie(s, maxRang) };
+             rang: s.rang, besterTag: bTag, tagessiege: tagessiege[s.id], nullTage: nullTage[s.id],
+             kategorie: finalPortraetKategorie(s, maxRang) };
   });
 
   // Bonusfragen-Bilanz (nur mit gesetzter Lösung)
@@ -3315,6 +3344,7 @@ function turnierAuswertung() {
 
   return { stand, podium, letzte, maxRang, weltmeister, vize, dritter, wechsel,
            fuehrungsKoenigId, fuehrungsTage, besterTag, serienKoenigId, bestSerie, meisteTreffer,
+           tagessiege, nullTage, jokerBonus, bonusRichtig, ersterFuehrerId,
            spieler, bonus, tage: matrix.length };
 }
 function finalausgabeHTML() {
@@ -3340,9 +3370,35 @@ function finalausgabeHTML() {
     wmHtml = `<div class="fa-wm">🏆 Weltmeister 2026: <b>${flaggeVon(a.weltmeister)} ${esc(a.weltmeister)}</b>${a.vize ? ` &nbsp;·&nbsp; Finale gegen ${flaggeVon(a.vize)} ${esc(a.vize)}` : ""}${a.dritter ? ` &nbsp;·&nbsp; 🥉 ${flaggeVon(a.dritter)} ${esc(a.dritter)}` : ""}</div>`;
   }
 
-  // 3) Weg an die Spitze
+  // Pokal-Hero (ganz oben, krönender Abschluss)
+  const heroHtml = `<div class="fa-hero">
+    <div class="fa-trophy">🏆</div>
+    <div class="fa-hero-title">${champs.length > 1 ? "UNSERE CHAMPIONS" : "UNSER CHAMPION"}</div>
+    <div class="fa-hero-name">${championName}</div>
+    <div class="fa-hero-sub">Tippkönig${champs.length > 1 ? "e" : ":in"} der WM 2026 · <b>${a.stand[0].punkte} Punkte</b></div>
+  </div>`;
+
+  // 3) Turnierverlauf (kleine Historie) + Weg an die Spitze
   const koenig = sp(a.fuehrungsKoenigId);
-  const wegHtml = `${nm(koenig)} stand an <b>${a.fuehrungsTage[a.fuehrungsKoenigId] || 0}</b> von ${a.tage} Spieltagen an der Tabellenspitze. Insgesamt wechselte die Führung <b>${a.wechsel}&thinsp;Mal</b> – ${a.wechsel >= 3 ? "was für ein Nervenkrimi!" : "ganz schön stabil da oben."}`;
+  const ersterF = a.ersterFuehrerId ? sp(a.ersterFuehrerId) : null;
+  const championErster = ersterF && champs.some(cx => cx.id === a.ersterFuehrerId);
+  let verlaufSatz;
+  if (!ersterF) verlaufSatz = "Ein Turnier voller Spannung – von den ersten Gruppenspielen bis zum großen Finale.";
+  else if (championErster && a.wechsel <= 1) verlaufSatz = `${nm(ersterF)} übernahm früh die Spitze und gab sie praktisch nicht mehr her – eine Machtdemonstration über die ganze WM.`;
+  else if (championErster) verlaufSatz = `${nm(ersterF)} führte schon früh, musste die Krone zwischendurch aber verteidigen: ${a.wechsel} Führungswechsel, ehe am Ende doch wieder ${nm(ersterF)} oben stand.`;
+  else verlaufSatz = `Anfangs führte ${nm(ersterF)}, doch am Ende setzte sich ${championName} durch – nach ${a.wechsel} Führungswechseln ein packender Schlussspurt.`;
+  const wegHtml = `${verlaufSatz} ${nm(koenig)} stand an <b>${a.fuehrungsTage[a.fuehrungsKoenigId] || 0}</b> von ${a.tage} Spieltagen ganz oben, und insgesamt wechselte die Führung <b>${a.wechsel}&thinsp;Mal</b> – ${a.wechsel >= 3 ? "was für ein Nervenkrimi!" : "ganz schön stabil da oben."}`;
+
+  // Ehrungen & Sonderpreise
+  const bestOf = (obj, min) => { let id = null, w = -Infinity; Object.keys(obj).forEach(k => { if (obj[k] > w) { w = obj[k]; id = k; } }); return (id !== null && w >= min) ? { id, wert: w } : null; };
+  const ehr = [];
+  if (a.meisteTreffer && a.meisteTreffer.treffer >= 1) ehr.push(`🎯 <b>Der Scharfschütze</b> – ${nm(a.meisteTreffer)} (${a.meisteTreffer.treffer} Volltreffer)`);
+  const sammler = bestOf(a.tagessiege, 1); if (sammler) ehr.push(`🏅 <b>Der Tagessieg-Sammler</b> – ${nm(sp(sammler.id))} (${sammler.wert} Tagessiege)`);
+  const jk = bestOf(a.jokerBonus, 1); if (jk) ehr.push(`🃏 <b>Der Joker-König</b> – ${nm(sp(jk.id))} (Joker brachte +${jk.wert} Extra-Punkte)`);
+  const hs = bestOf(a.bonusRichtig, 1); if (hs) ehr.push(`🔮 <b>Der Bonus-Hellseher</b> – ${nm(sp(hs.id))} (${hs.wert} richtige Bonusfragen)`);
+  const konst = a.spieler.filter(s => a.nullTage[s.id] === 0 && s.punkte > 0).sort((x, y) => y.punkte - x.punkte)[0];
+  if (konst) ehr.push(`💎 <b>Die Konstante</b> – ${nm(konst)} (kein einziger Nuller-Tag)`);
+  const ehrungenHtml = ehr.map(e => `<li>${e}</li>`).join("");
 
   // 4) Zahlen & Rekorde
   const serienKoenig = sp(a.serienKoenigId);
@@ -3365,29 +3421,41 @@ function finalausgabeHTML() {
   const laterneName = a.letzte.length > 1 ? namenListe(a.letzte) : nm(a.letzte[0]);
   const laterneHtml = `🥄 Die <b>rote Laterne</b> geht an ${laterneName}. Kopf hoch – laut Hausregel wartet nun eine kleine, liebe Aufgabe (Tisch decken o. Ä., alles augenzwinkernd). Verloren hat hier ohnehin niemand: Ihr wart alle mit vollem Herzen dabei. ❤️`;
 
-  // 7) Billes Schlusswort
+  // 7) Der Zusammenhalt (warmer Familien-Abschnitt)
+  const ZUSAMMENHALT = [
+    "Am Ende zählt viel mehr als die Tabelle: Wochenlang habt ihr gemeinsam gefiebert, gejubelt, gestöhnt und gelacht – Abend für Abend, Tipp für Tipp. Ihr habt euch geärgert, gegenseitig aufgezogen und trotzdem immer zusammengehalten. Genau das macht so ein Turnier besonders: nicht die Punkte, sondern die gemeinsame Zeit. Und mittendrin, auf dem Sofa, ein glücklich wedelnder Hund.",
+    "Was für eine Reise! Von den ersten Gruppenspielen bis zum großen Finale seid ihr als Familie zusammengerückt – jeder Abend ein kleines Fest, jeder Tipp ein gemeinsames Abenteuer. Da wurde gefachsimpelt, gebangt und herzhaft gelacht, und keiner blieb allein mit seiner Freude oder seinem Ärger. Solche Wochen schweißen zusammen. Am schönsten war ohnehin nicht der Sieg, sondern dass ihr sie alle miteinander erlebt habt."
+  ];
+  const zusammenhaltText = ZUSAMMENHALT[seed % ZUSAMMENHALT.length];
+
+  // 8) Billes Schlusswort
   const billeText = BILLE_SCHLUSSWORT[seed % BILLE_SCHLUSSWORT.length];
 
-  // 8) Bonusfragen-Bilanz
+  // 9) Bonusfragen-Bilanz
   let bonusHtml = "";
   if (a.bonus.length) {
     const zeilen = a.bonus.map(b => `<li><b>${esc(b.frage)}</b><br>Richtig war: <b>${esc(b.loesung)}</b> (${b.punkte}&thinsp;P) – ${b.richtige.length ? "getippt von " + b.richtige.join(", ") : "hatte niemand"}</li>`).join("");
     bonusHtml = `<div class="fa-section">🎲 Die großen Bonusfragen</div><ul class="fa-bonus">${zeilen}</ul>`;
   }
+  const ehrungenSection = ehrungenHtml ? `<div class="fa-section">🏅 Ehrungen &amp; Sonderpreise</div><ul class="fa-rekorde">${ehrungenHtml}</ul>` : "";
 
   return `<div class="finalausgabe">
     <div class="fa-masthead">🏆 GROSSE FINALAUSGABE</div>
     <div class="fa-untertitel">Die WM 2026 im großen Rückblick</div>
+    ${heroHtml}
     ${wmHtml}
     <div class="fa-section">👑 Der Champion</div>
     <div class="fa-champion">${championText}</div>
     <ul class="fa-podium">${podiumHtml}</ul>
-    <div class="fa-section">📈 Der Weg an die Spitze</div>
+    <div class="fa-section">📖 Der Turnierverlauf</div>
     <div class="fa-fliess">${wegHtml}</div>
+    ${ehrungenSection}
     <div class="fa-section">🔢 Zahlen &amp; Rekorde</div>
     <ul class="fa-rekorde">${rekorde}</ul>
     <div class="fa-section">👥 Jede:r im Rückblick</div>
     <div class="fa-portraets">${portraets}</div>
+    <div class="fa-section">🤝 Der Zusammenhalt</div>
+    <div class="fa-fliess">${zusammenhaltText}</div>
     <div class="fa-section">🥄 Rote Laterne &amp; Ausklang</div>
     <div class="fa-fliess">${laterneHtml}</div>
     ${bonusHtml}
@@ -4036,6 +4104,23 @@ function renderSchlagzeile(ergebnis) {
   if (!c) { return; }
   if (!ergebnis) { c.innerHTML = ""; return; }
 
+  // Ist das Turnier komplett durch (Finalsieger steht fest, alle Bonusfragen
+  // aufgelöst), ERSETZT die große Finalausgabe die normale Tagesausgabe – der
+  // Pokal thront dann ganz oben als krönender Abschluss.
+  if (turnierVorbei()) {
+    let finalHtml = "";
+    try { finalHtml = finalausgabeHTML(); } catch (e) { console.error("Finalausgabe:", e); }
+    if (finalHtml) {
+      c.innerHTML = `
+        <div class="schlagzeile-box">
+          <div class="label">📰 LADRIÈRE RUNDSCHAU · SONDERAUSGABE</div>
+          ${finalHtml}
+          <button class="klein sekundaer schlagzeile-teilen-btn" onclick="schlagzeileTeilen()">📤 Finalausgabe teilen</button>
+        </div>`;
+      return;
+    }
+  }
+
   const bild = SCHLAGZEILE_BILDER[ergebnis.kategorie]
     ? `<div class="rundschau-bild">${SCHLAGZEILE_BILDER[ergebnis.kategorie]}</div>` : "";
   const details = ergebnis.bericht;  // {text, spielerDetails, pechvogel, rampenlicht, tagesAwards}
@@ -4099,11 +4184,6 @@ function renderSchlagzeile(ergebnis) {
   // Abschnitt: Vorschau auf die kommende K.-o.-Runde (Begegnungen + Favoriten).
   let vorschauHtml = "";
   try { vorschauHtml = vorschauRubrikHTML(); } catch (e) { console.error("Vorschau:", e); }
-
-  // Große Finalausgabe: erscheint automatisch ganz oben, sobald das Finale
-  // gespielt ist – der festliche Gesamt-Rückblick auf das ganze Tippspiel.
-  let finalHtml = "";
-  try { if (turnierVorbei()) finalHtml = finalausgabeHTML(); } catch (e) { console.error("Finalausgabe:", e); }
 
   // Abschnitt: Tipper-Tabelle
   let tabelleHtml = "";
@@ -4270,7 +4350,6 @@ function renderSchlagzeile(ergebnis) {
     <div class="schlagzeile-box">
       <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
       <div class="datum">Spieltag vom ${esc(ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
-      ${finalHtml}
       <div class="rundschau-kopf">${bild}<div class="text">${ergebnis.text}</div></div>
       ${rampenlichtHtml}
       ${tabelleHtml}
@@ -4337,7 +4416,9 @@ function renderTabelle() {
   // Wanderpokal für die Führenden (bei Punktgleichheit teilen sie sich den Pokal)
   const fuehrende = stand.filter(s => s.rang === 1);
   const hatPunkte = stand.some(s => s.punkte > 0);
-  pokalC.innerHTML = hatPunkte ? `
+  // Ist das Turnier durch, entfällt der Wanderpokal hier – der Champion wird
+  // stattdessen ganz oben in der großen Finalausgabe gekrönt.
+  pokalC.innerHTML = (hatPunkte && !turnierVorbei()) ? `
     <div class="pokal-box">
       <span class="pokal-emoji">🏆</span>
       <div>${fuehrende.length > 1 ? 'Punktgleich an der Spitze – sie teilen sich den Familien-Wanderpokal:' : 'Aktueller Träger des Familien-Wanderpokals:'}</div>
