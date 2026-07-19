@@ -456,6 +456,53 @@
   body.dark .rundschau-tierwelt { background: #2a2620; border-left-color: #b08863; }
   body.dark .rundschau-tierwelt .tw-titel { color: #d0a074; }
   body.dark .rundschau-tierwelt .tw-text { color: #ddd4cc; }
+  /* Große WM-Finalausgabe: festlicher Gesamt-Rückblick */
+  .finalausgabe {
+    margin: 4px 8px 10px; padding: 12px 12px 14px; text-align: left;
+    background: linear-gradient(180deg, #fff9e8 0%, #fff5f0 100%);
+    border: 2px solid #e0b34c; border-radius: 10px;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+  .finalausgabe .fa-masthead {
+    text-align: center; font-family: -apple-system, Segoe UI, sans-serif;
+    font-weight: 900; letter-spacing: 1px; font-size: 1.15rem; color: #b8860b;
+    text-transform: uppercase;
+  }
+  .finalausgabe .fa-untertitel { text-align: center; font-style: italic; color: #8a6d3b; font-size: .85rem; margin-bottom: 8px; }
+  .finalausgabe .fa-wm { text-align: center; font-size: .9rem; margin: 4px 0 8px; color: #333; }
+  .finalausgabe .fa-section {
+    font-family: -apple-system, Segoe UI, sans-serif;
+    font-weight: 800; font-size: .74rem; letter-spacing: .8px; text-transform: uppercase;
+    color: #b8860b; border-top: 1px solid #ecd9a6; margin: 12px 0 5px; padding-top: 7px;
+  }
+  .finalausgabe .fa-champion { font-size: .92rem; line-height: 1.55; color: #2a2a2a; }
+  .finalausgabe .fa-fliess { font-size: .87rem; line-height: 1.55; color: #333; }
+  .finalausgabe .fa-podium { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .finalausgabe .fa-podium li { font-size: .9rem; }
+  .finalausgabe .fa-medaille { font-size: 1.05rem; }
+  .finalausgabe .fa-pts { color: #888; font-size: .82rem; }
+  .finalausgabe .fa-rekorde, .finalausgabe .fa-bonus { margin: 4px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; }
+  .finalausgabe .fa-rekorde li, .finalausgabe .fa-bonus li { font-size: .85rem; line-height: 1.45; color: #333; }
+  .finalausgabe .fa-portraets { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .finalausgabe .fa-portraet { background: #fffdf7; border: 1px solid #ecd9a6; border-radius: 7px; padding: 7px 10px; }
+  .finalausgabe .fa-p-kopf { font-weight: 700; color: #8a6d3b; font-size: .86rem; margin-bottom: 3px; }
+  .finalausgabe .fa-p-text { font-size: .85rem; line-height: 1.5; color: #333; }
+  .finalausgabe .fa-bille { display: flex; gap: 10px; align-items: flex-start; margin-top: 6px;
+    background: #fbf6ef; border-left: 3px solid #8d6e63; border-radius: 0 6px 6px 0; padding: 8px 12px; }
+  .finalausgabe .fa-bille-icon { width: 34px; height: 34px; flex-shrink: 0; }
+  .finalausgabe .fa-bille-icon svg { width: 100%; height: 100%; display: block; }
+  .finalausgabe .fa-bille-text { font-size: .86rem; line-height: 1.55; color: #4a3a30; font-style: italic; }
+  body.dark .finalausgabe { background: linear-gradient(180deg, #2b2618 0%, #2a201c 100%); border-color: #7a5f28; }
+  body.dark .finalausgabe .fa-masthead, body.dark .finalausgabe .fa-section { color: #e0c060; }
+  body.dark .finalausgabe .fa-untertitel { color: #c9a86a; }
+  body.dark .finalausgabe .fa-section { border-top-color: #4a3e22; }
+  body.dark .finalausgabe .fa-champion, body.dark .finalausgabe .fa-fliess,
+  body.dark .finalausgabe .fa-rekorde li, body.dark .finalausgabe .fa-bonus li,
+  body.dark .finalausgabe .fa-p-text, body.dark .finalausgabe .fa-wm { color: #e6ddd0; }
+  body.dark .finalausgabe .fa-portraet { background: #241f14; border-color: #4a3e22; }
+  body.dark .finalausgabe .fa-p-kopf { color: #d0a074; }
+  body.dark .finalausgabe .fa-bille { background: #2c2622; border-left-color: #a1887f; }
+  body.dark .finalausgabe .fa-bille-text { color: #ddd; }
   /* Kolumne: wiederkehrende fiktive Stimme mit Running-Gag-Signatur */
   .rundschau-kolumne {
     display: flex; gap: 10px; align-items: flex-start;
@@ -3165,6 +3212,191 @@ function tierweltRubrikHTML(seed) {
     </div>`;
 }
 
+// ---- Große WM-Finalausgabe (Sonderausgabe zum Turnierende) ----
+// Erscheint automatisch, sobald das Finale gespielt ist: ein festlicher,
+// ausführlicher Rückblick auf das ganze Tippspiel.
+function turnierVorbei() {
+  const f = state.spiele.find(s => s.phase === "Finale");
+  return !!(f && f.gespielt);
+}
+const BILLE_SCHLUSSWORT = [
+  "So, das war sie also – die ganze WM. Ich hab jeden Tippabend vom Sofa aus begleitet, treu gewedelt und garantiert kein einziges herunterfallendes Leckerli verpasst. Ihr habt gefiebert, gejubelt und geflucht, und ich war mittendrin im schönsten Rudel der Welt. Danke, dass ich als euer Ballorakel dabei sein durfte – und jetzt, ganz ehrlich: Wer wirft mir zur Feier den Ball? 🎾",
+  "Was für ein Turnier, mein liebes Rudel! Von den ersten Gruppenspielen bis zum großen Finale hab ich mit euch gezittert, gekuschelt und gebettelt. Ihr wart mir jeden Abend die liebste Gesellschaft, und ein bisschen stolz bin ich auf euch alle. Jetzt wird gefeiert – und ich hätte da schon mal Appetit auf ein Extra-Würstchen. 💛",
+  "Und aus die Maus – die WM ist Geschichte. Ich hab als Ballorakel mein Bestes gegeben: viel geschlafen, viel gewedelt und immer die Schnauze in Snack-Richtung gehalten. Am Ende zählt für mich sowieso nicht die Tabelle, sondern dass wir alle zusammen auf dem Sofa saßen. Ihr seid mein Lieblingsteam, ganz ohne Punktewertung. 🐾",
+  "Ein letztes Mal Ballorakel-Weisheit zum großen Finale: Ihr habt das wunderbar gemacht, alle miteinander. Ich hab jeden Sieg mitgefeiert und jede Niete mit einer Extra-Kuschelrunde getröstet. So ein Turnier schweißt zusammen – und mich sowieso an eure Beine. Auf die nächste WM, das nächste Leckerli und ganz viele Bälle! 🎾"
+];
+const FINAL_PORTRAET = {
+  champion: [
+    "{name} krönt sich zum Tippkönig der WM 2026! Mit {punkte} Punkten und {treffer} Volltreffern war einfach kein Vorbeikommen. Der beste Einzeltag brachte satte {bester} Punkte. Ein verdienter Champion – Krone auf, Applaus an!",
+    "Ganz oben thront {name}: {punkte} Punkte, {treffer} exakte Ergebnisse und Nerven wie Drahtseile. Am stärksten Tag regnete es {bester} Punkte. So sieht ein würdiger Turniersieger aus!"
+  ],
+  podium: [
+    "Aufs Treppchen geschafft: {name} beendet die WM mit starken {punkte} Punkten und {treffer} Volltreffern. Der beste Tag brachte {bester} Punkte. Eine Runde, auf die man mächtig stolz sein darf!",
+    "{name} mischt ganz vorne mit – {punkte} Punkte und {treffer} genaue Treffer bedeuten einen Podestplatz. Am Spitzentag waren es {bester} Punkte. Hervorragend getippt!"
+  ],
+  scharfschuetze: [
+    "{name} war das Auge des Turniers: {treffer} exakte Ergebnisse sprechen für sich, macht am Ende {punkte} Punkte. Der beste Tag: {bester} Punkte. Ein echter Scharfschütze am Tippzettel!",
+    "Präzision pur bei {name} – {treffer} Volltreffer über das Turnier und {punkte} Punkte insgesamt. Am stärksten Tag {bester} Punkte. Da stimmte das Gespür für die Ergebnisse!"
+  ],
+  solide: [
+    "{name} tippte sich solide durch die WM: {punkte} Punkte, {treffer} Volltreffer, kein Wackeln. Der beste Tag brachte {bester} Punkte. Verlässlich bis zum Schluss – Respekt!",
+    "Ruhig und beständig: {name} sammelte {punkte} Punkte und {treffer} exakte Treffer ein. Am Spitzentag waren es {bester} Punkte. Ein grundsolides Turnier!"
+  ],
+  laterne: [
+    "Die rote Laterne trägt {name} mit Fassung – {punkte} Punkte, aber jede Menge Herzblut. Immerhin sprang am besten Tag noch ein Highlight von {bester} Punkten heraus. Verloren hat hier niemand: Dabei sein war alles, und die kleine liebe Aufgabe wartet mit einem Augenzwinkern. ❤️",
+    "Ganz am Ende, aber mit dem größten Kämpferherz: {name} beschließt die WM mit {punkte} Punkten. Der beste Tag ({bester} Punkte) zeigt: Das Talent war da! Kopf hoch – die rote Laterne leuchtet am wärmsten. 🕯️"
+  ]
+};
+function finalPortraetKategorie(s, maxRang) {
+  if (s.rang === 1) return "champion";
+  if (s.rang <= 3) return "podium";
+  if (s.rang === maxRang) return "laterne";
+  if (s.treffer >= 4) return "scharfschuetze";
+  return "solide";
+}
+function turnierAuswertung() {
+  if (!state.spieler.length) return null;
+  const stand = berechneStand();
+  if (!stand.length || !stand.some(s => s.punkte > 0)) return null;
+  const maxRang = Math.max(...stand.map(s => s.rang));
+  const podium = stand.slice(0, 3);
+  const letzte = stand.filter(s => s.rang === maxRang);
+  const finale = state.spiele.find(s => s.phase === "Finale");
+  const platz3 = state.spiele.find(s => s.phase === "Spiel um Platz 3");
+  const weltmeister = finale ? koSieger(finale) : null;
+  const vize = finale ? koVerlierer(finale) : null;
+  const dritter = (platz3 && platz3.gespielt) ? koSieger(platz3) : null;
+
+  const matrix = tagesPunkteMatrix();
+  const verlauf = fuehrungsVerlauf();
+
+  // Führungswechsel + meiste Tage an der Spitze
+  let wechsel = 0, prev = null;
+  const fuehrungsTage = {}; state.spieler.forEach(p => fuehrungsTage[p.id] = 0);
+  verlauf.forEach(v => {
+    const key = v.fuehrer.slice().sort().join(",");
+    if (key === "") return;
+    if (prev !== null && key !== prev) wechsel++;
+    prev = key;
+    v.fuehrer.forEach(id => fuehrungsTage[id]++);
+  });
+  const fuehrungsKoenigId = Object.keys(fuehrungsTage).sort((a, b) => fuehrungsTage[b] - fuehrungsTage[a])[0];
+
+  // Bester Einzeltag + längste Tagessieg-Serie
+  let besterTag = { punkte: -1, spielerId: null, datum: null };
+  const streak = {}, bestSerie = {}; state.spieler.forEach(p => { streak[p.id] = 0; bestSerie[p.id] = 0; });
+  matrix.forEach(tag => {
+    const werte = state.spieler.map(p => ({ id: p.id, pts: tag.punkte[p.id] }));
+    const max = Math.max(0, ...werte.map(w => w.pts ?? 0));
+    const sieger = max > 0 ? werte.filter(w => (w.pts ?? 0) === max).map(w => w.id) : [];
+    state.spieler.forEach(p => {
+      const pts = tag.punkte[p.id];
+      if (pts !== null && pts > besterTag.punkte) besterTag = { punkte: pts, spielerId: p.id, datum: tag.datum };
+      if (sieger.length === 1 && sieger[0] === p.id) { streak[p.id]++; bestSerie[p.id] = Math.max(bestSerie[p.id], streak[p.id]); }
+      else streak[p.id] = 0;
+    });
+  });
+  const serienKoenigId = Object.keys(bestSerie).sort((a, b) => bestSerie[b] - bestSerie[a])[0];
+  const meisteTreffer = stand.slice().sort((a, b) => b.treffer - a.treffer)[0];
+
+  // Per-Spieler-Rückblick
+  const spieler = stand.map(s => {
+    let bTag = { punkte: -1, datum: null };
+    matrix.forEach(tag => { const pts = tag.punkte[s.id]; if (pts !== null && pts > bTag.punkte) bTag = { punkte: pts, datum: tag.datum }; });
+    return { id: s.id, name: s.name, avatar: s.avatar, punkte: s.punkte, treffer: s.treffer,
+             rang: s.rang, besterTag: bTag, kategorie: finalPortraetKategorie(s, maxRang) };
+  });
+
+  // Bonusfragen-Bilanz (nur mit gesetzter Lösung)
+  const bonus = state.bonusFragen.filter(b => b.loesung).map(b => ({
+    frage: b.frage, loesung: b.loesung, punkte: b.punkte,
+    richtige: state.spieler.filter(p => state.bonusTipps[p.id]?.[b.id] === b.loesung).map(p => `${p.avatar} ${esc(p.name)}`)
+  }));
+
+  return { stand, podium, letzte, maxRang, weltmeister, vize, dritter, wechsel,
+           fuehrungsKoenigId, fuehrungsTage, besterTag, serienKoenigId, bestSerie, meisteTreffer,
+           spieler, bonus, tage: matrix.length };
+}
+function finalausgabeHTML() {
+  let a; try { a = turnierAuswertung(); } catch (e) { console.error("Finalauswertung:", e); return ""; }
+  if (!a) return "";
+  const sp = id => state.spieler.find(p => p.id === id) || { name: "?", avatar: "" };
+  const nm = o => `${esc(o.avatar || "")} ${esc(o.name || "")}`.trim();
+  const datumTxt = d => d ? d.toLocaleDateString("de-DE", { day: "numeric", month: "long" }) : "";
+  const seed = (typeof hashCode === "function" ? hashCode(a.stand[0].id) : 0) + a.tage;
+
+  // 1) Champion + Podium
+  const champs = a.stand.filter(s => s.rang === 1);
+  const championName = champs.length > 1 ? namenListe(champs) : nm(a.stand[0]);
+  const cTpl = FINAL_PORTRAET.champion[seed % FINAL_PORTRAET.champion.length];
+  const championText = schlagzeileVorlage(cTpl, { name: championName, punkte: a.stand[0].punkte, treffer: a.stand[0].treffer, bester: Math.max(0, a.besterTag.punkte) });
+  const medaillen = ["🥇", "🥈", "🥉"];
+  const podiumHtml = a.podium.map((s, i) =>
+    `<li><span class="fa-medaille">${medaillen[i] || (s.rang + ".")}</span> <b>${nm(s)}</b> <span class="fa-pts">${s.punkte}&thinsp;P</span></li>`).join("");
+
+  // 2) WM-Sieger-Team
+  let wmHtml = "";
+  if (a.weltmeister) {
+    wmHtml = `<div class="fa-wm">🏆 Weltmeister 2026: <b>${flaggeVon(a.weltmeister)} ${esc(a.weltmeister)}</b>${a.vize ? ` &nbsp;·&nbsp; Finale gegen ${flaggeVon(a.vize)} ${esc(a.vize)}` : ""}${a.dritter ? ` &nbsp;·&nbsp; 🥉 ${flaggeVon(a.dritter)} ${esc(a.dritter)}` : ""}</div>`;
+  }
+
+  // 3) Weg an die Spitze
+  const koenig = sp(a.fuehrungsKoenigId);
+  const wegHtml = `${nm(koenig)} stand an <b>${a.fuehrungsTage[a.fuehrungsKoenigId] || 0}</b> von ${a.tage} Spieltagen an der Tabellenspitze. Insgesamt wechselte die Führung <b>${a.wechsel}&thinsp;Mal</b> – ${a.wechsel >= 3 ? "was für ein Nervenkrimi!" : "ganz schön stabil da oben."}`;
+
+  // 4) Zahlen & Rekorde
+  const serienKoenig = sp(a.serienKoenigId);
+  const rekorde = [
+    `🎯 <b>Meiste Volltreffer:</b> ${nm(a.meisteTreffer)} mit ${a.meisteTreffer.treffer} exakten Ergebnissen`,
+    a.besterTag.spielerId ? `🚀 <b>Bester Einzel-Spieltag:</b> ${nm(sp(a.besterTag.spielerId))} mit ${a.besterTag.punkte} Punkten${a.besterTag.datum ? ` am ${datumTxt(a.besterTag.datum)}` : ""}` : "",
+    (a.bestSerie[a.serienKoenigId] >= 2) ? `🔥 <b>Längste Tagessieg-Serie:</b> ${nm(serienKoenig)} mit ${a.bestSerie[a.serienKoenigId]} Tagen in Folge` : "",
+    `📅 <b>Spieltage insgesamt:</b> ${a.tage}`
+  ].filter(Boolean).map(r => `<li>${r}</li>`).join("");
+
+  // 5) Jeder im Rückblick
+  const portraets = a.spieler.map(s => {
+    const liste = FINAL_PORTRAET[s.kategorie] || FINAL_PORTRAET.solide;
+    const tpl = liste[(seed + hashCodeSafe(s.id)) % liste.length];
+    const text = schlagzeileVorlage(tpl, { name: nm(s), punkte: s.punkte, treffer: s.treffer, bester: Math.max(0, s.besterTag.punkte), tag: datumTxt(s.besterTag.datum) });
+    return `<div class="fa-portraet"><div class="fa-p-kopf">${s.rang}. ${nm(s)}</div><div class="fa-p-text">${text}</div></div>`;
+  }).join("");
+
+  // 6) Rote Laterne
+  const laterneName = a.letzte.length > 1 ? namenListe(a.letzte) : nm(a.letzte[0]);
+  const laterneHtml = `🥄 Die <b>rote Laterne</b> geht an ${laterneName}. Kopf hoch – laut Hausregel wartet nun eine kleine, liebe Aufgabe (Tisch decken o. Ä., alles augenzwinkernd). Verloren hat hier ohnehin niemand: Ihr wart alle mit vollem Herzen dabei. ❤️`;
+
+  // 7) Billes Schlusswort
+  const billeText = BILLE_SCHLUSSWORT[seed % BILLE_SCHLUSSWORT.length];
+
+  // 8) Bonusfragen-Bilanz
+  let bonusHtml = "";
+  if (a.bonus.length) {
+    const zeilen = a.bonus.map(b => `<li><b>${esc(b.frage)}</b><br>Richtig war: <b>${esc(b.loesung)}</b> (${b.punkte}&thinsp;P) – ${b.richtige.length ? "getippt von " + b.richtige.join(", ") : "hatte niemand"}</li>`).join("");
+    bonusHtml = `<div class="fa-section">🎲 Die großen Bonusfragen</div><ul class="fa-bonus">${zeilen}</ul>`;
+  }
+
+  return `<div class="finalausgabe">
+    <div class="fa-masthead">🏆 GROSSE FINALAUSGABE</div>
+    <div class="fa-untertitel">Die WM 2026 im großen Rückblick</div>
+    ${wmHtml}
+    <div class="fa-section">👑 Der Champion</div>
+    <div class="fa-champion">${championText}</div>
+    <ul class="fa-podium">${podiumHtml}</ul>
+    <div class="fa-section">📈 Der Weg an die Spitze</div>
+    <div class="fa-fliess">${wegHtml}</div>
+    <div class="fa-section">🔢 Zahlen &amp; Rekorde</div>
+    <ul class="fa-rekorde">${rekorde}</ul>
+    <div class="fa-section">👥 Jede:r im Rückblick</div>
+    <div class="fa-portraets">${portraets}</div>
+    <div class="fa-section">🥄 Rote Laterne &amp; Ausklang</div>
+    <div class="fa-fliess">${laterneHtml}</div>
+    ${bonusHtml}
+    <div class="fa-section">🐾 Billes großes Schlusswort</div>
+    <div class="fa-bille"><span class="fa-bille-icon">${BILLE_ICON}</span><span class="fa-bille-text">${billeText}</span></div>
+  </div>`;
+}
+function hashCodeSafe(s) { return (typeof hashCode === "function") ? hashCode(s) : 0; }
+
 // Namens-Normalisierung für robuste Vergleiche (Umlaute raus, klein, getrimmt).
 function normName(name) {
   return (name || "").trim().toLowerCase()
@@ -3868,6 +4100,11 @@ function renderSchlagzeile(ergebnis) {
   let vorschauHtml = "";
   try { vorschauHtml = vorschauRubrikHTML(); } catch (e) { console.error("Vorschau:", e); }
 
+  // Große Finalausgabe: erscheint automatisch ganz oben, sobald das Finale
+  // gespielt ist – der festliche Gesamt-Rückblick auf das ganze Tippspiel.
+  let finalHtml = "";
+  try { if (turnierVorbei()) finalHtml = finalausgabeHTML(); } catch (e) { console.error("Finalausgabe:", e); }
+
   // Abschnitt: Tipper-Tabelle
   let tabelleHtml = "";
   if (details && details.spielerDetails && details.spielerDetails.length) {
@@ -4033,6 +4270,7 @@ function renderSchlagzeile(ergebnis) {
     <div class="schlagzeile-box">
       <div class="label">📰 LADRIÈRE RUNDSCHAU</div>
       <div class="datum">Spieltag vom ${esc(ergebnis.datum.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
+      ${finalHtml}
       <div class="rundschau-kopf">${bild}<div class="text">${ergebnis.text}</div></div>
       ${rampenlichtHtml}
       ${tabelleHtml}
