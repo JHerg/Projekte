@@ -3617,26 +3617,43 @@ function finalausgabeHTML() {
     else ende = ` Doch am Ende setzte sich ${championName} durch – nach ${a.wechsel} Führungswechseln ein packender Schlussspurt.`;
     verlaufSatz = start + ende;
   }
-  const wegHtml = `${verlaufSatz} ${nm(koenig)} stand an <b>${a.fuehrungsTage[a.fuehrungsKoenigId] || 0}</b> von ${a.tage} Spieltagen ganz oben, und insgesamt wechselte die Führung <b>${a.wechsel}&thinsp;Mal</b> – ${a.wechsel >= 3 ? "was für ein Nervenkrimi!" : "ganz schön stabil da oben."}`;
+  // Führungs-König(e): alle mit den meisten Tagen an der Spitze (Gleichstand!)
+  const maxFTage = Math.max(0, ...Object.values(a.fuehrungsTage));
+  const fKoenige = maxFTage > 0 ? Object.keys(a.fuehrungsTage).filter(k => a.fuehrungsTage[k] === maxFTage).map(sp).filter(Boolean) : [];
+  const wegHtml = `${verlaufSatz} ${fKoenige.length ? namenListe(fKoenige) : "Niemand"} ${fKoenige.length > 1 ? "standen" : "stand"} an <b>${maxFTage}</b> von ${a.tage} Spieltagen ganz oben, und insgesamt wechselte die Führung <b>${a.wechsel}&thinsp;Mal</b> – ${a.wechsel >= 3 ? "was für ein Nervenkrimi!" : "ganz schön stabil da oben."}`;
 
-  // Ehrungen & Sonderpreise
-  const bestOf = (obj, min) => { let id = null, w = -Infinity; Object.keys(obj).forEach(k => { if (obj[k] > w) { w = obj[k]; id = k; } }); return (id !== null && w >= min) ? { id, wert: w } : null; };
+  // Ehrungen & Sonderpreise – bei Gleichstand werden ALLE Bestplatzierten genannt.
+  const alleMax = (obj, min) => {
+    let w = -Infinity; Object.keys(obj).forEach(k => { if (obj[k] > w) w = obj[k]; });
+    if (w === -Infinity || w < min) return null;
+    return { ids: Object.keys(obj).filter(k => obj[k] === w), wert: w };
+  };
+  const nmIds = ids => namenListe(ids.map(x => sp(x)).filter(Boolean));
+  const pl = (ids, sing, plur) => (ids.length > 1 ? plur : sing);
+  const trefferMap = {}; a.spieler.forEach(s => trefferMap[s.id] = s.treffer);
   const ehr = [];
-  if (a.laengsteFuehrungId && a.fSerieBest[a.laengsteFuehrungId] >= 2) ehr.push(`👑 <b>Der Dauer-Regent</b> – ${nm(sp(a.laengsteFuehrungId))} (${a.fSerieBest[a.laengsteFuehrungId]} Spieltage am Stück an Platz 1)`);
-  if (a.meisteTreffer && a.meisteTreffer.treffer >= 1) ehr.push(`🎯 <b>Der Scharfschütze</b> – ${nm(a.meisteTreffer)} (${a.meisteTreffer.treffer} Volltreffer)`);
-  const sammler = bestOf(a.tagessiege, 1); if (sammler) ehr.push(`🏅 <b>Der Tagessieg-Sammler</b> – ${nm(sp(sammler.id))} (${sammler.wert} Tagessiege)`);
-  const jk = bestOf(a.jokerBonus, 1); if (jk) ehr.push(`🃏 <b>Der Joker-König</b> – ${nm(sp(jk.id))} (Joker brachte +${jk.wert} Extra-Punkte)`);
-  const hs = bestOf(a.bonusRichtig, 1); if (hs) ehr.push(`🔮 <b>Der Bonus-Hellseher</b> – ${nm(sp(hs.id))} (${hs.wert} richtige Bonusfragen)`);
-  const konst = a.spieler.filter(s => a.nullTage[s.id] === 0 && s.punkte > 0).sort((x, y) => y.punkte - x.punkte)[0];
-  if (konst) ehr.push(`💎 <b>Die Konstante</b> – ${nm(konst)} (kein einziger Nuller-Tag)`);
+  const dr = alleMax(a.fSerieBest, 2);
+  if (dr) ehr.push(`👑 <b>${pl(dr.ids, "Der Dauer-Regent", "Die Dauer-Regenten")}</b> – ${nmIds(dr.ids)} (${dr.wert} Spieltage am Stück an Platz 1)`);
+  const sc = alleMax(trefferMap, 1);
+  if (sc) ehr.push(`🎯 <b>${pl(sc.ids, "Der Scharfschütze", "Die Scharfschützen")}</b> – ${nmIds(sc.ids)} (${sc.wert} Volltreffer)`);
+  const sa = alleMax(a.tagessiege, 1);
+  if (sa) ehr.push(`🏅 <b>${pl(sa.ids, "Der Tagessieg-Sammler", "Die Tagessieg-Sammler")}</b> – ${nmIds(sa.ids)} (${sa.wert} Tagessiege)`);
+  const jk = alleMax(a.jokerBonus, 1);
+  if (jk) ehr.push(`🃏 <b>${pl(jk.ids, "Der Joker-König", "Die Joker-Könige")}</b> – ${nmIds(jk.ids)} (Joker brachte +${jk.wert} Extra-Punkte)`);
+  const hs = alleMax(a.bonusRichtig, 1);
+  if (hs) ehr.push(`🔮 <b>${pl(hs.ids, "Der Bonus-Hellseher", "Die Bonus-Hellseher")}</b> – ${nmIds(hs.ids)} (${hs.wert} richtige Bonusfragen)`);
+  const konstAlle = a.spieler.filter(s => a.nullTage[s.id] === 0 && s.punkte > 0);
+  if (konstAlle.length) ehr.push(`💎 <b>${konstAlle.length > 1 ? "Die Konstanten" : "Die Konstante"}</b> – ${namenListe(konstAlle)} (kein einziger Nuller-Tag)`);
   const ehrungenHtml = ehr.map(e => `<li>${e}</li>`).join("");
 
-  // 4) Zahlen & Rekorde
-  const serienKoenig = sp(a.serienKoenigId);
+  // 4) Zahlen & Rekorde – ebenfalls mit allen Gleichauf-Platzierten
+  const besterTagMap = {}; a.spieler.forEach(s => besterTagMap[s.id] = s.besterTag.punkte);
+  const btMax = alleMax(besterTagMap, 1);
+  const serieRek = alleMax(a.bestSerie, 2);
   const rekorde = [
-    `🎯 <b>Meiste Volltreffer:</b> ${nm(a.meisteTreffer)} mit ${a.meisteTreffer.treffer} exakten Ergebnissen`,
-    a.besterTag.spielerId ? `🚀 <b>Bester Einzel-Spieltag:</b> ${nm(sp(a.besterTag.spielerId))} mit ${a.besterTag.punkte} Punkten${a.besterTag.datum ? ` am ${datumTxt(a.besterTag.datum)}` : ""}` : "",
-    (a.bestSerie[a.serienKoenigId] >= 2) ? `🔥 <b>Längste Tagessieg-Serie:</b> ${nm(serienKoenig)} mit ${a.bestSerie[a.serienKoenigId]} Tagen in Folge` : "",
+    sc ? `🎯 <b>Meiste Volltreffer:</b> ${nmIds(sc.ids)} mit ${sc.wert} exakten Ergebnissen` : "",
+    btMax ? `🚀 <b>Bester Einzel-Spieltag:</b> ${nmIds(btMax.ids)} mit ${btMax.wert} Punkten` : "",
+    serieRek ? `🔥 <b>Längste Tagessieg-Serie:</b> ${nmIds(serieRek.ids)} mit ${serieRek.wert} Tagen in Folge` : "",
     `📅 <b>Spieltage insgesamt:</b> ${a.tage}`
   ].filter(Boolean).map(r => `<li>${r}</li>`).join("");
 
