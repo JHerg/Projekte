@@ -793,6 +793,19 @@
   .toast.zeigen { opacity: 1; bottom: 110px; }
 
   .info-zeile { font-size: .78rem; color: #888; margin-top: 6px; line-height: 1.5; }
+  /* Abschieds-Banner (Countdown, wie lange die Seite noch online ist) */
+  #abschiedBanner:empty { display: none; }
+  .abschied-box { margin: 10px 12px 0; padding: 10px 14px; border-radius: 12px; text-align: center;
+    font-size: .9rem; line-height: 1.5; color: #7a5a10;
+    background: linear-gradient(180deg, #fff3cf 0%, #fff8e6 100%); border: 2px solid #e0b34c;
+    box-shadow: 0 2px 6px rgba(184,134,11,.18); }
+  .abschied-box b { color: #8a5a10; }
+  .abschied-box.ende { background: linear-gradient(180deg, #eef4fb 0%, #f6faff 100%); border-color: #5b8fc9; color: #2c5a8a; }
+  .abschied-box.ende b { color: #24506f; }
+  body.dark .abschied-box { background: linear-gradient(180deg, #2f2716 0%, #241f14 100%); border-color: #7a5f28; color: #e0c060; }
+  body.dark .abschied-box b { color: #f0d68a; }
+  body.dark .abschied-box.ende { background: #1e2833; border-color: #5b8fc9; color: #cfe0f0; }
+  body.dark .abschied-box.ende b { color: #dbe9f7; }
   .ko-ovr-phase { font-weight: 700; color: var(--gruen); font-size: .85rem; margin: 12px 0 4px; }
   .ko-ovr-row { padding: 6px 0; border-bottom: 1px solid #eee; }
   .ko-ovr-dritt { background: #fff8e1; border-radius: 6px; padding: 6px 8px; }
@@ -1013,6 +1026,8 @@
   <h1>Familien-WM-Tippspiel 2026</h1>
   <p>Tippen, lachen, gewinnen – und der Letzte muss zittern! 😈</p>
 </header>
+
+<div id="abschiedBanner"></div>
 
 <div class="aktiver-spieler">
   <span>🎮 Wer tippt gerade?</span>
@@ -3337,6 +3352,34 @@ function tierweltRubrikHTML(seed) {
 // ---- Große WM-Finalausgabe (Sonderausgabe zum Turnierende) ----
 // Erscheint automatisch, sobald das Finale gespielt ist: ein festlicher,
 // ausführlicher Rückblick auf das ganze Tippspiel.
+// ---- Abschieds-Banner: Countdown, wie lange die Seite noch online bleibt ----
+// Stichtag hier zentral einstellen (letzter Tag online, Monat 0-basiert):
+const ABSCHIED_DATUM = new Date(2026, 6, 30);   // 30. Juli 2026
+function tageBisAbschied() {
+  const heute = new Date(); heute.setHours(0, 0, 0, 0);
+  const ziel = new Date(ABSCHIED_DATUM); ziel.setHours(0, 0, 0, 0);
+  return Math.round((ziel - heute) / 86400000);
+}
+function renderAbschiedBanner() {
+  const c = document.getElementById("abschiedBanner");
+  if (!c) return;
+  // Erscheint nur, wenn das Turnier durch ist (nach dem Finale + Bonusfragen).
+  if (!turnierVorbei()) { c.innerHTML = ""; return; }
+  const tage = tageBisAbschied();
+  const dTxt = ABSCHIED_DATUM.toLocaleDateString("de-DE", { day: "numeric", month: "long" });
+  let inhalt;
+  if (tage > 1) {
+    inhalt = `🏁 <b>Das Familien-WM-Tippspiel ist gelaufen – danke fürs Mitfiebern!</b><br>Diese Seite bleibt noch <b>${tage} Tage</b> online (bis ${dTxt}), dann macht Bille Feierabend. 🐾`;
+  } else if (tage === 1) {
+    inhalt = `🏁 <b>Danke fürs Mitfiebern!</b><br>Nur noch <b>1 Tag</b> online – morgen (${dTxt}) macht Bille Feierabend. 🐾`;
+  } else if (tage === 0) {
+    inhalt = `🏁 <b>Heute ist der letzte Tag online</b> – danke für dieses schöne Turnier! Schaut euch die große Finalausgabe gern noch einmal in Ruhe an. 🏆🐾`;
+  } else {
+    inhalt = `🏆 <b>Das Familien-WM-Tippspiel ist beendet.</b> Danke euch allen – bis zum nächsten Mal! 🐾`;
+  }
+  c.innerHTML = `<div class="abschied-box${tage < 0 ? " ende" : ""}">${inhalt}</div>`;
+}
+
 function turnierVorbei() {
   const f = state.spiele.find(s => s.phase === "Finale");
   // Finale muss gespielt UND der Sieger bestimmt sein (bei Remis nach 90 Min.
@@ -7873,6 +7916,7 @@ function cloudDiffUndPush() {
 // ===================== INIT =====================
 function alleRendern() {
   adminUIaktualisieren();
+  renderAbschiedBanner();
   renderSpielerSelect();
   renderSpielerListe();
   renderAvatarPicker();
