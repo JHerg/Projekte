@@ -3451,7 +3451,8 @@ function turnierAuswertung() {
     if (jid) { const js = state.spiele.find(x => x.id === jid); if (js && js.gespielt) jokerBonus[p.id] = punkteFuer(state.tipps[p.id]?.[js.id], js) ?? 0; }
   });
   state.bonusFragen.filter(b => b.loesung).forEach(b => state.spieler.forEach(p => { if (state.bonusTipps[p.id]?.[b.id] === b.loesung) bonusRichtig[p.id]++; }));
-  const ersterFuehrerId = (verlauf.find(v => v.fuehrer.length) || {}).fuehrer?.[0] || null;
+  // Erste(r) Tabellenführer – bei Gleichstand ALLE gleichzeitig Führenden.
+  const ersterFuehrerIds = (verlauf.find(v => v.fuehrer.length) || {}).fuehrer || [];
 
   // Per-Spieler-Rückblick
   const spieler = stand.map(s => {
@@ -3476,7 +3477,7 @@ function turnierAuswertung() {
   return { stand, podium, letzte, maxRang, weltmeister, vize, dritter, wechsel,
            fuehrungsKoenigId, fuehrungsTage, fSerieBest, laengsteFuehrungId,
            besterTag, serienKoenigId, bestSerie, meisteTreffer,
-           tagessiege, nullTage, jokerBonus, bonusRichtig, ersterFuehrerId,
+           tagessiege, nullTage, jokerBonus, bonusRichtig, ersterFuehrerIds,
            championVerlauf, gesamtTipps, gesamtVolltreffer,
            spieler, bonus, tage: matrix.length };
 }
@@ -3599,13 +3600,23 @@ function finalausgabeHTML() {
 
   // 3) Turnierverlauf (kleine Historie) + Weg an die Spitze
   const koenig = sp(a.fuehrungsKoenigId);
-  const ersterF = a.ersterFuehrerId ? sp(a.ersterFuehrerId) : null;
-  const championErster = ersterF && champs.some(cx => cx.id === a.ersterFuehrerId);
+  const ersteFuehrer = (a.ersterFuehrerIds || []).map(fid => sp(fid)).filter(Boolean);
+  const ersteFuehrerName = ersteFuehrer.length ? namenListe(ersteFuehrer) : "";
+  const mehrereErste = ersteFuehrer.length > 1;
+  const championErster = ersteFuehrer.some(f => champs.some(cx => cx.id === f.id));
   let verlaufSatz;
-  if (!ersterF) verlaufSatz = "Ein Turnier voller Spannung – von den ersten Gruppenspielen bis zum großen Finale.";
-  else if (championErster && a.wechsel <= 1) verlaufSatz = `${nm(ersterF)} übernahm früh die Spitze und gab sie praktisch nicht mehr her – eine Machtdemonstration über die ganze WM.`;
-  else if (championErster) verlaufSatz = `${nm(ersterF)} führte schon früh, musste die Krone zwischendurch aber verteidigen: ${a.wechsel} Führungswechsel, ehe am Ende doch wieder ${nm(ersterF)} oben stand.`;
-  else verlaufSatz = `Anfangs führte ${nm(ersterF)}, doch am Ende setzte sich ${championName} durch – nach ${a.wechsel} Führungswechseln ein packender Schlussspurt.`;
+  if (!ersteFuehrer.length) {
+    verlaufSatz = "Ein Turnier voller Spannung – von den ersten Gruppenspielen bis zum großen Finale.";
+  } else {
+    const start = mehrereErste
+      ? `Zu Beginn teilten sich ${ersteFuehrerName} die Tabellenspitze.`
+      : `Früh setzte sich ${ersteFuehrerName} an die Spitze.`;
+    let ende;
+    if (championErster && a.wechsel <= 1) ende = " Und ganz oben blieb's – eine Machtdemonstration über die ganze WM.";
+    else if (championErster) ende = ` Nach ${a.wechsel} Führungswechseln stand am Ende doch wieder die alte Spitze ganz oben.`;
+    else ende = ` Doch am Ende setzte sich ${championName} durch – nach ${a.wechsel} Führungswechseln ein packender Schlussspurt.`;
+    verlaufSatz = start + ende;
+  }
   const wegHtml = `${verlaufSatz} ${nm(koenig)} stand an <b>${a.fuehrungsTage[a.fuehrungsKoenigId] || 0}</b> von ${a.tage} Spieltagen ganz oben, und insgesamt wechselte die Führung <b>${a.wechsel}&thinsp;Mal</b> – ${a.wechsel >= 3 ? "was für ein Nervenkrimi!" : "ganz schön stabil da oben."}`;
 
   // Ehrungen & Sonderpreise
@@ -3712,7 +3723,9 @@ function finalausgabeHTML() {
   const finaleD = finaleG ? parseSpielDatum(finaleG) : null;
   const meilensteine = [
     { i: "📅", d: alleD[0] || null, t: "Anpfiff der WM 2026 – 48 Teams, das Rudel fiebert los." },
-    a.ersterFuehrerId ? { i: "👑", d: null, t: `Erster Spitzenreiter: <b>${nm(sp(a.ersterFuehrerId))}</b> setzt sich an die Tabellenspitze.` } : null,
+    ersteFuehrer.length ? { i: "👑", d: null, t: mehrereErste
+      ? `Erste Spitzenreiter: <b>${ersteFuehrerName}</b> teilen sich die Tabellenführung.`
+      : `Erster Spitzenreiter: <b>${ersteFuehrerName}</b> setzt sich an die Tabellenspitze.` } : null,
     a.besterTag.spielerId ? { i: "🚀", d: a.besterTag.datum, t: `Rekordtag: <b>${nm(sp(a.besterTag.spielerId))}</b> sammelt ${a.besterTag.punkte} Punkte an einem einzigen Tag.` } : null,
     koD.length ? { i: "🏟️", d: koD[0], t: "Die K.-o.-Phase beginnt – ab jetzt zählt jeder Tipp doppelt vor Spannung." } : null,
     (finaleD || a.weltmeister) ? { i: "🏆", d: finaleD, t: a.weltmeister ? `Das große Finale: <b>${flaggeVon(a.weltmeister)} ${esc(a.weltmeister)}</b> wird Weltmeister 2026.` : "Das große Finale steigt." } : null,
