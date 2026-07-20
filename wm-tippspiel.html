@@ -584,6 +584,23 @@
   body.dark .finalausgabe .fa-uk-hint { color: #c9a86a; }
   body.dark .finalausgabe .uk-details { background: #241f14; border-color: #4a3e22; }
   body.dark .finalausgabe .uk-details summary { color: #f0d68a; }
+  /* Bonusfragen-Transparenz: wer tippte was */
+  .finalausgabe .fa-bonus-frage { background: #fffdf7; border: 1px solid #ecd9a6; border-radius: 8px; padding: 8px 10px; margin-bottom: 7px; }
+  .finalausgabe .fa-b-frage { font-weight: 700; color: #333; font-size: .86rem; }
+  .finalausgabe .fa-b-loesung { font-size: .78rem; color: #2e7d32; margin: 3px 0 6px; }
+  .finalausgabe .fa-b-tipps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .finalausgabe .fa-b-tipps li { display: flex; justify-content: space-between; gap: 8px; font-size: .82rem; padding: 2px 0; border-top: 1px dashed #eee3c6; }
+  .finalausgabe .fa-b-tipps li span:last-child { font-weight: 600; white-space: nowrap; }
+  .finalausgabe .fa-b-ok { color: #2e7d32; }
+  .finalausgabe .fa-b-no { color: #666; }
+  .finalausgabe .fa-b-none { color: #aaa; }
+  body.dark .finalausgabe .fa-bonus-frage { background: #241f14; border-color: #4a3e22; }
+  body.dark .finalausgabe .fa-b-frage { color: #e6ddd0; }
+  body.dark .finalausgabe .fa-b-loesung { color: #7cc47f; }
+  body.dark .finalausgabe .fa-b-tipps li { border-top-color: #3a3320; }
+  body.dark .finalausgabe .fa-b-ok { color: #7cc47f; }
+  body.dark .finalausgabe .fa-b-no { color: #bbb; }
+  body.dark .finalausgabe .fa-b-none { color: #777; }
   /* Kolumne: wiederkehrende fiktive Stimme mit Running-Gag-Signatur */
   .rundschau-kolumne {
     display: flex; gap: 10px; align-items: flex-start;
@@ -3421,10 +3438,15 @@ function turnierAuswertung() {
              kategorie: finalPortraetKategorie(s, maxRang) };
   });
 
-  // Bonusfragen-Bilanz (nur mit gesetzter Lösung)
+  // Bonusfragen-Bilanz (nur mit gesetzter Lösung) – inkl. voller Transparenz:
+  // wer hat was getippt.
   const bonus = state.bonusFragen.filter(b => b.loesung).map(b => ({
     frage: b.frage, loesung: b.loesung, punkte: b.punkte,
-    richtige: state.spieler.filter(p => state.bonusTipps[p.id]?.[b.id] === b.loesung).map(p => `${p.avatar} ${esc(p.name)}`)
+    richtige: state.spieler.filter(p => state.bonusTipps[p.id]?.[b.id] === b.loesung).map(p => `${p.avatar} ${esc(p.name)}`),
+    tipps: state.spieler.map(p => {
+      const antwort = state.bonusTipps[p.id]?.[b.id] || null;
+      return { name: `${p.avatar} ${esc(p.name)}`, antwort, richtig: antwort === b.loesung };
+    })
   }));
 
   return { stand, podium, letzte, maxRang, weltmeister, vize, dritter, wechsel,
@@ -3575,11 +3597,19 @@ function finalausgabeHTML() {
   // 8) Billes Schlusswort
   const billeText = BILLE_SCHLUSSWORT[seed % BILLE_SCHLUSSWORT.length];
 
-  // 9) Bonusfragen-Bilanz
+  // 9) Bonusfragen-Bilanz – mit voller Transparenz: wer hat was getippt
   let bonusHtml = "";
   if (a.bonus.length) {
-    const zeilen = a.bonus.map(b => `<li><b>${esc(b.frage)}</b><br>Richtig war: <b>${esc(b.loesung)}</b> (${b.punkte}&thinsp;P) – ${b.richtige.length ? "getippt von " + b.richtige.join(", ") : "hatte niemand"}</li>`).join("");
-    bonusHtml = `<div class="fa-section">🎲 Die großen Bonusfragen</div><ul class="fa-bonus">${zeilen}</ul>`;
+    const bloecke = a.bonus.map(b => {
+      const tippListe = b.tipps.map(t =>
+        `<li class="${t.richtig ? "fa-b-ok" : (t.antwort ? "fa-b-no" : "fa-b-none")}"><span>${t.name}</span><span>${t.antwort ? esc(t.antwort) : "—"} ${t.richtig ? "✅" : (t.antwort ? "❌" : "◦")}</span></li>`).join("");
+      return `<div class="fa-bonus-frage">
+        <div class="fa-b-frage">${esc(b.frage)}</div>
+        <div class="fa-b-loesung">✅ Richtige Antwort: <b>${esc(b.loesung)}</b> · ${b.punkte}&thinsp;P – ${b.richtige.length ? "erraten von " + b.richtige.join(", ") : "hatte niemand"}</div>
+        <ul class="fa-b-tipps">${tippListe}</ul>
+      </div>`;
+    }).join("");
+    bonusHtml = `<div class="fa-section">🎲 Die großen Bonusfragen – wer tippte was?</div>${bloecke}`;
   }
   const ehrungenSection = ehrungenHtml ? `<div class="fa-section">🏅 Ehrungen &amp; Sonderpreise</div><ul class="fa-rekorde">${ehrungenHtml}</ul>` : "";
 
