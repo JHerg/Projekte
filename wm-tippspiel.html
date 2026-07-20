@@ -601,6 +601,30 @@
   body.dark .finalausgabe .fa-b-ok { color: #7cc47f; }
   body.dark .finalausgabe .fa-b-no { color: #bbb; }
   body.dark .finalausgabe .fa-b-none { color: #777; }
+  /* K.-o.-Tipp-Transparenz */
+  .finalausgabe .ko-t-details { border: 1px solid #ecd9a6; border-radius: 8px; background: #fffdf7; margin-bottom: 6px; overflow: hidden; }
+  .finalausgabe .ko-t-details summary { cursor: pointer; padding: 8px 10px; font-weight: 700; color: #8a5a10; font-size: .84rem; list-style: none; }
+  .finalausgabe .ko-t-details summary::-webkit-details-marker { display: none; }
+  .finalausgabe .ko-t-details summary::before { content: "▸ "; color: #b8860b; }
+  .finalausgabe .ko-t-details[open] summary::before { content: "▾ "; }
+  .finalausgabe .ko-t-spiel { padding: 4px 10px 8px; border-top: 1px solid #f0e6c8; }
+  .finalausgabe .ko-t-kopf { font-size: .82rem; color: #333; margin: 4px 0; }
+  .finalausgabe .ko-t-ne { font-size: .72rem; color: #a07a2a; }
+  .finalausgabe .ko-t-tipps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .finalausgabe .ko-t-tipps li { display: flex; justify-content: space-between; gap: 8px; font-size: .8rem; }
+  .finalausgabe .ko-t-tipps li span:last-child { white-space: nowrap; font-weight: 600; }
+  .finalausgabe .ko-t-4 { color: #2e7d32; }
+  .finalausgabe .ko-t-3 { color: #558b2f; }
+  .finalausgabe .ko-t-2 { color: #8a6d3b; }
+  .finalausgabe .ko-t-0 { color: #aaa; }
+  body.dark .finalausgabe .ko-t-details { background: #241f14; border-color: #4a3e22; }
+  body.dark .finalausgabe .ko-t-details summary { color: #f0d68a; }
+  body.dark .finalausgabe .ko-t-spiel { border-top-color: #3a3320; }
+  body.dark .finalausgabe .ko-t-kopf { color: #e6ddd0; }
+  body.dark .finalausgabe .ko-t-4 { color: #7cc47f; }
+  body.dark .finalausgabe .ko-t-3 { color: #9ccc65; }
+  body.dark .finalausgabe .ko-t-2 { color: #c9a86a; }
+  body.dark .finalausgabe .ko-t-0 { color: #777; }
   /* Kolumne: wiederkehrende fiktive Stimme mit Running-Gag-Signatur */
   .rundschau-kolumne {
     display: flex; gap: 10px; align-items: flex-start;
@@ -3512,6 +3536,36 @@ const FINAL_STIMMEN_LATERNE = [
   "„Getippt hab ich mit dem Herzen, nur die Ergebnisse waren anderer Meinung. Aber Spaß hatten wir alle – und darum geht's ja.“",
   "„Rote Laterne? Ich nenn's ‚Publikumsliebling von hinten‘. Die kleine Aufgabe erledige ich mit Humor – und Bille hilft beim Tischdecken sicher nicht.“"
 ];
+// K.-o.-Tipp-Transparenz für die Finalausgabe: pro Runde ausklappbar, je Spiel
+// das Ergebnis und wie alle getippt haben (inkl. erspielter Punkte/Joker).
+function koTippsHTML() {
+  const ko = state.spiele.filter(s => s.koRunde && s.gespielt)
+    .sort((a, b) => a.koRunde - b.koRunde || a.koIndex - b.koIndex);
+  if (!ko.length) return "";
+  const phasen = [];
+  ko.forEach(s => { let g = phasen.find(x => x.phase === s.phase); if (!g) { g = { phase: s.phase, spiele: [] }; phasen.push(g); } g.spiele.push(s); });
+  const bloecke = phasen.map(g => {
+    const spieleHtml = g.spiele.map(s => {
+      const sieg = s.sieger ? ` <span class="ko-t-ne">(weiter: ${flaggeVon(s.sieger)} ${esc(s.sieger)} n.V./n.E.)</span>` : "";
+      const tipps = state.spieler.map(p => {
+        const t = state.tipps[p.id]?.[s.id];
+        const tippStr = (t && t.e1 !== null && t.e2 !== null) ? `${t.e1}:${t.e2}` : "—";
+        const pts = punkteFuerSpieler(p.id, s) ?? 0;
+        const joker = istJoker(p.id, s.id) ? " 🃏" : "";
+        const kl = pts >= 4 ? "ko-t-4" : pts >= 3 ? "ko-t-3" : pts >= 2 ? "ko-t-2" : "ko-t-0";
+        return `<li class="${kl}"><span>${p.avatar} ${esc(p.name)}</span><span>${tippStr}${joker} · ${pts}&thinsp;P</span></li>`;
+      }).join("");
+      return `<div class="ko-t-spiel">
+        <div class="ko-t-kopf">${flaggeVon(s.t1)} ${esc(s.t1)} <b>${s.e1}:${s.e2}</b> ${esc(s.t2)} ${flaggeVon(s.t2)}${sieg}</div>
+        <ul class="ko-t-tipps">${tipps}</ul>
+      </div>`;
+    }).join("");
+    return `<details class="ko-t-details"><summary>${esc(g.phase)} · ${g.spiele.length} Spiel${g.spiele.length > 1 ? "e" : ""}</summary>${spieleHtml}</details>`;
+  }).join("");
+  return `<div class="fa-section">🏟️ Die K.-o.-Tipps – wer lag wie?</div>
+    <div class="fa-uk-hint">Pro Runde antippen zum Ausklappen – so lief's im K.-o.-Baum:</div>
+    ${bloecke}`;
+}
 function finalausgabeHTML() {
   let a; try { a = turnierAuswertung(); } catch (e) { console.error("Finalauswertung:", e); return ""; }
   if (!a) return "";
@@ -3667,6 +3721,10 @@ function finalausgabeHTML() {
   const zeitstrahlHtml = meilensteine.map(m =>
     `<div class="fa-zs-item"><div class="fa-zs-dot">${m.i}</div><div class="fa-zs-body">${m.d ? `<span class="fa-zs-datum">${datumTxt(m.d)}</span>` : ""}${m.t}</div></div>`).join("");
 
+  // K.-o.-Tipp-Transparenz (ausklappbar pro Runde)
+  let koTippsHtml = "";
+  try { koTippsHtml = koTippsHTML(); } catch (e) { console.error("K.o.-Tipps:", e); }
+
   // Mini-Urkunden (ausklappen · drucken · teilen)
   const urkundenHtml = a.spieler.map(s => `<details class="uk-details" ontoggle="if(this.open)urkundeRender('${s.id}')">
       <summary>🎖️ Urkunde für ${nm(s)}</summary>
@@ -3707,6 +3765,7 @@ function finalausgabeHTML() {
     <div class="fa-fliess">${zusammenhaltText}</div>
     <div class="fa-section">🥄 Rote Laterne &amp; Ausklang</div>
     <div class="fa-fliess">${laterneHtml}</div>
+    ${koTippsHtml}
     ${bonusHtml}
     <div class="fa-section">🐾 Billes großes Schlusswort</div>
     <div class="fa-bille"><span class="fa-bille-icon">${BILLE_ICON}</span><span class="fa-bille-text">${billeText}</span></div>
